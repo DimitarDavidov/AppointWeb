@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: appointweb_postgres
+    environment:
+      POSTGRES_USER: appointweb
+      POSTGRES_PASSWORD: appointweb_password
+      POSTGRES_DB: appointwebdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - appointnet
+
+  backend:
+    build:
+      context: ../backend/AppointWeb.Api
+      dockerfile: Dockerfile
+    container_name: appointweb_backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=appointwebdb;Username=appointweb;Password=appointweb_password"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    command: >
+      sh -c "
+        until nc -z postgres 5432;
+        do
+          echo 'Waiting for Postgres...';
+          sleep 1;
+        done;
+        echo 'Postgres is up!';
+        dotnet AppointWeb.Api.dll
+      "
+    networks:
+      - appointnet
+
+volumes:
+  pgdata:
+
+networks:
+  appointnet:

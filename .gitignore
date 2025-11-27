@@ -1,0 +1,8 @@
+bin/
+obj/
+pgdata/
+*.db
+*.sqlite
+.vscode/
+Docker/.env
+**/appsettings*.json
