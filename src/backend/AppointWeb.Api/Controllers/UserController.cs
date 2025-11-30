@@ -4,7 +4,7 @@ using AppointWeb.Api.Services.Interfaces;
 namespace AppointWeb.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/user")]
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;

@@ -20,6 +20,7 @@ services:
     container_name: appointweb_backend
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=appointwebdb;Username=appointweb;Password=appointweb_password"
     ports:
       - "8080:8080"

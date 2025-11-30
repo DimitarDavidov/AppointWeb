@@ -17,9 +17,29 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+
+        });
+});
+
+
 var app = builder.Build();
 
-app.ApplyMigrations();
+app.UseRouting();
+app.UseCors("AllowFrontend");
+app.UseAuthorization();
+
 app.MapControllers();
+
+app.ApplyMigrations();
 
 app.Run();
