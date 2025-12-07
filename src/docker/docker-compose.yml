@@ -13,32 +13,6 @@ services:
     networks:
       - appointnet
 
-  backend:
-    build:
-      context: ../backend/AppointWeb.Api
-      dockerfile: Dockerfile
-    container_name: appointweb_backend
-    environment:
-      ASPNETCORE_ENVIRONMENT: "Development"
-      ASPNETCORE_URLS: "http://0.0.0.0:8080"
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=appointwebdb;Username=appointweb;Password=appointweb_password"
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-    command: >
-      sh -c "
-        until nc -z postgres 5432;
-        do
-          echo 'Waiting for Postgres...';
-          sleep 1;
-        done;
-        echo 'Postgres is up!';
-        dotnet AppointWeb.Api.dll
-      "
-    networks:
-      - appointnet
-
 volumes:
   pgdata:
 
