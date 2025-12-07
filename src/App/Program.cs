@@ -5,6 +5,8 @@ using AppointWeb.Api.Services;
 using AppointWeb.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using AppointWeb.Api.Extensions;
+using AppointWeb.Api.Middleware;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +34,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 using (var scope = app.Services.CreateScope())
 {
