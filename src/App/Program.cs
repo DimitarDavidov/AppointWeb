@@ -31,8 +31,30 @@ builder.Services.AddCors(options =>
         });
 });
 
-
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    try
+    {
+        Console.WriteLine("Checking database connection...");
+        db.Database.OpenConnection();
+        db.Database.CloseConnection();
+        Console.WriteLine("Database connection OK");
+    }
+    catch (Exception ex)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine("DB Connection failed");
+        Console.ResetColor();
+
+        Console.WriteLine(ex.ToString());
+
+        throw new InvalidOperationException("Backend startup aborted due to database connection failure.", ex);
+    }
+}
 
 app.UseRouting();
 app.UseCors("AllowFrontend");
