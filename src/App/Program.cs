@@ -6,6 +6,9 @@ using AppointWeb.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using AppointWeb.Api.Extensions;
 using AppointWeb.Api.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,7 +37,33 @@ builder.Services.AddCors(options =>
         });
 });
 
+
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var jwtKey = jwtSection["Key"]!;
+var issuer = jwtSection["Issuer"]!;
+var audience = jwtSection["Audience"]!;
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = issuer,
+            ValidateAudience = true,
+            ValidAudience = audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30)
+        };
+    });
+
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<JwtTokenService>();
+
 var app = builder.Build();
+
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 using (var scope = app.Services.CreateScope())
@@ -60,12 +89,14 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.ApplyMigrations();
+
 app.UseRouting();
 app.UseCors("AllowFrontend");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.ApplyMigrations();
 
 app.Run();
