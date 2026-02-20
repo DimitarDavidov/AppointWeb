@@ -17,6 +17,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 
+
 builder.Services.AddControllers();
 
 builder.Services.AddCors(options =>

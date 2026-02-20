@@ -10,7 +10,7 @@ public static class DatabaseMigrationExtensions
         using var scope = app.ApplicationServices.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        db.Database.EnsureCreated();
+        db.Database.Migrate();
 
         return app;
     }
