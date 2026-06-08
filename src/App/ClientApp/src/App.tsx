@@ -1,40 +1,16 @@
-import { useEffect, useState } from "react";
-import api from "./api/api";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Layout from "./components/Layout/Layout";
+import Home from "./pages/Home";
 
 function App() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [error, setError] = useState<string>("");
-
-  useEffect(() => {
-    api.get("/api/user")
-      .then((res) => {
-        setUsers(res.data);
-        setError("");
-      })
-      .catch((err) => {
-        console.error("API error:", err);
-        setError("Failed to connect to backend");
-      });
-  }, []);
-
   return (
-    <div style={{ padding: 20 }}>
-      <h1>AppointWeb Frontend</h1>
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <h2>Users:</h2>
-
-      {users.length === 0 ? (
-        <p>No users found.</p>
-      ) : (
-        <ul>
-          {users.map((u) => (
-            <li key={u.id}>{u.email}</li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
