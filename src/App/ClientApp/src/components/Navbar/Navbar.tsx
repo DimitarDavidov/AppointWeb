@@ -9,7 +9,9 @@ function Navbar() {
       </Link>
 
       <div className="navbar-actions">
-        <button type="button">Login</button>
+        <Link to="/login" className="navbar-link">
+          Login
+        </Link>
         <button type="button">Logout</button>
         <Link to="/register" className="navbar-link">
           Register

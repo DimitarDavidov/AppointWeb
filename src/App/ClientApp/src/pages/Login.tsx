@@ -1,42 +1,30 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getErrorMessage, register } from "../api/auth";
+import { getErrorMessage, login } from "../api/auth";
 import { setCredentials } from "../features/auth/authSlice";
 import { useAppDispatch } from "../store/hooks";
 import "./Auth.scss";
 
-function Register() {
+function Login() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      const response = await register({ email, password });
+      const response = await login({ email, password });
       dispatch(setCredentials(response.accessToken));
       navigate("/");
     } catch (err) {
-      setError(getErrorMessage(err, "Registration failed. Please try again."));
+      setError(getErrorMessage(err, "Login failed. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -45,8 +33,8 @@ function Register() {
   return (
     <div className="auth">
       <div className="auth-card">
-        <h1 className="auth-title">Create account</h1>
-        <p className="auth-subtitle">Sign up to book appointments</p>
+        <h1 className="auth-title">Welcome back</h1>
+        <p className="auth-subtitle">Log in to your account</p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="auth-field">
@@ -69,21 +57,7 @@ function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
-              autoComplete="new-password"
-            />
-          </div>
-
-          <div className="auth-field">
-            <label htmlFor="confirmPassword">Confirm password</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
+              autoComplete="current-password"
             />
           </div>
 
@@ -94,16 +68,16 @@ function Register() {
             type="submit"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Creating account..." : "Register"}
+            {isSubmitting ? "Logging in..." : "Log in"}
           </button>
         </form>
 
         <p className="auth-footer">
-          Already have an account? <Link to="/login">Log in</Link>
+          Don't have an account? <Link to="/register">Register</Link>
         </p>
       </div>
     </div>
   );
 }
 
-export default Register;
+export default Login;
