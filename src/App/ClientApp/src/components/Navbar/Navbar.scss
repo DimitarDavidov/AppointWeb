@@ -8,26 +8,24 @@
   padding: 0.75rem 1.5rem;
   background-color: #1a1a1a;
   border-bottom: 1px solid #333;
-}
 
-.navbar-brand {
-  font-size: 1.25rem;
-  font-weight: 600;
-  padding: 0.5rem 1rem;
-}
+  &-brand {
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+  }
 
-.navbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
+  &-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 
-.navbar-actions button {
-  padding: 0.5rem 1rem;
-}
+    button {
+      padding: 0.5rem 1rem;
+    }
+  }
 
-@media (prefers-color-scheme: light) {
-  .navbar {
+  @media (prefers-color-scheme: light) {
     background-color: #ffffff;
     border-bottom-color: #e0e0e0;
   }
