@@ -20,13 +20,34 @@
     align-items: center;
     gap: 0.5rem;
 
-    button {
+    button,
+    .navbar-link {
       padding: 0.5rem 1rem;
+    }
+  }
+
+  &-link {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 1em;
+    font-weight: 500;
+    background-color: #1a1a1a;
+    cursor: pointer;
+    transition: border-color 0.25s;
+
+    &:hover {
+      border-color: #646cff;
     }
   }
 
   @media (prefers-color-scheme: light) {
     background-color: #ffffff;
     border-bottom-color: #e0e0e0;
+
+    .navbar-link {
+      background-color: #f9f9f9;
+    }
   }
 }

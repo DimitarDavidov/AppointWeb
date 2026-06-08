@@ -11,7 +11,9 @@ function Navbar() {
       <div className="navbar-actions">
         <button type="button">Login</button>
         <button type="button">Logout</button>
-        <button type="button">Register</button>
+        <Link to="/register" className="navbar-link">
+          Register
+        </Link>
       </div>
     </nav>
   );
