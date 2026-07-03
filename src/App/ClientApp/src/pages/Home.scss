@@ -37,7 +37,15 @@
     margin: 0 0 1rem;
     font-size: clamp(2rem, 5vw, 2.75rem);
     line-height: 1.2;
-    color: var(--color-primary);
+    background: linear-gradient(
+      90deg,
+      var(--color-brand-slate-dark) 0%,
+      var(--color-brand-teal) 55%,
+      var(--color-brand-mint) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   &-description {
@@ -63,7 +71,7 @@
       border-radius: 999px;
       font-size: 0.9rem;
       font-weight: 500;
-      color: var(--color-primary-dark);
+      color: var(--color-brand-slate);
     }
   }
 
@@ -99,7 +107,7 @@
 
       &:hover {
         background-color: var(--color-primary-light);
-        color: var(--color-primary-dark);
+        color: var(--color-brand-teal-dark);
       }
     }
   }

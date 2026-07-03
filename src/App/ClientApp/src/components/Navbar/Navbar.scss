@@ -6,9 +6,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.85rem 1.5rem;
-  background-color: var(--color-primary);
-  border-bottom: 1px solid var(--color-primary-dark);
-  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    #f0fdfa 0%,
+    #ecfeff 45%,
+    #cffafe 100%
+  );
+  border-bottom: 1px solid rgba(8, 145, 178, 0.15);
+  color: var(--color-brand-slate-dark);
 
   &-brand {
     display: flex;
@@ -41,18 +46,18 @@
     display: inline-flex;
     align-items: center;
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(8, 145, 178, 0.2);
     font-size: 1em;
     font-weight: 500;
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.65);
+    color: var(--color-brand-slate);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-      color: #ffffff;
-      border-color: rgba(255, 255, 255, 0.5);
+      background-color: #ffffff;
+      color: var(--color-brand-teal-dark);
+      border-color: rgba(8, 145, 178, 0.35);
     }
   }
 
@@ -61,60 +66,112 @@
 
     &:hover .navbar-dropdown,
     &:focus-within .navbar-dropdown {
-      display: flex;
+      display: block;
+    }
+
+    &:hover .navbar-user-chevron,
+    &:focus-within .navbar-user-chevron {
+      transform: rotate(180deg);
     }
   }
 
   &-user-trigger {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background-color: rgba(255, 255, 255, 0.7);
+    color: var(--color-brand-slate-dark);
     border: none;
-    padding: 0.5rem 1rem;
-    font-size: 0.95rem;
+    border-radius: 999px;
+    padding: 0.3rem 0.85rem 0.3rem 0.3rem;
+    font-size: 0.9rem;
     font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.2);
+      background-color: #ffffff;
     }
+  }
+
+  &-user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-brand-teal) 0%, var(--color-brand-mint) 100%);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  &-user-name {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-brand-slate);
+    font-weight: 600;
+  }
+
+  &-user-chevron {
+    width: 0;
+    height: 0;
+    margin-right: 0.15rem;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--color-brand-slate);
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
   }
 
   &-dropdown {
     display: none;
-    flex-direction: column;
     position: absolute;
     top: 100%;
     right: 0;
     padding-top: 0.5rem;
-    min-width: 180px;
+    min-width: 200px;
+  }
+
+  &-dropdown-panel {
+    display: flex;
+    flex-direction: column;
     background-color: var(--color-bg);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(8, 145, 178, 0.15);
     overflow: hidden;
+    animation: navbar-dropdown-in 0.15s ease;
   }
 
   &-dropdown-item {
     display: block;
-    padding: 0.75rem 1rem;
+    padding: 0.8rem 1.1rem;
     color: var(--color-text);
+    font-size: 0.95rem;
     font-weight: 500;
     text-decoration: none;
-    transition: background-color 0.15s;
+    transition: background-color 0.15s, color 0.15s;
 
     &:hover {
       background-color: var(--color-primary-light);
-      color: var(--color-primary-dark);
+      color: var(--color-brand-teal-dark);
     }
   }
 
   &-dropdown-logout {
-    margin-top: 0.25rem;
-    padding: 0.75rem 1rem;
+    padding: 0.8rem 1.1rem;
     width: 100%;
     border-radius: 0;
+    border: none;
     border-top: 1px solid var(--color-border);
     background-color: var(--color-bg);
     color: var(--color-error);
+    font-size: 0.95rem;
     font-weight: 500;
     text-align: left;
 
@@ -122,5 +179,17 @@
       background-color: var(--color-error-bg);
       color: var(--color-error);
     }
+  }
+}
+
+@keyframes navbar-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

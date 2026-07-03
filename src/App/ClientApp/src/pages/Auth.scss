@@ -10,7 +10,7 @@
     border: 1px solid var(--color-border);
     border-radius: 12px;
     background-color: var(--color-bg);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
   }
 
   &-title {
@@ -18,7 +18,14 @@
     font-size: 1.75rem;
     line-height: 1.2;
     text-align: center;
-    color: var(--color-primary);
+    background: linear-gradient(
+      90deg,
+      var(--color-brand-slate-dark),
+      var(--color-brand-teal)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   &-subtitle {

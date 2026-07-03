@@ -6,6 +6,13 @@
   &-title {
     margin: 0;
     font-size: 2rem;
-    color: var(--color-primary);
+    background: linear-gradient(
+      90deg,
+      var(--color-brand-slate-dark),
+      var(--color-brand-teal)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
