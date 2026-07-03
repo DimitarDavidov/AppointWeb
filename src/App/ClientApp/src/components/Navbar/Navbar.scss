@@ -6,13 +6,20 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
-  background-color: #1a1a1a;
-  border-bottom: 1px solid #333;
+  background-color: var(--color-primary);
+  border-bottom: 1px solid var(--color-primary-dark);
+  color: #ffffff;
 
   &-brand {
     font-size: 1.25rem;
     font-weight: 600;
     padding: 0.5rem 1rem;
+    color: #ffffff;
+
+    &:hover {
+      color: #ffffff;
+      opacity: 0.9;
+    }
   }
 
   &-actions {
@@ -26,33 +33,90 @@
     }
   }
 
-  &-user {
-    font-size: 0.9rem;
-    color: #888;
-  }
-
   &-link {
     display: inline-flex;
     align-items: center;
     border-radius: 8px;
-    border: 1px solid transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     font-size: 1em;
     font-weight: 500;
-    background-color: #1a1a1a;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
     cursor: pointer;
-    transition: border-color 0.25s;
+    transition: background-color 0.2s;
 
     &:hover {
-      border-color: #646cff;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.5);
     }
   }
 
-  @media (prefers-color-scheme: light) {
-    background-color: #ffffff;
-    border-bottom-color: #e0e0e0;
+  &-user-menu {
+    position: relative;
 
-    .navbar-link {
-      background-color: #f9f9f9;
+    &:hover .navbar-dropdown,
+    &:focus-within .navbar-dropdown {
+      display: flex;
+    }
+  }
+
+  &-user-trigger {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &-dropdown {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    padding-top: 0.5rem;
+    min-width: 180px;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
+    overflow: hidden;
+  }
+
+  &-dropdown-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: var(--color-text);
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.15s;
+
+    &:hover {
+      background-color: var(--color-primary-light);
+      color: var(--color-primary-dark);
+    }
+  }
+
+  &-dropdown-logout {
+    margin-top: 0.25rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    border-radius: 0;
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-bg);
+    color: var(--color-error);
+    font-weight: 500;
+    text-align: left;
+
+    &:hover {
+      background-color: var(--color-error-bg);
+      color: var(--color-error);
     }
   }
 }

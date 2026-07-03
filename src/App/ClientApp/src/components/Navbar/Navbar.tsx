@@ -6,8 +6,12 @@ import "./Navbar.scss";
 function Navbar() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { accessToken, email } = useAppSelector((state) => state.auth);
+  const { accessToken, username, role } = useAppSelector(
+    (state) => state.auth
+  );
   const isLoggedIn = !!accessToken;
+  const isAdmin = role === "Admin";
+  const displayName = username ?? "User";
 
   function handleLogout() {
     dispatch(logout());
@@ -22,12 +26,32 @@ function Navbar() {
 
       <div className="navbar-actions">
         {isLoggedIn ? (
-          <>
-            {email && <span className="navbar-user">{email}</span>}
-            <button type="button" onClick={handleLogout}>
-              Logout
+          <div className="navbar-user-menu">
+            <button type="button" className="navbar-user-trigger">
+              {displayName}
             </button>
-          </>
+
+            <div className="navbar-dropdown">
+              {isAdmin && (
+                <Link to="/admin" className="navbar-dropdown-item">
+                  Admin Panel
+                </Link>
+              )}
+              <Link to="/account" className="navbar-dropdown-item">
+                Account
+              </Link>
+              <Link to="/appointments" className="navbar-dropdown-item">
+                Appointments
+              </Link>
+              <button
+                type="button"
+                className="navbar-dropdown-logout"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         ) : (
           <>
             <Link to="/login" className="navbar-link">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
+import "./Home.scss";
 
 function Home() {
   const [users, setUsers] = useState<any[]>([]);
@@ -19,17 +20,17 @@ function Home() {
   }, []);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>AppointWeb Frontend</h1>
+    <div className="home">
+      <h1 className="home-title">AppointWeb</h1>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="home-error">{error}</p>}
 
-      <h2>Users:</h2>
+      <h2 className="home-subtitle">Users</h2>
 
       {users.length === 0 ? (
-        <p>No users found.</p>
+        <p className="home-empty">No users found.</p>
       ) : (
-        <ul>
+        <ul className="home-list">
           {users.map((u) => (
             <li key={u.id}>{u.email}</li>
           ))}

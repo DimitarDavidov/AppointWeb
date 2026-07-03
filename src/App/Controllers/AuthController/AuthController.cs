@@ -47,7 +47,13 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync();
 
         var token = _jwt.CreateAccessToken(user);
-        return Ok(new AuthResponse { AccessToken = token });
+        return Ok(new AuthResponse
+        {
+            AccessToken = token,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role
+        });
     }
 
     [HttpPost("login")]
@@ -63,6 +69,12 @@ public class AuthController : ControllerBase
             return Unauthorized("Invalid credentials.");
 
         var token = _jwt.CreateAccessToken(user);
-        return Ok(new AuthResponse { AccessToken = token });
+        return Ok(new AuthResponse
+        {
+            AccessToken = token,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role
+        });
     }
 }

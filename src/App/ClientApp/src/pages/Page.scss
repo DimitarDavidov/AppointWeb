@@ -1,0 +1,11 @@
+.page {
+  padding: 2rem 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+
+  &-title {
+    margin: 0;
+    font-size: 2rem;
+    color: var(--color-primary);
+  }
+}

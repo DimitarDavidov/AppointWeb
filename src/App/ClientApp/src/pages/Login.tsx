@@ -21,7 +21,7 @@ function Login() {
 
     try {
       const response = await login({ email, password });
-      dispatch(setCredentials(response.accessToken));
+      dispatch(setCredentials(response));
       navigate("/");
     } catch (err) {
       setError(getErrorMessage(err, "Login failed. Please try again."));

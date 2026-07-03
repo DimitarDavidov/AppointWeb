@@ -39,7 +39,7 @@ function Register() {
 
     try {
       const response = await register({ username, email, password });
-      dispatch(setCredentials(response.accessToken));
+      dispatch(setCredentials(response));
       navigate("/");
     } catch (err) {
       setError(getErrorMessage(err, "Registration failed. Please try again."));
