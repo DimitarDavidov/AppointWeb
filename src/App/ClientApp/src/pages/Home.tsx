@@ -1,42 +1,49 @@
-import { useEffect, useState } from "react";
-import api from "../api/api";
+import { Link } from "react-router-dom";
+import welcomeBg from "../assets/images/welcome-bg.png";
+import { useAppSelector } from "../store/hooks";
 import "./Home.scss";
 
 function Home() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [error, setError] = useState<string>("");
-
-  useEffect(() => {
-    api
-      .get("/api/user")
-      .then((res) => {
-        setUsers(res.data);
-        setError("");
-      })
-      .catch((err) => {
-        console.error("API error:", err);
-        setError("Failed to connect to backend");
-      });
-  }, []);
+  const isLoggedIn = !!useAppSelector((state) => state.auth.accessToken);
 
   return (
-    <div className="home">
-      <h1 className="home-title">AppointWeb</h1>
+    <section className="welcome">
+      <div className="welcome-banner" aria-hidden="true">
+        <img
+          className="welcome-banner-img"
+          src={welcomeBg}
+          alt=""
+        />
+      </div>
 
-      {error && <p className="home-error">{error}</p>}
+      <div className="welcome-content">
+        <h1 className="welcome-title">Welcome to AppointWeb!</h1>
 
-      <h2 className="home-subtitle">Users</h2>
+        <p className="welcome-description">
+          Book appointments for the things that matter — dentist visits, fitness
+          classes, salon treatments, tutoring sessions, and more. AppointWeb
+          brings scheduling together in one simple place.
+        </p>
 
-      {users.length === 0 ? (
-        <p className="home-empty">No users found.</p>
-      ) : (
-        <ul className="home-list">
-          {users.map((u) => (
-            <li key={u.id}>{u.email}</li>
-          ))}
+        <ul className="welcome-features">
+          <li>Dentists & healthcare</li>
+          <li>Sports & activities</li>
+          <li>Beauty & wellness</li>
+          <li>Classes & personal services</li>
         </ul>
-      )}
-    </div>
+
+        {!isLoggedIn && (
+          <div className="welcome-actions">
+            <Link to="/register" className="welcome-btn welcome-btn-primary">
+              Get started
+            </Link>
+            <Link to="/login" className="welcome-btn welcome-btn-secondary">
+              Log in
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
