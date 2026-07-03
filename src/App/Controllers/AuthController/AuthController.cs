@@ -26,13 +26,18 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
     {
         var email = request.Email.Trim().ToLowerInvariant();
+        var username = request.Username.Trim().ToLowerInvariant();
 
-        var exists = await _db.Users.AnyAsync(u => u.Email == email);
-        if (exists) return Conflict("Email already registered.");
+        if (await _db.Users.AnyAsync(u => u.Email == email))
+            return Conflict("Email already registered.");
+
+        if (await _db.Users.AnyAsync(u => u.Username == username))
+            return Conflict("Username already taken.");
 
         var user = new User
         {
             Email = email,
+            Username = username,
             Role = "Customer"
         };
 

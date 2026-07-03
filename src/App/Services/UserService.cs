@@ -21,7 +21,8 @@ public class UserService : IUserService
 
     public async Task<User> CreateUser(string email)
     {
-        var user = new User { Email = email };
+        var baseUsername = email.Split('@')[0].ToLowerInvariant();
+        var user = new User { Email = email, Username = baseUsername };
         return await _repo.AddAsync(user);
     }
 }

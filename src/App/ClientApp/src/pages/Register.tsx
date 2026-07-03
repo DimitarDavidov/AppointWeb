@@ -9,6 +9,7 @@ import "./Auth.scss";
 function Register() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -18,6 +19,11 @@ function Register() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (username.trim().length < 3) {
+      setError("Username must be at least 3 characters.");
+      return;
+    }
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
@@ -32,7 +38,7 @@ function Register() {
     setIsSubmitting(true);
 
     try {
-      const response = await register({ email, password });
+      const response = await register({ username, email, password });
       dispatch(setCredentials(response.accessToken));
       navigate("/");
     } catch (err) {
@@ -49,6 +55,20 @@ function Register() {
         <p className="auth-subtitle">Sign up to book appointments</p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="auth-field">
+            <label htmlFor="username">Username</label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              minLength={3}
+              maxLength={50}
+              autoComplete="username"
+            />
+          </div>
+
           <div className="auth-field">
             <label htmlFor="email">Email</label>
             <input
