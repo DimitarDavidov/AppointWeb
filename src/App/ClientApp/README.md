@@ -13,6 +13,17 @@ npm run dev
 
 Runs on http://localhost:5173 (requires the backend API on http://localhost:8080).
 
+## Pages
+
+| Route | Description |
+|-------|-------------|
+| `/` | Welcome landing page |
+| `/login` | Log in |
+| `/register` | Register (username, email, password) |
+| `/account` | Account (placeholder) |
+| `/appointments` | Appointments (placeholder) |
+| `/admin` | Admin panel (placeholder, admin role only in menu) |
+
 ## Scripts
 
 | Command | Description |
@@ -22,4 +33,4 @@ Runs on http://localhost:5173 (requires the backend API on http://localhost:8080
 | `npm run lint` | ESLint |
 | `npm run preview` | Preview production build |
 
-See [Frontend documentation](../../docs/frontend.md) for folder structure, routing, and state management.
+See [Frontend documentation](../../docs/frontend.md) for folder structure, routing, auth state, and styling.

@@ -10,41 +10,54 @@ The frontend is a React SPA located in `src/App/ClientApp/`. It uses Vite as the
 | TypeScript | Type safety |
 | Vite | Dev server and bundler |
 | React Router | Client-side routing |
-| Redux Toolkit | Global state (auth) |
+| Redux Toolkit | Global auth state |
 | Axios | HTTP client |
 | SCSS | Styling |
 
 ## Folder structure
 
 ```
-ClientApp/src/
-├── api/
-│   ├── api.ts              # Axios instance + JWT interceptor
-│   └── auth.ts             # Login, register API calls
-├── components/
-│   ├── Layout/
-│   │   └── Layout.tsx      # Shared layout (navbar + page content)
-│   └── Navbar/
-│       ├── Navbar.tsx      # Sticky navigation bar
-│       └── Navbar.scss
-├── features/
-│   └── auth/
-│       └── authSlice.ts    # Redux auth state
-├── pages/
-│   ├── Home.tsx            # Home page
-│   ├── Login.tsx           # Login form
-│   ├── Register.tsx        # Registration form
-│   └── Auth.scss           # Shared auth page styles
-├── store/
-│   ├── store.ts            # Redux store configuration
-│   └── hooks.ts            # Typed useAppDispatch / useAppSelector
-├── types/
-│   └── auth.ts             # TypeScript interfaces for auth DTOs
-├── utils/
-│   └── jwt.ts              # JWT payload decoder
-├── App.tsx                 # Router setup
-├── main.tsx                # Entry point (Provider wrapper)
-└── index.scss              # Global styles
+ClientApp/
+├── public/
+│   └── favicon.png              # Browser tab icon
+├── src/
+│   ├── api/
+│   │   ├── api.ts               # Axios instance + JWT interceptor
+│   │   └── auth.ts              # Login, register API calls
+│   ├── assets/images/
+│   │   ├── logo.png             # Navbar logo
+│   │   ├── favicon.png          # Source favicon (copied to public/)
+│   │   └── welcome-bg.png       # Welcome page banner image
+│   ├── components/
+│   │   ├── Layout/
+│   │   │   └── Layout.tsx       # Shared layout (navbar + page content)
+│   │   └── Navbar/
+│   │       ├── Navbar.tsx       # Sticky nav with auth-aware menu
+│   │       └── Navbar.scss
+│   ├── features/
+│   │   └── auth/
+│   │       └── authSlice.ts     # Redux auth state
+│   ├── pages/
+│   │   ├── Home.tsx             # Welcome landing page
+│   │   ├── Login.tsx            # Login form
+│   │   ├── Register.tsx         # Registration form (username required)
+│   │   ├── Account.tsx          # Account page (placeholder)
+│   │   ├── Appointments.tsx     # Appointments page (placeholder)
+│   │   ├── AdminPanel.tsx       # Admin panel (placeholder)
+│   │   ├── Auth.scss            # Shared auth form styles
+│   │   ├── Home.scss            # Welcome page styles
+│   │   └── Page.scss            # Shared placeholder page styles
+│   ├── store/
+│   │   ├── store.ts             # Redux store configuration
+│   │   └── hooks.ts             # Typed useAppDispatch / useAppSelector
+│   ├── types/
+│   │   └── auth.ts              # TypeScript interfaces for auth DTOs
+│   ├── utils/
+│   │   ├── jwt.ts               # JWT payload decoder
+│   │   └── formatDisplayName.ts # Capitalize username for display
+│   ├── App.tsx                  # Router setup
+│   ├── main.tsx                 # Entry point (Provider wrapper)
+│   └── index.scss               # Global styles & brand color variables
 ```
 
 ## Routing
@@ -53,24 +66,50 @@ Defined in `App.tsx`. All routes share the `Layout` component (sticky navbar).
 
 | Path | Component | Description |
 |------|-----------|-------------|
-| `/` | `Home` | Landing page |
+| `/` | `Home` | Welcome landing page with banner image |
 | `/login` | `Login` | Login form |
 | `/register` | `Register` | Registration form |
+| `/account` | `Account` | Account page (placeholder) |
+| `/appointments` | `Appointments` | Appointments page (placeholder) |
+| `/admin` | `AdminPanel` | Admin panel (placeholder) |
 
-## Layout
+## Layout & navbar
 
 ```
-┌─────────────────────────────────────────────┐
-│  Navbar (sticky)                            │
-│  [Appoint]              [Login] [Logout] [Register] │
-├─────────────────────────────────────────────┤
-│                                             │
-│  Page content (via React Router Outlet)     │
-│                                             │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  Navbar (sticky, light teal gradient)                    │
+│  [Logo]                    [Login] [Register]  — or —  │
+│                            [Avatar Username ▾]           │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  Page content (via React Router Outlet)                  │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
 ```
 
-The navbar is always visible regardless of which page the user is on.
+The navbar is always visible on every page.
+
+### Logged out
+- Shows **Login** and **Register** links
+
+### Logged in
+- Shows username with avatar initial in a pill button
+- Hover opens dropdown menu:
+  - **Admin Panel** → `/admin` (only if `role === "Admin"`)
+  - **Account** → `/account`
+  - **Appointments** → `/appointments`
+  - **Logout** (clears auth state)
+
+The username is displayed with the first letter capitalized.
+
+## Welcome page
+
+The home page (`/`) is a welcome landing page with:
+
+- A full-width banner image at the top (`assets/images/welcome-bg.png`)
+- Welcome message and description
+- Category tags (healthcare, sports, beauty, etc.)
+- **Get started** / **Log in** buttons (hidden when already logged in)
 
 ## State management
 
@@ -82,8 +121,11 @@ Redux Toolkit manages auth state. See [Authentication](authentication.md) for de
 import { useAppSelector } from "../store/hooks";
 
 function MyComponent() {
-  const { accessToken, email, role } = useAppSelector((state) => state.auth);
+  const { accessToken, username, email, role } = useAppSelector(
+    (state) => state.auth
+  );
   const isLoggedIn = !!accessToken;
+  const isAdmin = role === "Admin";
 }
 ```
 
@@ -95,8 +137,8 @@ import { setCredentials, logout } from "../features/auth/authSlice";
 
 const dispatch = useAppDispatch();
 
-// After login
-dispatch(setCredentials(token));
+// After login or register — pass full AuthResponse from API
+dispatch(setCredentials(response));
 
 // Logout
 dispatch(logout());
@@ -111,11 +153,20 @@ The axios instance in `src/api/api.ts` is configured with:
 
 Auth-specific API calls (`login`, `register`) live in `src/api/auth.ts`.
 
-## Styling
+## Styling & branding
 
-- Global styles in `index.scss` (dark/light mode via `prefers-color-scheme`)
-- Component styles use SCSS with nesting (e.g. `Navbar.scss`)
-- Login and Register share `Auth.scss` for consistent form layout
+The UI uses a **teal and slate** color palette matching the AppointWeb logo:
+
+| Token | Color | Usage |
+|-------|-------|-------|
+| `--color-brand-slate` | `#475569` | Body text, username |
+| `--color-brand-teal` | `#06b6d4` | Primary accent, buttons, links |
+| `--color-brand-mint` | `#2dd4bf` | Gradient accents |
+
+- Global styles and CSS variables in `index.scss`
+- Component styles use SCSS with nesting
+- Login and Register share `Auth.scss`
+- Headings on welcome/auth pages use a slate → teal gradient
 
 ## Scripts
 
@@ -132,8 +183,8 @@ The API base URL is hardcoded in `src/api/api.ts` as `http://localhost:8080` for
 
 ## Not yet implemented
 
-- Logout button wired to `dispatch(logout())`
-- Conditional navbar (hide Login/Register when logged in)
-- Admin panel route and role-based UI
-- Appointment booking page
-- Auth guard (redirect to login for protected pages)
+- Route guards (redirect unauthenticated users away from protected pages)
+- Admin panel content and API-side `[Authorize(Roles = "Admin")]`
+- Account and Appointments page functionality
+- Appointment booking UI on the frontend
+- Auth guard on `/admin` route

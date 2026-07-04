@@ -10,12 +10,12 @@ AppointWeb uses **PostgreSQL 16** with **Entity Framework Core** for data access
 ├──────────────┤       ├──────────────────┤       ├──────────────┤
 │ Id (PK)      │◄──┐   │ Id (PK)          │   ┌──►│ Id (PK)      │
 │ Email        │   ├───│ CustomerId (FK)  │   │   │ Name         │
-│ PasswordHash │   │   │ ProviderId (FK)  │───┘   │ Description  │
-│ Role         │   └───│ ServiceId (FK)   │───────│ DurationMin  │
-│ CreatedAt    │◄──────│ StartTime        │       │ Price        │
-└──────────────┘       │ EndTime          │       │ IsActive     │
-       ▲               │ Status           │       │ CreatedAt    │
-       │               │ PriceAtBooking   │       └──────────────┘
+│ Username     │   │   │ ProviderId (FK)  │───┘   │ Description  │
+│ PasswordHash │   └───│ ServiceId (FK)   │───────│ DurationMin  │
+│ Role         │◄──────│ StartTime        │       │ Price        │
+│ CreatedAt    │       │ EndTime          │       │ IsActive     │
+└──────────────┘       │ Status           │       │ CreatedAt    │
+       ▲               │ PriceAtBooking   │       └──────────────┘
        │               │ CreatedAt        │
        └───────────────│                  │
          (Provider)    └──────────────────┘
@@ -31,6 +31,7 @@ A user can be a **customer** (books appointments) or a **provider** (delivers se
 |--------|------|-------|
 | `Id` | uuid | Primary key |
 | `Email` | text | Required, unique index |
+| `Username` | varchar(50) | Required, unique index |
 | `PasswordHash` | text | Required, ASP.NET Identity hasher |
 | `Role` | text | Required, default `"Customer"` |
 | `CreatedAt` | timestamptz | UTC |
@@ -63,9 +64,9 @@ A user can be a **customer** (books appointments) or a **provider** (delivers se
 
 ## Constraints
 
-### Unique email
+### Unique email and username
 
-Each user must have a unique email address (index `IX_Users_Email`).
+Each user must have a unique email address (`IX_Users_Email`) and a unique username (`IX_Users_Username`). Usernames are stored in lowercase.
 
 ### Double-booking prevention
 
@@ -86,6 +87,7 @@ Migrations live in `src/App/Migrations/` and are applied on API startup via `App
 | `AddServicesAndAppointments` | Creates Users, Services, Appointments tables |
 | `AddUserAuthFields` | Adds PasswordHash, Role, CreatedAt to Users; unique email index |
 | `AddAppointmentDoubleBookingConstraint` | PostgreSQL exclusion constraint for provider overlap |
+| `AddUsernameToUser` | Adds Username column with unique index; backfills existing users |
 
 ### Manual migration commands
 
@@ -133,7 +135,7 @@ Useful queries:
 
 ```sql
 -- List users
-SELECT "Id", "Email", "Role", "CreatedAt" FROM "Users";
+SELECT "Id", "Username", "Email", "Role", "CreatedAt" FROM "Users";
 
 -- List services
 SELECT * FROM "Services";

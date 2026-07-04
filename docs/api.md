@@ -18,6 +18,7 @@ POST /api/auth/register
 
 ```json
 {
+  "username": "johndoe",
   "email": "user@example.com",
   "password": "password123"
 }
@@ -25,14 +26,18 @@ POST /api/auth/register
 
 | Field | Type | Rules |
 |-------|------|-------|
-| `email` | string | Required, valid email |
+| `username` | string | Required, 3–50 characters, must be unique |
+| `email` | string | Required, valid email, must be unique |
 | `password` | string | Required, minimum 6 characters |
 
 **Success response — `200 OK`**
 
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIs..."
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "username": "johndoe",
+  "email": "user@example.com",
+  "role": "Customer"
 }
 ```
 
@@ -41,6 +46,7 @@ POST /api/auth/register
 | Status | Condition |
 |--------|-----------|
 | `409 Conflict` | Email already registered |
+| `409 Conflict` | Username already taken |
 | `400 Bad Request` | Validation failed |
 
 ---
@@ -66,7 +72,10 @@ POST /api/auth/login
 
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIs..."
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "username": "johndoe",
+  "email": "user@example.com",
+  "role": "Customer"
 }
 ```
 
@@ -77,6 +86,17 @@ POST /api/auth/login
 | `401 Unauthorized` | Invalid email or password |
 
 ---
+
+## Auth response fields
+
+Both register and login return the same `AuthResponse` shape:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `accessToken` | string | JWT for authenticated requests |
+| `username` | string | User's unique username |
+| `email` | string | User's email address |
+| `role` | string | User role (`Customer` or `Admin`) |
 
 ## User endpoints
 
@@ -95,6 +115,7 @@ GET /api/user
   {
     "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
     "email": "user@example.com",
+    "username": "johndoe",
     "passwordHash": "...",
     "role": "Customer",
     "createdAt": "2026-02-20T19:00:00Z"
@@ -195,7 +216,7 @@ The frontend axios client attaches this automatically when a token exists in `lo
 # 1. Register
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"user@example.com\",\"password\":\"password123\"}"
+  -d "{\"username\":\"johndoe\",\"email\":\"user@example.com\",\"password\":\"password123\"}"
 
 # 2. Save the accessToken from the response, then create an appointment
 curl -X POST http://localhost:8080/api/appointments \

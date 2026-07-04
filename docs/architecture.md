@@ -56,9 +56,10 @@ On startup the API:
 2. Frontend sends `POST /api/auth/login` with email and password
 3. Backend validates credentials against the `Users` table
 4. Backend returns a signed JWT
-5. Frontend stores the token in Redux + `localStorage`
-6. Subsequent API requests include `Authorization: Bearer <token>`
-7. Backend validates the JWT on protected endpoints (e.g. creating appointments)
+5. Frontend stores the token and user info (`username`, `email`, `role`) in Redux + `localStorage`
+6. Navbar updates to show username dropdown menu
+7. Subsequent API requests include `Authorization: Bearer <token>`
+8. Backend validates the JWT on protected endpoints (e.g. creating appointments)
 
 ## Backend layers
 
@@ -94,8 +95,8 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 
 These are part of the intended design but not fully built yet:
 
-- Admin panel with role-based access (`Role = "Admin"`)
-- Logout button wired to Redux
-- Conditional navbar (show Login/Register vs Logout based on auth state)
-- Protected user endpoints (currently `GET /api/user` is public)
+- Admin panel content and API-side role enforcement (`[Authorize(Roles = "Admin")]`)
+- Account and Appointments page functionality
 - Frontend appointment booking UI
+- Route guards on protected frontend pages
+- Protected user endpoints (currently `GET /api/user` is public)

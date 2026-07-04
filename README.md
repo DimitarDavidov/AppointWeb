@@ -157,13 +157,20 @@ The frontend runs on **http://localhost:5173** and talks to the API at `http://l
 
 ## Frontend pages
 
-| Route | Description |
-|-------|-------------|
-| `/` | Home |
-| `/login` | Log in |
-| `/register` | Create an account |
+| Route | Auth | Description |
+|-------|------|-------------|
+| `/` | No | Welcome landing page |
+| `/login` | No | Log in |
+| `/register` | No | Create an account (username, email, password) |
+| `/account` | No* | Account settings (placeholder) |
+| `/appointments` | No* | User appointments (placeholder) |
+| `/admin` | No* | Admin panel (placeholder, shown in menu for `Admin` role only) |
 
-After login or registration, a JWT is stored in Redux and `localStorage`. See [Authentication](docs/authentication.md) for details.
+\*Pages exist but are not yet protected by route guards.
+
+After login or registration, the API returns a JWT plus user info (`username`, `email`, `role`). This is stored in Redux and `localStorage`. See [Authentication](docs/authentication.md) for details.
+
+The navbar shows **Login / Register** when logged out, or a **username dropdown** (Account, Appointments, Admin Panel, Logout) when logged in.
 
 ## API endpoints
 
