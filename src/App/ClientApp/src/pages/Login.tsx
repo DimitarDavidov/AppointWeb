@@ -50,7 +50,12 @@ function Login() {
           </div>
 
           <div className="auth-field">
-            <label htmlFor="password">Password</label>
+            <div className="auth-field-header">
+              <label htmlFor="password">Password</label>
+              <Link to="/forgot-password" className="auth-forgot">
+                Forgot password?
+              </Link>
+            </div>
             <input
               id="password"
               type="password"
