@@ -5,6 +5,7 @@ using AppointWeb.Api.Services;
 using AppointWeb.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace AppointWeb.Api.Controllers;
@@ -84,6 +85,7 @@ public class AuthController : ControllerBase
         });
     }
 
+    [EnableRateLimiting("ForgotPassword")]
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(
         ForgotPasswordRequest request,
