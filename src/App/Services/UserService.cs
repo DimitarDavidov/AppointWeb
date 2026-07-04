@@ -1,3 +1,4 @@
+using AppointWeb.Api.Dtos.Users;
 using AppointWeb.Api.Models;
 using AppointWeb.Api.Repositories.Interfaces;
 using AppointWeb.Api.Services.Interfaces;
@@ -18,6 +19,17 @@ public class UserService : IUserService
 
     public Task<IEnumerable<User>> GetUsers()
         => _repo.GetAllAsync();
+
+    public async Task<IEnumerable<ProviderResponse>> GetProviders()
+    {
+        var providers = await _repo.GetByRoleAsync(UserRoles.Provider);
+
+        return providers.Select(u => new ProviderResponse
+        {
+            Id = u.Id,
+            Username = u.Username,
+        });
+    }
 
     public async Task<User> CreateUser(string email)
     {

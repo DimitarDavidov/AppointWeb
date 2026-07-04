@@ -20,6 +20,7 @@ import { getErrorMessage } from "../api/auth";
 import { setCredentials } from "../features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
+import { formatRoleLabel } from "../constants/roles";
 import "./Account.scss";
 
 type EditableField = "email" | "username" | "password" | "phoneNumber";
@@ -172,7 +173,7 @@ function SaveButton({
 function Account() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { accessToken, email, username } = useAppSelector(
+  const { accessToken, email, username, role } = useAppSelector(
     (state) => state.auth
   );
 
@@ -415,8 +416,8 @@ function Account() {
           </div>
           <h1 className="account-hero-title">Account Settings</h1>
           <p className="account-hero-subtitle">
-            Hi {displayName}, manage your profile and keep your information up
-            to date.
+            Hi {displayName} · {formatRoleLabel(role)} — manage your profile
+            and keep your information up to date.
           </p>
         </header>
 

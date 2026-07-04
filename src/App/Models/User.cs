@@ -16,7 +16,7 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
 
     [Required]
-    public string Role { get; set; } = "Customer";
+    public string Role { get; set; } = UserRoles.Customer;
 
     public string? PhoneNumber { get; set; }
 

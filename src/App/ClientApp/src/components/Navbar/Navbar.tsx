@@ -10,8 +10,10 @@ import {
   AppointmentsIcon,
   LoginIcon,
   LogoutIcon,
+  ProviderIcon,
   RegisterIcon,
 } from "./NavIcons";
+import { UserRoles } from "../../constants/roles";
 import "./Navbar.scss";
 
 function MobileNavLink({
@@ -67,7 +69,9 @@ function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const isLoggedIn = !!accessToken;
-  const isAdmin = role === "Admin";
+  const isAdmin = role === UserRoles.Admin;
+  const isProvider = role === UserRoles.Provider;
+  const canAccessProviderPanel = isProvider || isAdmin;
   const displayName = capitalizeFirstLetter(username ?? "User");
   const userInitial = displayName.charAt(0).toUpperCase();
 
@@ -136,6 +140,13 @@ function Navbar() {
                     to="/admin"
                     label="Admin Panel"
                     icon={<AdminIcon />}
+                  />
+                )}
+                {canAccessProviderPanel && (
+                  <DesktopDropdownLink
+                    to="/provider"
+                    label="Provider Panel"
+                    icon={<ProviderIcon />}
                   />
                 )}
                 <DesktopDropdownLink
@@ -212,6 +223,14 @@ function Navbar() {
                     to="/admin"
                     label="Admin Panel"
                     icon={<AdminIcon />}
+                    onClick={closeMobileMenu}
+                  />
+                )}
+                {canAccessProviderPanel && (
+                  <MobileNavLink
+                    to="/provider"
+                    label="Provider Panel"
+                    icon={<ProviderIcon />}
                     onClick={closeMobileMenu}
                   />
                 )}

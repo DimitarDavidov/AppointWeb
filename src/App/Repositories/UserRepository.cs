@@ -20,6 +20,13 @@ public class UserRepository : IUserRepository
     public async Task<IEnumerable<User>> GetAllAsync()
         => await _context.Users.ToListAsync();
 
+    public async Task<IEnumerable<User>> GetByRoleAsync(string role)
+        => await _context.Users
+            .AsNoTracking()
+            .Where(u => u.Role == role)
+            .OrderBy(u => u.Username)
+            .ToListAsync();
+
     public async Task<User> AddAsync(User user)
     {
         _context.Users.Add(user);

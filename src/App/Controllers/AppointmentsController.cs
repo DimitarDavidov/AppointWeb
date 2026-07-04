@@ -44,12 +44,15 @@ public class AppointmentsController : ControllerBase
         if (service is null)
             return NotFound("Service not found.");
 
-        var providerExists = await _db.Users
+        var provider = await _db.Users
             .AsNoTracking()
-            .AnyAsync(u => u.Id == request.ProviderId, ct);
+            .SingleOrDefaultAsync(u => u.Id == request.ProviderId, ct);
 
-        if (!providerExists)
+        if (provider is null)
             return NotFound("Provider not found.");
+
+        if (provider.Role != UserRoles.Provider)
+            return BadRequest("The selected user is not a provider.");
 
         var endUtc = startUtc.AddMinutes(service.DurationMinutes);
 

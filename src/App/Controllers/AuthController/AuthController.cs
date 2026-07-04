@@ -48,7 +48,7 @@ public class AuthController : ControllerBase
             PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber)
                 ? null
                 : request.PhoneNumber.Trim(),
-            Role = "Customer"
+            Role = UserRoles.ResolveRegistrationRole(request.Role)
         };
 
         user.PasswordHash = _hasher.HashPassword(user, request.Password);

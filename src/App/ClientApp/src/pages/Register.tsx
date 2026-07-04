@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getErrorMessage, register } from "../api/auth";
+import { UserRoles, type UserRole } from "../constants/roles";
 import { setCredentials } from "../features/auth/authSlice";
 import { useAppDispatch } from "../store/hooks";
 import "./Auth.scss";
@@ -14,6 +15,7 @@ function Register() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [accountType, setAccountType] = useState<UserRole>(UserRoles.Customer);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,7 +41,13 @@ function Register() {
     setIsSubmitting(true);
 
     try {
-      const response = await register({ username, email, password, phoneNumber });
+      const response = await register({
+        username,
+        email,
+        password,
+        phoneNumber,
+        role: accountType,
+      });
       dispatch(setCredentials(response));
       navigate("/");
     } catch (err) {
@@ -53,9 +61,45 @@ function Register() {
     <div className="auth">
       <div className="auth-card">
         <h1 className="auth-title">Create account</h1>
-        <p className="auth-subtitle">Sign up to book appointments</p>
+        <p className="auth-subtitle">
+          {accountType === UserRoles.Provider
+            ? "Sign up to offer services and manage appointments"
+            : "Sign up to book appointments"}
+        </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
+          <fieldset className="auth-role-picker">
+            <legend className="auth-role-picker-label">I want to</legend>
+            <div className="auth-role-picker-options">
+              <label
+                className={`auth-role-option${accountType === UserRoles.Customer ? " auth-role-option--active" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="accountType"
+                  value={UserRoles.Customer}
+                  checked={accountType === UserRoles.Customer}
+                  onChange={() => setAccountType(UserRoles.Customer)}
+                />
+                <span className="auth-role-option-title">Book appointments</span>
+                <span className="auth-role-option-desc">Customer account</span>
+              </label>
+              <label
+                className={`auth-role-option${accountType === UserRoles.Provider ? " auth-role-option--active" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="accountType"
+                  value={UserRoles.Provider}
+                  checked={accountType === UserRoles.Provider}
+                  onChange={() => setAccountType(UserRoles.Provider)}
+                />
+                <span className="auth-role-option-title">Offer services</span>
+                <span className="auth-role-option-desc">Provider account</span>
+              </label>
+            </div>
+          </fieldset>
+
           <div className="auth-field">
             <label htmlFor="username">Username</label>
             <input

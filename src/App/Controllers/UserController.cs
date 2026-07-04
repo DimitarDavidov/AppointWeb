@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AppointWeb.Api.Services.Interfaces;
 
@@ -13,6 +14,11 @@ public class UserController : ControllerBase
     {
         _service = service;
     }
+
+    [Authorize]
+    [HttpGet("providers")]
+    public async Task<IActionResult> GetProviders()
+        => Ok(await _service.GetProviders());
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUser(int id)
