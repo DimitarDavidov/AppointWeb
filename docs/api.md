@@ -78,6 +78,86 @@ POST /api/auth/login
 
 ---
 
+### Forgot password
+
+Request a password reset link by email. Always returns the same response whether or not the email exists (prevents account enumeration).
+
+Rate limited to **5 requests per IP per 15 minutes**.
+
+```
+POST /api/auth/forgot-password
+```
+
+**Request body**
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Success response — `200 OK`**
+
+```json
+{
+  "message": "If an account exists for this email, password reset instructions have been sent."
+}
+```
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `400 Bad Request` | Validation failed (invalid email format) |
+| `429 Too Many Requests` | Rate limit exceeded |
+
+---
+
+### Reset password
+
+Set a new password using the token from the reset email link.
+
+```
+POST /api/auth/reset-password
+```
+
+**Request body**
+
+```json
+{
+  "token": "token-from-email-link",
+  "newPassword": "newpassword123"
+}
+```
+
+| Field | Type | Rules |
+|-------|------|-------|
+| `token` | string | Required, from `?token=` query param in reset email |
+| `newPassword` | string | Required, minimum 6 characters |
+
+**Success response — `200 OK`**
+
+```json
+{
+  "message": "Password has been reset successfully."
+}
+```
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `400 Bad Request` | Invalid or expired token, or validation failed |
+
+**Business rules**
+
+- Reset tokens expire after **1 hour**
+- Each token can only be used **once**
+- Requesting a new reset invalidates previous unused tokens for that user
+- Only the token hash is stored in the database — the raw token is sent by email only
+
+---
+
 ## User endpoints
 
 > **Note:** These endpoints are currently unprotected and return the full user model including `passwordHash`. This will be secured in a future update.
@@ -197,7 +277,17 @@ curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"user@example.com\",\"password\":\"password123\"}"
 
-# 2. Save the accessToken from the response, then create an appointment
+# 2. Request password reset
+curl -X POST http://localhost:8080/api/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"user@example.com\"}"
+
+# 3. Reset password with token from email
+curl -X POST http://localhost:8080/api/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d "{\"token\":\"TOKEN_FROM_EMAIL\",\"newPassword\":\"newpassword123\"}"
+
+# 4. Save the accessToken from login, then create an appointment
 curl -X POST http://localhost:8080/api/appointments \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \

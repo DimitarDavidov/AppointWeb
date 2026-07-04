@@ -84,12 +84,49 @@ There is no backend logout endpoint — this is normal for stateless JWTs. Logou
 
 The token remains valid until it expires, but the frontend stops sending it.
 
+## Password reset
+
+Users can reset their password via email without being logged in.
+
+```
+Forgot password form → POST /api/auth/forgot-password
+                              │
+                              ▼
+                    Token saved (hashed) + email sent
+                              │
+                              ▼
+              User clicks link → /reset-password?token=...
+                              │
+                              ▼
+                    POST /api/auth/reset-password
+```
+
+### Security behaviour
+
+- **No email enumeration** — forgot-password always returns the same success message
+- **Rate limiting** — 5 forgot-password requests per IP per 15 minutes
+- **Hashed tokens** — only SHA-256 hash stored in `PasswordResetTokens`
+- **1-hour expiry**, single use, old unused tokens invalidated on new request
+- **Email failure rollback** — if SMTP fails, the token is removed so no orphaned reset links exist
+- Existing JWTs remain valid until expiry after a password reset (no server-side session invalidation)
+
+### Email delivery
+
+| Mode | When | Behaviour |
+|------|------|-----------|
+| `LoggingEmailService` | `Email:Host` is empty | Reset link logged to console |
+| `SmtpEmailService` | SMTP configured | HTML + plain-text email via MailKit |
+
+Reset emails include a branded HTML template and link to `{Frontend:BaseUrl}/reset-password?token=...`.
+
 ## Protected vs public endpoints
 
 | Endpoint | Auth required |
 |----------|---------------|
 | `POST /api/auth/register` | No |
 | `POST /api/auth/login` | No |
+| `POST /api/auth/forgot-password` | No |
+| `POST /api/auth/reset-password` | No |
 | `GET /api/user` | No (should be protected in future) |
 | `POST /api/appointments` | Yes |
 
@@ -116,6 +153,27 @@ JWT settings in `appsettings.Development.json`:
 | `Issuer` | Who created the token |
 | `Audience` | Who the token is intended for |
 | `ExpiresMinutes` | Token lifetime |
+
+Email and frontend settings for password reset:
+
+```json
+{
+  "Email": {
+    "Host": "smtp.gmail.com",
+    "Port": 587,
+    "Username": "your-gmail@gmail.com",
+    "Password": "your-gmail-app-password",
+    "FromAddress": "your-gmail@gmail.com",
+    "FromName": "AppointWeb",
+    "UseSsl": true
+  },
+  "Frontend": {
+    "BaseUrl": "http://localhost:5173"
+  }
+}
+```
+
+See `appsettings.Development.example.json` for the full template.
 
 ## Security notes (portfolio context)
 

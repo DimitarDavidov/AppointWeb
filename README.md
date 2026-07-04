@@ -21,7 +21,7 @@ Full documentation index: **[docs/README.md](docs/README.md)**
 | Frontend | React 19, TypeScript, Vite, Redux Toolkit, React Router, SCSS |
 | Backend | ASP.NET Core 9, Entity Framework Core |
 | Database | PostgreSQL 16 (Docker) |
-| Auth | JWT (register / login) |
+| Auth | JWT (register / login) + password reset via email |
 
 ## Prerequisites
 
@@ -106,6 +106,18 @@ Create `src/App/appsettings.Development.json`:
     "Audience": "AppointWeb",
     "ExpiresMinutes": "60"
   },
+  "Email": {
+    "Host": "smtp.gmail.com",
+    "Port": 587,
+    "Username": "your-gmail@gmail.com",
+    "Password": "your-gmail-app-password",
+    "FromAddress": "your-gmail@gmail.com",
+    "FromName": "AppointWeb",
+    "UseSsl": true
+  },
+  "Frontend": {
+    "BaseUrl": "http://localhost:5173"
+  },
   "Logging": {
     "LogLevel": {
       "Default": "Information",
@@ -116,7 +128,19 @@ Create `src/App/appsettings.Development.json`:
 }
 ```
 
-You can copy the template above and adjust values if needed to. The `Jwt:Key` must be long enough for HMAC-SHA256 signing (32+ characters recommended).
+You can copy from `src/App/appsettings.Development.example.json`. The `Jwt:Key` must be long enough for HMAC-SHA256 signing (32+ characters recommended).
+
+**Email (password reset)**
+
+| Setting | Purpose |
+|---------|---------|
+| `Email:Host` | SMTP server (leave empty to log reset links instead of sending email) |
+| `Email:Port` | SMTP port (587 for Gmail) |
+| `Email:Username` / `Password` | SMTP credentials |
+| `Email:FromAddress` / `FromName` | Sender shown in reset emails |
+| `Frontend:BaseUrl` | Frontend URL used in reset links (e.g. `http://localhost:5173`) |
+
+Without `Email:Host`, the API uses `LoggingEmailService` and prints reset links to the console — useful for local development.
 
 Migrations run automatically when the API starts.
 
@@ -162,6 +186,8 @@ The frontend runs on **http://localhost:5173** and talks to the API at `http://l
 | `/` | Home |
 | `/login` | Log in |
 | `/register` | Create an account |
+| `/forgot-password` | Request a password reset email |
+| `/reset-password?token=...` | Set a new password from email link |
 
 After login or registration, a JWT is stored in Redux and `localStorage`. See [Authentication](docs/authentication.md) for details.
 
@@ -173,6 +199,8 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 |--------|----------|------|-------------|
 | `POST` | `/api/auth/register` | No | Register a new user |
 | `POST` | `/api/auth/login` | No | Log in and receive a JWT |
+| `POST` | `/api/auth/forgot-password` | No | Request password reset email |
+| `POST` | `/api/auth/reset-password` | No | Reset password with email token |
 | `GET` | `/api/user` | No | List users |
 | `POST` | `/api/appointments` | Yes | Create an appointment |
 

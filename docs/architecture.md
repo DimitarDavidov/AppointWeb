@@ -60,11 +60,20 @@ On startup the API:
 6. Subsequent API requests include `Authorization: Bearer <token>`
 7. Backend validates the JWT on protected endpoints (e.g. creating appointments)
 
+## Request flow (example: password reset)
+
+1. User opens `/forgot-password` and submits their email
+2. Frontend sends `POST /api/auth/forgot-password`
+3. Backend looks up user; if found, creates a hashed token and sends email
+4. User clicks the link in the email → `/reset-password?token=...`
+5. User enters a new password; frontend sends `POST /api/auth/reset-password`
+6. Backend validates the token, updates the password, and marks the token as used
+
 ## Backend layers
 
 ```
 Controllers     →  HTTP endpoints, request validation, status codes
-Services        →  Business logic (JWT generation, user operations)
+Services        →  Business logic (JWT, password reset, email)
 Repositories    →  Data access abstraction
 Data            →  DbContext, entity configurations, migrations
 Models          →  Domain entities (User, Service, Appointment)
@@ -86,7 +95,7 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 | File | Purpose |
 |------|---------|
 | `appsettings.Development.json` | Connection string, JWT settings (gitignored) |
-| `appsettings.Development.example.json` | Template to copy for local setup |
+| `appsettings.Development.example.json` | Template to copy for local setup (JWT, Email, Frontend URL) |
 | `Properties/launchSettings.json` | Backend port (`8080`) |
 | `src/docker/docker-compose.yml` | PostgreSQL credentials and port |
 

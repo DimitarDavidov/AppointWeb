@@ -20,7 +20,7 @@ The frontend is a React SPA located in `src/App/ClientApp/`. It uses Vite as the
 ClientApp/src/
 ├── api/
 │   ├── api.ts              # Axios instance + JWT interceptor
-│   └── auth.ts             # Login, register API calls
+│   └── auth.ts             # Login, register, forgot/reset password API calls
 ├── components/
 │   ├── Layout/
 │   │   └── Layout.tsx      # Shared layout (navbar + page content)
@@ -34,6 +34,8 @@ ClientApp/src/
 │   ├── Home.tsx            # Home page
 │   ├── Login.tsx           # Login form
 │   ├── Register.tsx        # Registration form
+│   ├── ForgotPassword.tsx  # Request reset email
+│   ├── ResetPassword.tsx   # Set new password from email token
 │   └── Auth.scss           # Shared auth page styles
 ├── store/
 │   ├── store.ts            # Redux store configuration
@@ -56,6 +58,8 @@ Defined in `App.tsx`. All routes share the `Layout` component (sticky navbar).
 | `/` | `Home` | Landing page |
 | `/login` | `Login` | Login form |
 | `/register` | `Register` | Registration form |
+| `/forgot-password` | `ForgotPassword` | Request password reset email |
+| `/reset-password` | `ResetPassword` | New password form (requires `?token=` query param) |
 
 ## Layout
 

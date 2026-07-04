@@ -77,6 +77,19 @@ EX_Appointments_NoOverlap_PerProvider
 
 Two `Booked` appointments for the same provider cannot overlap in time. The application also checks for overlaps before inserting, and catches the constraint violation as a fallback.
 
+### Password reset tokens
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `Id` | uuid | Primary key |
+| `UserId` | uuid | FK → Users (cascade delete) |
+| `TokenHash` | varchar(64) | SHA-256 hex of raw token, unique index |
+| `ExpiresAt` | timestamptz | UTC, default 1 hour from creation |
+| `CreatedAt` | timestamptz | UTC |
+| `UsedAt` | timestamptz | Null until token is consumed |
+
+Raw reset tokens are never stored — only the hash. The plain token is sent by email and submitted once by the client.
+
 ## Migrations
 
 Migrations live in `src/App/Migrations/` and are applied on API startup via `ApplyMigrations()` in `Program.cs`.
@@ -86,6 +99,7 @@ Migrations live in `src/App/Migrations/` and are applied on API startup via `App
 | `AddServicesAndAppointments` | Creates Users, Services, Appointments tables |
 | `AddUserAuthFields` | Adds PasswordHash, Role, CreatedAt to Users; unique email index |
 | `AddAppointmentDoubleBookingConstraint` | PostgreSQL exclusion constraint for provider overlap |
+| `AddPasswordResetTokens` | Creates PasswordResetTokens table for email password reset |
 
 ### Manual migration commands
 
