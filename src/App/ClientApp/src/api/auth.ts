@@ -15,6 +15,15 @@ export async function forgotPassword(email: string): Promise<void> {
   await api.post("/api/auth/forgot-password", { email });
 }
 
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+export async function resetPassword(data: ResetPasswordRequest): Promise<void> {
+  await api.post("/api/auth/reset-password", data);
+}
+
 export function getErrorMessage(error: unknown, fallback: string): string {
   if (typeof error === "object" && error !== null && "response" in error) {
     const data = (error as { response?: { data?: unknown } }).response?.data;

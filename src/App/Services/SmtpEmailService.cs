@@ -49,20 +49,14 @@ public class SmtpEmailService : IEmailService
         message.To.Add(MailboxAddress.Parse(toEmail));
         message.Subject = "Reset your AppointWeb password";
 
+        var (htmlBody, textBody) = PasswordResetEmailBuilder.Build(resetLink);
         var body = new BodyBuilder
         {
-            TextBody =
-                $"We received a request to reset your AppointWeb password.\n\n" +
-                $"Confirm it is you by opening this link (valid for 1 hour):\n{resetLink}\n\n" +
-                "If you did not request this, you can ignore this email.",
-            HtmlBody =
-                $"""
-                <p>We received a request to reset your AppointWeb password.</p>
-                <p><a href="{resetLink}">Confirm it is you and reset your password</a></p>
-                <p>This link is valid for 1 hour.</p>
-                <p>If you did not request this, you can ignore this email.</p>
-                """
+            TextBody = textBody,
+            HtmlBody = htmlBody
         };
+
+        PasswordResetEmailBuilder.AttachLogo(body);
 
         message.Body = body.ToMessageBody();
         return message;

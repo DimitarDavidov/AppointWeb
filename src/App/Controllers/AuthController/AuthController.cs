@@ -97,4 +97,23 @@ public class AuthController : ControllerBase
                 "If an account exists for this email, password reset instructions have been sent."
         });
     }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(
+        ResetPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var success = await _passwordResetService.ResetPasswordAsync(
+            request.Token,
+            request.NewPassword,
+            cancellationToken);
+
+        if (!success)
+        {
+            return BadRequest(
+                "Invalid or expired reset link. Please request a new one.");
+        }
+
+        return Ok(new { message = "Password has been reset successfully." });
+    }
 }

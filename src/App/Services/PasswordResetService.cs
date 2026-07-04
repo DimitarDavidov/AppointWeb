@@ -4,6 +4,7 @@ using AppointWeb.Api.Data;
 using AppointWeb.Api.Models;
 using AppointWeb.Api.Options;
 using AppointWeb.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -16,6 +17,7 @@ public class PasswordResetService : IPasswordResetService
     private readonly AppDbContext _db;
     private readonly IEmailService _emailService;
     private readonly FrontendSettings _frontendSettings;
+    private readonly PasswordHasher<User> _hasher = new();
 
     public PasswordResetService(
         AppDbContext db,
@@ -63,6 +65,31 @@ public class PasswordResetService : IPasswordResetService
             user.Email,
             resetLink,
             cancellationToken);
+    }
+
+    public async Task<bool> ResetPasswordAsync(
+        string token,
+        string newPassword,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return false;
+
+        var tokenHash = HashToken(token);
+        var resetToken = await _db.PasswordResetTokens
+            .Include(t => t.User)
+            .SingleOrDefaultAsync(
+                t => t.TokenHash == tokenHash && t.UsedAt == null,
+                cancellationToken);
+
+        if (resetToken is null || resetToken.ExpiresAt <= DateTime.UtcNow)
+            return false;
+
+        resetToken.User.PasswordHash = _hasher.HashPassword(resetToken.User, newPassword);
+        resetToken.UsedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     private static string GenerateSecureToken()
