@@ -11,6 +11,7 @@ function Register() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -38,7 +39,7 @@ function Register() {
     setIsSubmitting(true);
 
     try {
-      const response = await register({ username, email, password });
+      const response = await register({ username, email, password, phoneNumber });
       dispatch(setCredentials(response));
       navigate("/");
     } catch (err) {
@@ -78,6 +79,17 @@ function Register() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
+            />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="phoneNumber">Phone number</label>
+            <input
+              id="phoneNumber"
+              type="text"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              autoComplete="tel"
             />
           </div>
 

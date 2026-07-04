@@ -18,6 +18,8 @@ public class User
     [Required]
     public string Role { get; set; } = "Customer";
 
+    public string? PhoneNumber { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Appointment> CustomerAppointments { get; set; } = new List<Appointment>();

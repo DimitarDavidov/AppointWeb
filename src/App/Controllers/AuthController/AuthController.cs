@@ -45,6 +45,9 @@ public class AuthController : ControllerBase
         {
             Email = email,
             Username = username,
+            PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber)
+                ? null
+                : request.PhoneNumber.Trim(),
             Role = "Customer"
         };
 
