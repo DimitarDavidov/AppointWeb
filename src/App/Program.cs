@@ -1,4 +1,5 @@
 using AppointWeb.Api.Data;
+using AppointWeb.Api.Options;
 using AppointWeb.Api.Repositories;
 using AppointWeb.Api.Repositories.Interfaces;
 using AppointWeb.Api.Services;
@@ -18,8 +19,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+builder.Services.Configure<FrontendSettings>(builder.Configuration.GetSection("Frontend"));
 
+var emailHost = builder.Configuration["Email:Host"];
+if (string.IsNullOrWhiteSpace(emailHost))
+{
+    builder.Services.AddScoped<IEmailService, LoggingEmailService>();
+}
+else
+{
+    builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+}
 
 builder.Services.AddControllers();
 

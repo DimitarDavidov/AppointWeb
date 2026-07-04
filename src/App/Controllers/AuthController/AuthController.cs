@@ -2,6 +2,7 @@ using AppointWeb.Api.Data;
 using AppointWeb.Api.Dtos.Auth;
 using AppointWeb.Api.Models;
 using AppointWeb.Api.Services;
+using AppointWeb.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,12 +15,17 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly JwtTokenService _jwt;
+    private readonly IPasswordResetService _passwordResetService;
     private readonly PasswordHasher<User> _hasher = new();
 
-    public AuthController(AppDbContext db, JwtTokenService jwt)
+    public AuthController(
+        AppDbContext db,
+        JwtTokenService jwt,
+        IPasswordResetService passwordResetService)
     {
         _db = db;
         _jwt = jwt;
+        _passwordResetService = passwordResetService;
     }
 
     [HttpPost("register")]
@@ -75,6 +81,20 @@ public class AuthController : ControllerBase
             Username = user.Username,
             Email = user.Email,
             Role = user.Role
+        });
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(
+        ForgotPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        await _passwordResetService.RequestResetAsync(request.Email, cancellationToken);
+
+        return Ok(new
+        {
+            message =
+                "If an account exists for this email, password reset instructions have been sent."
         });
     }
 }

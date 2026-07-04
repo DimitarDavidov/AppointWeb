@@ -11,6 +11,10 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
   return response.data;
 }
 
+export async function forgotPassword(email: string): Promise<void> {
+  await api.post("/api/auth/forgot-password", { email });
+}
+
 export function getErrorMessage(error: unknown, fallback: string): string {
   if (typeof error === "object" && error !== null && "response" in error) {
     const data = (error as { response?: { data?: unknown } }).response?.data;

@@ -1,22 +1,28 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { forgotPassword, getErrorMessage } from "../api/auth";
 import "./Auth.scss";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setError("");
     setIsSubmitting(true);
 
-    // Frontend only — backend reset flow not wired yet
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    setSubmitted(true);
-    setIsSubmitting(false);
+    try {
+      await forgotPassword(email);
+      setSubmitted(true);
+    } catch (err) {
+      setError(getErrorMessage(err, "Could not send reset email. Please try again."));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -39,6 +45,8 @@ function ForgotPassword() {
           </div>
         ) : (
           <form className="auth-form" onSubmit={handleSubmit}>
+            {error && <p className="auth-error">{error}</p>}
+
             <div className="auth-field">
               <label htmlFor="email">Enter your email</label>
               <input
