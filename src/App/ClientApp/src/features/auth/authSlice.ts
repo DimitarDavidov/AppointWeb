@@ -93,8 +93,28 @@ const authSlice = createSlice({
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(AUTH_USER_KEY);
     },
+    updateProfile(
+      state,
+      action: PayloadAction<
+        Partial<Pick<AuthState, "username" | "email">>
+      >
+    ) {
+      if (action.payload.username !== undefined) {
+        state.username = action.payload.username;
+      }
+      if (action.payload.email !== undefined) {
+        state.email = action.payload.email;
+      }
+
+      saveStoredUser({
+        userId: state.userId,
+        username: state.username,
+        email: state.email,
+        role: state.role,
+      });
+    },
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { setCredentials, logout, updateProfile } = authSlice.actions;
 export default authSlice.reducer;
