@@ -1,3 +1,5 @@
+@use "../styles/breakpoints" as *;
+
 .page {
   padding: 2rem 1.5rem;
   max-width: 800px;
@@ -5,7 +7,7 @@
 
   &-title {
     margin: 0;
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 4vw, 2rem);
     background: linear-gradient(
       90deg,
       var(--color-brand-slate-dark),
@@ -14,5 +16,9 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  @include sm-down {
+    padding: 1.25rem 1rem;
   }
 }

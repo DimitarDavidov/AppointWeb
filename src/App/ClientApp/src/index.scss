@@ -1,4 +1,11 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
+  --navbar-height: 73px;
   --color-brand-slate: #475569;
   --color-brand-slate-dark: #334155;
   --color-brand-teal: #06b6d4;
@@ -30,6 +37,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+@media (max-width: 767px) {
+  :root {
+    --navbar-height: 60px;
+  }
+}
+
 a {
   font-weight: 500;
   color: var(--color-primary);
@@ -44,11 +57,21 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 #root {
   width: 100%;
+  max-width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+main {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 h1 {
@@ -71,6 +94,7 @@ button {
   background-color: var(--color-primary);
   color: #ffffff;
   cursor: pointer;
+  touch-action: manipulation;
   transition: background-color 0.2s;
 
   &:hover {

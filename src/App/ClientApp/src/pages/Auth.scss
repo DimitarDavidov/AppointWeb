@@ -1,9 +1,12 @@
+@use "../styles/breakpoints" as *;
+
 .auth {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 57px);
+  min-height: calc(100vh - var(--navbar-height));
+  min-height: calc(100dvh - var(--navbar-height));
   padding: 2rem 1.5rem;
   background-image: url("../assets/images/loginRegisterBackgroundImage.png");
   background-size: cover;
@@ -79,6 +82,7 @@
       font-family: inherit;
       background-color: var(--color-bg);
       color: var(--color-text);
+      touch-action: manipulation;
 
       &:focus {
         outline: none;
@@ -108,5 +112,27 @@
     text-align: center;
     font-size: 0.9rem;
     color: var(--color-text-muted);
+  }
+
+  @include sm-down {
+    padding: 1rem;
+    background-position: 75% center;
+
+    &::before {
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    &-card {
+      padding: 1.25rem;
+      border-radius: 10px;
+    }
+
+    &-title {
+      font-size: 1.5rem;
+    }
+
+    &-field input {
+      font-size: 16px;
+    }
   }
 }
