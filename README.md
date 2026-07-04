@@ -180,7 +180,8 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 |--------|----------|------|-------------|
 | `POST` | `/api/auth/register` | No | Register a new user |
 | `POST` | `/api/auth/login` | No | Log in and receive a JWT |
-| `GET` | `/api/user` | No | List users |
+| `GET` | `/api/user` | Yes | List users |
+| `GET` | `/api/user/{id}` | Yes | Get user by ID |
 | `POST` | `/api/appointments` | Yes | Create an appointment |
 
 ## Troubleshooting

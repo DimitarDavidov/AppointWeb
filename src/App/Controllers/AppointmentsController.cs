@@ -35,7 +35,7 @@ public class AppointmentsController : ControllerBase
             : request.StartTime.ToUniversalTime();
 
         if (startUtc < DateTime.UtcNow.AddMinutes(-1))
-            return BadRequest("Invilit start time");
+            return BadRequest("Invalid start time");
 
         var service = await _db.Services
             .AsNoTracking()

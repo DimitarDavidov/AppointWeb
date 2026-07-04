@@ -1,10 +1,13 @@
-using Microsoft.AspNetCore.Mvc;
+using AppointWeb.Api.Dtos.Users;
 using AppointWeb.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AppointWeb.Api.Controllers;
 
 [ApiController]
 [Route("api/user")]
+[Authorize]
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;
@@ -14,18 +17,14 @@ public class UserController : ControllerBase
         _service = service;
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetUser(int id)
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<UserResponse>> GetUser(Guid id)
     {
         var user = await _service.GetUser(id);
         return user is null ? NotFound() : Ok(user);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetUsers()
+    public async Task<ActionResult<IEnumerable<UserResponse>>> GetUsers()
         => Ok(await _service.GetUsers());
-
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] string email)
-        => Ok(await _service.CreateUser(email));
 }

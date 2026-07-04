@@ -1,3 +1,4 @@
+using AppointWeb.Api.Dtos.Users;
 using AppointWeb.Api.Models;
 using AppointWeb.Api.Repositories.Interfaces;
 using AppointWeb.Api.Services.Interfaces;
@@ -13,16 +14,24 @@ public class UserService : IUserService
         _repo = repo;
     }
 
-    public Task<User?> GetUser(int id)
-        => _repo.GetByIdAsync(id);
-
-    public Task<IEnumerable<User>> GetUsers()
-        => _repo.GetAllAsync();
-
-    public async Task<User> CreateUser(string email)
+    public async Task<UserResponse?> GetUser(Guid id)
     {
-        var baseUsername = email.Split('@')[0].ToLowerInvariant();
-        var user = new User { Email = email, Username = baseUsername };
-        return await _repo.AddAsync(user);
+        var user = await _repo.GetByIdAsync(id);
+        return user is null ? null : ToResponse(user);
     }
+
+    public async Task<IEnumerable<UserResponse>> GetUsers()
+    {
+        var users = await _repo.GetAllAsync();
+        return users.Select(ToResponse);
+    }
+
+    private static UserResponse ToResponse(User user) => new()
+    {
+        Id = user.Id,
+        Email = user.Email,
+        Username = user.Username,
+        Role = user.Role,
+        CreatedAt = user.CreatedAt
+    };
 }

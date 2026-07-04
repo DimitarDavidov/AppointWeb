@@ -132,7 +132,8 @@ The token remains valid until it expires, but the frontend stops sending it.
 |----------|---------------|
 | `POST /api/auth/register` | No |
 | `POST /api/auth/login` | No |
-| `GET /api/user` | No (should be protected in future) |
+| `GET /api/user` | Yes |
+| `GET /api/user/{id}` | Yes |
 | `POST /api/appointments` | Yes |
 
 Protected endpoints use the `[Authorize]` attribute. The backend reads the user ID from the JWT `sub` claim.
@@ -165,5 +166,4 @@ JWT settings in `appsettings.Development.json`:
 - The JWT key should be a long random string in production
 - There is no refresh token — users re-login after expiry
 - There is no token blacklist — logout is client-side only
-- User listing endpoint currently exposes password hashes (legacy, to be fixed)
 - Frontend routes (`/admin`, `/account`, etc.) are not yet protected by route guards

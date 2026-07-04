@@ -99,4 +99,3 @@ These are part of the intended design but not fully built yet:
 - Account and Appointments page functionality
 - Frontend appointment booking UI
 - Route guards on protected frontend pages
-- Protected user endpoints (currently `GET /api/user` is public)

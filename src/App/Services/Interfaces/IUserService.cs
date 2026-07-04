@@ -1,10 +1,9 @@
-using AppointWeb.Api.Models;
+using AppointWeb.Api.Dtos.Users;
 
 namespace AppointWeb.Api.Services.Interfaces;
 
 public interface IUserService
 {
-    Task<User?> GetUser(int id);
-    Task<IEnumerable<User>> GetUsers();
-    Task<User> CreateUser(string email);
+    Task<UserResponse?> GetUser(Guid id);
+    Task<IEnumerable<UserResponse>> GetUsers();
 }
