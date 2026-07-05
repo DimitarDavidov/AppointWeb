@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getErrorMessage, login } from "../api/auth";
 import { setCredentials } from "../features/auth/authSlice";
 import { useAppDispatch } from "../store/hooks";
@@ -9,6 +9,9 @@ import "./Auth.scss";
 function Login() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo =
+    (location.state as { from?: string } | null)?.from ?? "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,7 +25,7 @@ function Login() {
     try {
       const response = await login({ email, password });
       dispatch(setCredentials(response));
-      navigate("/");
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, "Login failed. Please try again."));
     } finally {

@@ -124,6 +124,85 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
+
+    &--centered {
+      justify-content: center;
+    }
+  }
+
+  &-booking {
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--color-border);
+
+    &-title {
+      margin: 1.5rem 0 0.35rem;
+      font-size: 1.15rem;
+      color: var(--color-brand-slate-dark);
+    }
+
+    &-hint {
+      margin: 0 0 1.25rem;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--color-text-muted);
+    }
+
+    &-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--color-text);
+
+      input {
+        min-height: 48px;
+        padding: 0.65rem 0.85rem;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        background-color: var(--color-bg);
+        font-size: 1rem;
+        font-family: inherit;
+        color: var(--color-text);
+        box-sizing: border-box;
+
+        &:focus {
+          outline: 2px solid var(--color-primary-light);
+          border-color: var(--color-primary);
+        }
+      }
+    }
+
+    &-error {
+      margin: 0 0 1rem;
+      font-size: 0.9rem;
+      color: var(--color-error);
+    }
+  }
+
+  &-success {
+    &-title {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-brand-teal-dark);
+    }
+
+    &-text {
+      margin: 0;
+      max-width: 28rem;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--color-text);
+    }
+
+    &-meta {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--color-brand-slate-dark);
+    }
   }
 
   &-btn {
@@ -146,8 +225,13 @@
       background-color: var(--color-primary);
       color: #ffffff;
 
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: var(--color-primary-dark);
+      }
+
+      &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
       }
     }
 
@@ -156,9 +240,14 @@
       color: var(--color-primary);
       border-color: var(--color-primary);
 
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: var(--color-primary-light);
         color: var(--color-brand-teal-dark);
+      }
+
+      &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
       }
     }
   }
