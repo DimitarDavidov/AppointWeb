@@ -27,4 +27,6 @@ public class Service
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    public ICollection<ProviderService> ProviderServices { get; set; } =
+        new List<ProviderService>();
 }

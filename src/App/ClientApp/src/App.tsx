@@ -17,7 +17,10 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/services/:id" element={<ServiceDetail />} />
+          <Route
+            path="/book/:providerId/:serviceId"
+            element={<ServiceDetail />}
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />

@@ -322,6 +322,25 @@
       text-decoration: none;
     }
 
+    &-category {
+      align-self: flex-start;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background-color: var(--color-primary-light);
+      color: var(--color-brand-teal-dark);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    &-provider {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--color-brand-teal-dark);
+      line-height: 1.3;
+    }
+
     &-name {
       margin: 0;
       font-size: 1.1rem;

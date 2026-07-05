@@ -39,8 +39,20 @@
     }
   }
 
+  &-category {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background-color: var(--color-primary-light);
+    color: var(--color-brand-teal-dark);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
   &-title {
-    margin: 0 0 1rem;
+    margin: 0 0 0.5rem;
     font-size: clamp(1.75rem, 5vw, 2.25rem);
     line-height: 1.25;
     background: linear-gradient(
@@ -51,6 +63,17 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  &-provider {
+    margin: 0 0 1.25rem;
+    font-size: 1rem;
+    color: var(--color-text-muted);
+
+    strong {
+      color: var(--color-brand-teal-dark);
+      font-weight: 600;
+    }
   }
 
   &-description {
@@ -67,7 +90,7 @@
 
   &-meta {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1rem;
     margin: 0 0 2rem;
     padding: 1.25rem;

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import welcomeBg from "../assets/images/welcome-bg.png";
-import { getServices } from "../api/services";
-import type { Service } from "../types/service";
+import { getCatalogOfferings } from "../api/catalog";
+import type { CatalogOffering } from "../types/catalog";
+import { capitalizeFirstLetter } from "../utils/formatDisplayName";
+import { formatDuration, formatPrice } from "../utils/formatService";
 import { useAppSelector } from "../store/hooks";
 import "./Home.scss";
 
@@ -24,50 +26,35 @@ function SearchIcon() {
   );
 }
 
-function formatPrice(price: number) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(price);
-}
-
-function formatDuration(minutes: number) {
-  if (minutes < 60) return `${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  return remainder > 0 ? `${hours}h ${remainder}m` : `${hours}h`;
-}
-
 function Home() {
   const isLoggedIn = !!useAppSelector((state) => state.auth.accessToken);
   const catalogRef = useRef<HTMLElement>(null);
   const [catalogVisible, setCatalogVisible] = useState(false);
-  const [services, setServices] = useState<Service[]>([]);
-  const [isLoadingServices, setIsLoadingServices] = useState(true);
-  const [servicesError, setServicesError] = useState("");
+  const [offerings, setOfferings] = useState<CatalogOffering[]>([]);
+  const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
+  const [catalogError, setCatalogError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadServices() {
+    async function loadCatalog() {
       try {
-        const data = await getServices();
+        const data = await getCatalogOfferings();
         if (!cancelled) {
-          setServices(data);
+          setOfferings(data);
         }
       } catch {
         if (!cancelled) {
-          setServicesError("Could not load services. Please try again later.");
+          setCatalogError("Could not load services. Please try again later.");
         }
       } finally {
         if (!cancelled) {
-          setIsLoadingServices(false);
+          setIsLoadingCatalog(false);
         }
       }
     }
 
-    loadServices();
+    loadCatalog();
 
     return () => {
       cancelled = true;
@@ -140,7 +127,7 @@ function Home() {
                 Browse services
               </h2>
               <p className="catalog-subtitle">
-                Scroll to explore what you can book on AppointWeb.
+                Scroll to explore providers and services you can book.
               </p>
             </div>
 
@@ -155,41 +142,52 @@ function Home() {
             </label>
           </div>
 
-          {isLoadingServices && (
+          {isLoadingCatalog && (
             <p className="catalog-status" aria-live="polite">
               Loading services...
             </p>
           )}
 
-          {servicesError && (
+          {catalogError && (
             <p className="catalog-status catalog-status--error" role="alert">
-              {servicesError}
+              {catalogError}
             </p>
           )}
 
-          {!isLoadingServices && !servicesError && services.length === 0 && (
+          {!isLoadingCatalog && !catalogError && offerings.length === 0 && (
             <p className="catalog-status">No services available yet.</p>
           )}
 
-          {!isLoadingServices && !servicesError && services.length > 0 && (
+          {!isLoadingCatalog && !catalogError && offerings.length > 0 && (
             <ul className="catalog-grid">
-              {services.map((service, index) => (
+              {offerings.map((offering, index) => (
                 <li
-                  key={service.id}
+                  key={`${offering.providerId}-${offering.serviceId}`}
                   className="catalog-card"
                   style={{ animationDelay: `${0.06 + index * 0.07}s` }}
                 >
-                  <Link to={`/services/${service.id}`} className="catalog-card-link">
-                    <h3 className="catalog-card-name">{service.name}</h3>
-                    {service.description && (
+                  <Link
+                    to={`/book/${offering.providerId}/${offering.serviceId}`}
+                    className="catalog-card-link"
+                  >
+                    {offering.category && (
+                      <span className="catalog-card-category">
+                        {offering.category}
+                      </span>
+                    )}
+                    <p className="catalog-card-provider">
+                      {capitalizeFirstLetter(offering.providerUsername)}
+                    </p>
+                    <h3 className="catalog-card-name">{offering.serviceName}</h3>
+                    {offering.description && (
                       <p className="catalog-card-description">
-                        {service.description}
+                        {offering.description}
                       </p>
                     )}
                     <div className="catalog-card-meta">
-                      <span>{formatDuration(service.durationMinutes)}</span>
+                      <span>{formatDuration(offering.durationMinutes)}</span>
                       <span className="catalog-card-price">
-                        {formatPrice(service.price)}
+                        {formatPrice(offering.price)}
                       </span>
                     </div>
                   </Link>
