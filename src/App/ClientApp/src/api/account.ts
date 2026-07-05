@@ -34,3 +34,7 @@ export async function updatePhoneNumber(
   });
   return response.data;
 }
+
+export async function deleteAccount(password: string): Promise<void> {
+  await api.delete("/api/account", { data: { password } });
+}

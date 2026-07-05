@@ -19,12 +19,17 @@ public class AccountController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly JwtTokenService _jwt;
+    private readonly IAccountDeletionService _accountDeletionService;
     private readonly PasswordHasher<User> _hasher = new();
 
-    public AccountController(AppDbContext db, JwtTokenService jwt)
+    public AccountController(
+        AppDbContext db,
+        JwtTokenService jwt,
+        IAccountDeletionService accountDeletionService)
     {
         _db = db;
         _jwt = jwt;
+        _accountDeletionService = accountDeletionService;
     }
 
     [HttpGet]
@@ -146,6 +151,29 @@ public class AccountController : ControllerBase
         await _db.SaveChangesAsync(cancellationToken);
 
         return Ok(MapProfile(user));
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteAccount(
+        DeleteAccountRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetUserId(out var userId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        try
+        {
+            await _accountDeletionService.DeleteAccountAsync(
+                userId,
+                request.Password,
+                cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return BadRequest("Password is incorrect.");
+        }
+
+        return NoContent();
     }
 
     private static UserProfileResponse MapProfile(User user) =>

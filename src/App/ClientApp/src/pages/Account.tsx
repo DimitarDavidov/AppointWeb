@@ -11,16 +11,18 @@ import {
 } from "../components/Account/AccountIcons";
 import {
   changePassword,
+  deleteAccount,
   getAccountProfile,
   updateEmail,
   updatePhoneNumber,
   updateUsername,
 } from "../api/account";
 import { getErrorMessage } from "../api/auth";
-import { setCredentials } from "../features/auth/authSlice";
+import ConfirmDialog from "../components/ConfirmDialog/ConfirmDialog";
+import { setCredentials, logout } from "../features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
-import { formatRoleLabel } from "../constants/roles";
+import { formatRoleLabel, UserRoles } from "../constants/roles";
 import "./Account.scss";
 
 type EditableField = "email" | "username" | "password" | "phoneNumber";
@@ -191,6 +193,10 @@ function Account() {
   const [isSavingUsername, setIsSavingUsername] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const displayName = capitalizeFirstLetter(username ?? "User");
   const userInitial = displayName.charAt(0).toUpperCase();
@@ -370,6 +376,39 @@ function Account() {
     }
   }
 
+  function handleOpenDeleteDialog() {
+    setDeletePassword("");
+    setDeleteError("");
+    setShowDeleteDialog(true);
+  }
+
+  function handleCloseDeleteDialog() {
+    if (isDeletingAccount) return;
+    setShowDeleteDialog(false);
+    setDeletePassword("");
+    setDeleteError("");
+  }
+
+  async function handleConfirmDeleteAccount() {
+    if (!deletePassword) {
+      setDeleteError("Enter your password to confirm account deletion.");
+      return;
+    }
+
+    setDeleteError("");
+    setIsDeletingAccount(true);
+
+    try {
+      await deleteAccount(deletePassword);
+      dispatch(logout());
+      navigate("/", { replace: true });
+    } catch (err) {
+      setDeleteError(getErrorMessage(err, "Could not delete your account. Please try again."));
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="account">
@@ -409,6 +448,40 @@ function Account() {
 
   return (
     <div className="account">
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Delete your account?"
+        confirmLabel="Delete my account"
+        cancelLabel="Keep my account"
+        isConfirming={isDeletingAccount}
+        onConfirm={handleConfirmDeleteAccount}
+        onClose={handleCloseDeleteDialog}
+      >
+        <p>
+          This permanently removes your account and all related data, including
+          appointments
+          {role === UserRoles.Provider ? ", service offerings, and availability" : ""}.
+          This action cannot be undone.
+        </p>
+        <label className="account-delete-password" htmlFor="delete-account-password">
+          Confirm with your password
+          <input
+            id="delete-account-password"
+            type="password"
+            value={deletePassword}
+            onChange={(e) => setDeletePassword(e.target.value)}
+            autoComplete="current-password"
+            disabled={isDeletingAccount}
+            placeholder="Your password"
+          />
+        </label>
+        {deleteError && (
+          <p className="account-delete-error" role="alert">
+            {deleteError}
+          </p>
+        )}
+      </ConfirmDialog>
+
       <div className="account-inner">
         <header className="account-hero">
           <div className="account-hero-avatar" aria-hidden="true">
@@ -580,6 +653,12 @@ function Account() {
             }
           />
         </div>
+
+        <p className="account-delete-wrap">
+          <button type="button" onClick={handleOpenDeleteDialog}>
+            Delete account
+          </button>
+        </p>
       </div>
     </div>
   );
