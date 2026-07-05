@@ -2,13 +2,13 @@ using AppointWeb.Api.Data;
 using AppointWeb.Api.Dtos.Account;
 using AppointWeb.Api.Dtos.Auth;
 using AppointWeb.Api.Dtos.Users;
+using AppointWeb.Api.Extensions;
 using AppointWeb.Api.Models;
 using AppointWeb.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace AppointWeb.Api.Controllers;
 
@@ -31,7 +31,7 @@ public class AccountController : ControllerBase
     public async Task<ActionResult<UserProfileResponse>> GetProfile(
         CancellationToken cancellationToken)
     {
-        if (!TryGetUserId(out var userId))
+        if (!User.TryGetUserId(out var userId))
             return Unauthorized("Invalid token: missing user id.");
 
         var user = await _db.Users
@@ -46,7 +46,7 @@ public class AccountController : ControllerBase
         UpdateEmailRequest request,
         CancellationToken cancellationToken)
     {
-        if (!TryGetUserId(out var userId))
+        if (!User.TryGetUserId(out var userId))
             return Unauthorized("Invalid token: missing user id.");
 
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
@@ -57,13 +57,7 @@ public class AccountController : ControllerBase
 
         if (string.Equals(user.Email, normalizedEmail, StringComparison.Ordinal))
         {
-            return Ok(new AuthResponse
-            {
-                AccessToken = _jwt.CreateAccessToken(user),
-                Username = user.Username,
-                Email = user.Email,
-                Role = user.Role,
-            });
+            return Ok(AuthResponseMapper.MapAuthResponse(user, _jwt.CreateAccessToken(user)));
         }
 
         if (await _db.Users.AnyAsync(
@@ -76,13 +70,7 @@ public class AccountController : ControllerBase
         user.Email = normalizedEmail;
         await _db.SaveChangesAsync(cancellationToken);
 
-        return Ok(new AuthResponse
-        {
-            AccessToken = _jwt.CreateAccessToken(user),
-            Username = user.Username,
-            Email = user.Email,
-            Role = user.Role,
-        });
+        return Ok(AuthResponseMapper.MapAuthResponse(user, _jwt.CreateAccessToken(user)));
     }
 
     [HttpPatch("username")]
@@ -90,7 +78,7 @@ public class AccountController : ControllerBase
         UpdateUsernameRequest request,
         CancellationToken cancellationToken)
     {
-        if (!TryGetUserId(out var userId))
+        if (!User.TryGetUserId(out var userId))
             return Unauthorized("Invalid token: missing user id.");
 
         var normalizedUsername = request.Username.Trim().ToLowerInvariant();
@@ -101,13 +89,7 @@ public class AccountController : ControllerBase
 
         if (string.Equals(user.Username, normalizedUsername, StringComparison.Ordinal))
         {
-            return Ok(new AuthResponse
-            {
-                AccessToken = _jwt.CreateAccessToken(user),
-                Username = user.Username,
-                Email = user.Email,
-                Role = user.Role,
-            });
+            return Ok(AuthResponseMapper.MapAuthResponse(user, _jwt.CreateAccessToken(user)));
         }
 
         if (await _db.Users.AnyAsync(
@@ -120,13 +102,7 @@ public class AccountController : ControllerBase
         user.Username = normalizedUsername;
         await _db.SaveChangesAsync(cancellationToken);
 
-        return Ok(new AuthResponse
-        {
-            AccessToken = _jwt.CreateAccessToken(user),
-            Username = user.Username,
-            Email = user.Email,
-            Role = user.Role,
-        });
+        return Ok(AuthResponseMapper.MapAuthResponse(user, _jwt.CreateAccessToken(user)));
     }
 
     [HttpPatch("password")]
@@ -134,7 +110,7 @@ public class AccountController : ControllerBase
         ChangePasswordRequest request,
         CancellationToken cancellationToken)
     {
-        if (!TryGetUserId(out var userId))
+        if (!User.TryGetUserId(out var userId))
             return Unauthorized("Invalid token: missing user id.");
 
         var user = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -156,7 +132,7 @@ public class AccountController : ControllerBase
         UpdatePhoneNumberRequest request,
         CancellationToken cancellationToken)
     {
-        if (!TryGetUserId(out var userId))
+        if (!User.TryGetUserId(out var userId))
             return Unauthorized("Invalid token: missing user id.");
 
         var user = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -181,12 +157,4 @@ public class AccountController : ControllerBase
             PhoneNumber = user.PhoneNumber,
             Role = user.Role,
         };
-
-    private bool TryGetUserId(out Guid userId)
-    {
-        var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? User.FindFirstValue("sub");
-
-        return Guid.TryParse(idStr, out userId);
-    }
 }

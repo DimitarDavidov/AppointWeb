@@ -56,14 +56,7 @@ public class AuthController : ControllerBase
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
-        var token = _jwt.CreateAccessToken(user);
-        return Ok(new AuthResponse
-        {
-            AccessToken = token,
-            Username = user.Username,
-            Email = user.Email,
-            Role = user.Role
-        });
+        return Ok(AuthResponseMapper.MapAuthResponse(user, _jwt.CreateAccessToken(user)));
     }
 
     [HttpPost("login")]
@@ -78,14 +71,7 @@ public class AuthController : ControllerBase
         if (result == PasswordVerificationResult.Failed)
             return Unauthorized("Invalid credentials.");
 
-        var token = _jwt.CreateAccessToken(user);
-        return Ok(new AuthResponse
-        {
-            AccessToken = token,
-            Username = user.Username,
-            Email = user.Email,
-            Role = user.Role
-        });
+        return Ok(AuthResponseMapper.MapAuthResponse(user, _jwt.CreateAccessToken(user)));
     }
 
     [EnableRateLimiting("ForgotPassword")]

@@ -1,6 +1,9 @@
+using AppointWeb.Api.Data;
+using AppointWeb.Api.Dtos.Users;
+using AppointWeb.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using AppointWeb.Api.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace AppointWeb.Api.Controllers;
 
@@ -8,30 +11,29 @@ namespace AppointWeb.Api.Controllers;
 [Route("api/user")]
 public class UserController : ControllerBase
 {
-    private readonly IUserService _service;
+    private readonly AppDbContext _db;
 
-    public UserController(IUserService service)
+    public UserController(AppDbContext db)
     {
-        _service = service;
+        _db = db;
     }
 
     [Authorize]
     [HttpGet("providers")]
-    public async Task<IActionResult> GetProviders()
-        => Ok(await _service.GetProviders());
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetUser(int id)
+    public async Task<ActionResult<IEnumerable<ProviderResponse>>> GetProviders(
+        CancellationToken ct)
     {
-        var user = await _service.GetUser(id);
-        return user is null ? NotFound() : Ok(user);
+        var providers = await _db.Users
+            .AsNoTracking()
+            .Where(u => u.Role == UserRoles.Provider)
+            .OrderBy(u => u.Username)
+            .Select(u => new ProviderResponse
+            {
+                Id = u.Id,
+                Username = u.Username,
+            })
+            .ToListAsync(ct);
+
+        return Ok(providers);
     }
-
-    [HttpGet]
-    public async Task<IActionResult> GetUsers()
-        => Ok(await _service.GetUsers());
-
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] string email)
-        => Ok(await _service.CreateUser(email));
 }

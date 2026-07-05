@@ -201,7 +201,7 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 | `POST` | `/api/auth/login` | No | Log in and receive a JWT |
 | `POST` | `/api/auth/forgot-password` | No | Request password reset email |
 | `POST` | `/api/auth/reset-password` | No | Reset password with email token |
-| `GET` | `/api/user` | No | List users |
+| `GET` | `/api/user/providers` | Yes | List provider accounts |
 | `POST` | `/api/appointments` | Yes | Create an appointment |
 
 ## Troubleshooting

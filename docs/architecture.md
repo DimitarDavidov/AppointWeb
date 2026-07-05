@@ -104,7 +104,4 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 These are part of the intended design but not fully built yet:
 
 - Admin panel with role-based access (`Role = "Admin"`)
-- Logout button wired to Redux
-- Conditional navbar (show Login/Register vs Logout based on auth state)
-- Protected user endpoints (currently `GET /api/user` is public)
 - Frontend appointment booking UI

@@ -160,12 +160,13 @@ POST /api/auth/reset-password
 
 ## User endpoints
 
-> **Note:** These endpoints are currently unprotected and return the full user model including `passwordHash`. This will be secured in a future update.
+### List providers
 
-### List all users
+Returns users with the `Provider` role. Requires authentication. Only `id` and `username` are returned — no sensitive fields.
 
 ```
-GET /api/user
+GET /api/user/providers
+Authorization: Bearer <accessToken>
 ```
 
 **Success response — `200 OK`**
@@ -174,29 +175,16 @@ GET /api/user
 [
   {
     "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "email": "user@example.com",
-    "passwordHash": "...",
-    "role": "Customer",
-    "createdAt": "2026-02-20T19:00:00Z"
+    "username": "jane-provider"
   }
 ]
 ```
-
----
-
-### Get user by ID
-
-```
-GET /api/user/{id}
-```
-
-**Success response — `200 OK`** — single user object
 
 **Error responses**
 
 | Status | Condition |
 |--------|-----------|
-| `404 Not Found` | User does not exist |
+| `401 Unauthorized` | Missing or invalid JWT |
 
 ---
 

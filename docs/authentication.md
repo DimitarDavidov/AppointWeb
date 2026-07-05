@@ -127,7 +127,7 @@ Reset emails include a branded HTML template and link to `{Frontend:BaseUrl}/res
 | `POST /api/auth/login` | No |
 | `POST /api/auth/forgot-password` | No |
 | `POST /api/auth/reset-password` | No |
-| `GET /api/user` | No (should be protected in future) |
+| `GET /api/user/providers` | Yes |
 | `POST /api/appointments` | Yes |
 
 Protected endpoints use the `[Authorize]` attribute. The backend reads the user ID from the JWT `sub` claim.

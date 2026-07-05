@@ -1,11 +1,11 @@
 using AppointWeb.Api.Data;
 using AppointWeb.Api.Dtos.Appointments;
+using AppointWeb.Api.Extensions;
 using AppointWeb.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using System.Security.Claims;
 
 namespace AppointWeb.Api.Controllers;
 
@@ -24,10 +24,7 @@ public class AppointmentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<AppointmentResponse>> Create(CreateAppointmentRequest request, CancellationToken ct)
     {
-        // Get customer id from JWT
-        var customerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-
-        if (!Guid.TryParse(customerIdStr, out var customerId))
+        if (!User.TryGetUserId(out var customerId))
             return Unauthorized("Invalid token: missing user id.");
 
         var startUtc = request.StartTime.Kind == DateTimeKind.Utc
