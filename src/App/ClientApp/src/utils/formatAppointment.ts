@@ -6,6 +6,10 @@ export function toDatetimeLocalValue(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+export function toDatetimeLocalValueFromIso(iso: string): string {
+  return toDatetimeLocalValue(new Date(iso));
+}
+
 export function formatAppointmentDateTime(iso: string): string {
   return new Intl.DateTimeFormat(undefined, {
     weekday: "short",

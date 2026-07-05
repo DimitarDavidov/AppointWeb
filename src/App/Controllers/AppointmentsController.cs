@@ -197,6 +197,70 @@ public class AppointmentsController : ControllerBase
         return Ok(AppointmentMapper.MapResponse(appointment));
     }
 
+    [HttpPatch("{id:guid}/reschedule")]
+    public async Task<ActionResult<AppointmentResponse>> Reschedule(
+        Guid id,
+        RescheduleAppointmentRequest request,
+        CancellationToken ct)
+    {
+        if (!User.TryGetUserId(out var userId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        var appointment = await _db.Appointments
+            .Include(a => a.Service)
+            .SingleOrDefaultAsync(a => a.Id == id, ct);
+
+        if (appointment is null)
+            return NotFound();
+
+        if (!CanAccessAppointment(appointment, userId, role))
+            return Forbid();
+
+        if (appointment.Status != AppointmentStatus.Booked)
+            return BadRequest("Only booked appointments can be rescheduled.");
+
+        var startUtc = request.StartTime.Kind == DateTimeKind.Utc
+            ? request.StartTime
+            : request.StartTime.ToUniversalTime();
+
+        if (startUtc < DateTime.UtcNow.AddMinutes(-1))
+            return BadRequest("Invalid start time.");
+
+        if (!appointment.Service.IsActive)
+            return BadRequest("This service is no longer available.");
+
+        var endUtc = startUtc.AddMinutes(appointment.Service.DurationMinutes);
+
+        if (!await FitsProviderAvailabilityAsync(appointment.ProviderId, startUtc, endUtc, ct))
+            return BadRequest("The selected time is outside the provider's availability.");
+
+        var overlaps = await _db.Appointments.AsNoTracking().AnyAsync(a =>
+            a.Id != id &&
+            a.ProviderId == appointment.ProviderId &&
+            a.Status == AppointmentStatus.Booked &&
+            a.StartTime < endUtc &&
+            a.EndTime > startUtc, ct);
+
+        if (overlaps)
+            return Conflict("This time slot is already booked.");
+
+        appointment.StartTime = startUtc;
+        appointment.EndTime = endUtc;
+
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23P01")
+        {
+            return Conflict("This time slot is already booked.");
+        }
+
+        return Ok(AppointmentMapper.MapResponse(appointment));
+    }
+
     private IQueryable<Appointment> FilterAppointmentsForUser(Guid userId, string? role)
     {
         var query = _db.Appointments.AsNoTracking();
