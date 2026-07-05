@@ -13,6 +13,9 @@ public class Service
     [MaxLength(1000)]
     public string? Description { get; set; }
 
+    [MaxLength(100)]
+    public string? Category { get; set; }
+
     [Range(1, 1440)]
     public int DurationMinutes { get; set; }
 

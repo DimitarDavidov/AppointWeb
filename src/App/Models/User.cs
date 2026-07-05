@@ -24,4 +24,6 @@ public class User
 
     public ICollection<Appointment> CustomerAppointments { get; set; } = new List<Appointment>();
     public ICollection<Appointment> ProviderAppointments { get; set; } = new List<Appointment>();
+    public ICollection<ProviderAvailability> ProviderAvailabilities { get; set; } =
+        new List<ProviderAvailability>();
 }

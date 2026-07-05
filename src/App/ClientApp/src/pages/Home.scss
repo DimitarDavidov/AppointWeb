@@ -180,3 +180,216 @@
     }
   }
 }
+
+.catalog {
+  width: 100%;
+  background-color: var(--color-bg-subtle);
+  border-top: 1px solid rgba(8, 145, 178, 0.1);
+  padding: 3rem 1.5rem 4rem;
+  box-sizing: border-box;
+
+  &-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  &-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  &-intro {
+    text-align: center;
+  }
+
+  &-title {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    line-height: 1.25;
+    background: linear-gradient(
+      90deg,
+      var(--color-brand-slate-dark) 0%,
+      var(--color-brand-teal) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  &-subtitle {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+
+  &-search {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background-color: var(--color-bg);
+    box-shadow: 0 8px 24px rgba(8, 145, 178, 0.08);
+    cursor: text;
+
+    &:focus-within {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      background: transparent;
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--color-text);
+
+      &:focus {
+        outline: none;
+      }
+
+      &::placeholder {
+        color: var(--color-text-muted);
+      }
+    }
+  }
+
+  &-search-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--color-brand-teal-dark);
+  }
+
+  &-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  &-status {
+    margin: 0;
+    padding: 2rem 1rem;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+
+    &--error {
+      color: var(--color-error);
+    }
+  }
+
+  &-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background-color: var(--color-bg);
+    box-shadow: 0 8px 24px rgba(8, 145, 178, 0.06);
+    opacity: 0;
+    transform: translateY(24px);
+
+    .catalog--visible & {
+      animation: catalog-card-in 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .catalog--visible &:hover {
+      transform: translateY(-2px);
+      border-color: rgba(8, 145, 178, 0.25);
+      box-shadow: 0 12px 28px rgba(8, 145, 178, 0.12);
+    }
+
+    &-link {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      height: 100%;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    &-name {
+      margin: 0;
+      font-size: 1.1rem;
+      line-height: 1.3;
+      color: var(--color-brand-slate-dark);
+    }
+
+    &-description {
+      margin: 0;
+      flex: 1;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: var(--color-text-muted);
+    }
+
+    &-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--color-border);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-brand-slate);
+    }
+
+    &-price {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-brand-teal-dark);
+    }
+  }
+
+  &--visible &-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  @include sm-down {
+    padding: 2rem max(1.25rem, env(safe-area-inset-left)) 3rem
+      max(1.25rem, env(safe-area-inset-right));
+
+    &-header {
+      margin-bottom: 1.5rem;
+    }
+
+    &-subtitle {
+      font-size: 0.95rem;
+    }
+
+    &-search input {
+      font-size: 16px;
+    }
+
+    &-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+@keyframes catalog-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
