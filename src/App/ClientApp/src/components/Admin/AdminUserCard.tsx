@@ -1,5 +1,11 @@
 import type { AdminUser } from "../../types/admin";
 import { formatRoleLabel, UserRoles, type UserRole } from "../../constants/roles";
+import {
+  DeleteActionIcon,
+  EditActionIcon,
+  SuspendActionIcon,
+  UnsuspendActionIcon,
+} from "./AdminActionIcons";
 import { capitalizeFirstLetter } from "../../utils/formatDisplayName";
 
 function roleBadgeClass(role: UserRole): string {
@@ -49,7 +55,10 @@ export function UserActionButtons({
         className="admin-btn admin-btn--edit"
         onClick={onEdit}
       >
-        Edit
+        <span className="admin-btn-icon">
+          <EditActionIcon />
+        </span>
+        <span className="admin-btn-label">Edit</span>
       </button>
 
       {user.isSuspended ? (
@@ -62,7 +71,10 @@ export function UserActionButtons({
           }
           onClick={onUnsuspend}
         >
-          Unsuspend
+          <span className="admin-btn-icon">
+            <UnsuspendActionIcon />
+          </span>
+          <span className="admin-btn-label">Unsuspend</span>
         </button>
       ) : (
         <button
@@ -74,7 +86,10 @@ export function UserActionButtons({
           }
           onClick={onSuspend}
         >
-          Suspend
+          <span className="admin-btn-icon">
+            <SuspendActionIcon />
+          </span>
+          <span className="admin-btn-label">Suspend</span>
         </button>
       )}
 
@@ -85,7 +100,10 @@ export function UserActionButtons({
         title={isSelf ? "You cannot delete your own account here" : undefined}
         onClick={onDelete}
       >
-        Delete
+        <span className="admin-btn-icon">
+          <DeleteActionIcon />
+        </span>
+        <span className="admin-btn-label">Delete</span>
       </button>
     </div>
   );
