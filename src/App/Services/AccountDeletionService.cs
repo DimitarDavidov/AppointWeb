@@ -28,6 +28,22 @@ public class AccountDeletionService : IAccountDeletionService
         if (verification == PasswordVerificationResult.Failed)
             throw new UnauthorizedAccessException("Password is incorrect.");
 
+        await DeleteUserDataAsync(userId, cancellationToken);
+    }
+
+    public async Task DeleteUserByAdminAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var exists = await _db.Users.AnyAsync(u => u.Id == userId, cancellationToken);
+        if (!exists)
+            throw new InvalidOperationException("User not found.");
+
+        await DeleteUserDataAsync(userId, cancellationToken);
+    }
+
+    private async Task DeleteUserDataAsync(Guid userId, CancellationToken cancellationToken)
+    {
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
 
         try
@@ -44,6 +60,7 @@ public class AccountDeletionService : IAccountDeletionService
                 .Where(a => a.ProviderId == userId)
                 .ExecuteDeleteAsync(cancellationToken);
 
+            var user = await _db.Users.SingleAsync(u => u.Id == userId, cancellationToken);
             _db.Users.Remove(user);
             await _db.SaveChangesAsync(cancellationToken);
 

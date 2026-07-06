@@ -1,0 +1,153 @@
+@use "../../styles/breakpoints" as *;
+
+.edit-user {
+  &-root {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
+  &-backdrop {
+    position: absolute;
+    inset: 0;
+    border: none;
+    background-color: rgba(15, 23, 42, 0.45);
+    cursor: pointer;
+  }
+
+  &-modal {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 28rem);
+    padding: 1.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background-color: var(--color-bg);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15);
+  }
+
+  &-header {
+    margin-bottom: 1.25rem;
+  }
+
+  &-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.35rem;
+    color: var(--color-brand-slate-dark);
+  }
+
+  &-subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+
+    strong {
+      color: var(--color-text);
+    }
+  }
+
+  &-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    input,
+    select {
+      padding: 0.65rem 0.8rem;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      font-size: 0.95rem;
+
+      &:focus {
+        outline: 2px solid var(--color-primary-light);
+        border-color: var(--color-primary);
+      }
+
+      &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  &-error {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--color-error);
+  }
+
+  &-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    margin-top: 0.25rem;
+  }
+
+  &-btn {
+    padding: 0.6rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    &-secondary {
+      border-color: var(--color-border);
+      background-color: var(--color-bg);
+      color: var(--color-text);
+
+      &:hover:not(:disabled) {
+        border-color: var(--color-text-muted);
+      }
+    }
+
+    &-primary {
+      background: linear-gradient(
+        135deg,
+        var(--color-brand-teal),
+        var(--color-brand-mint)
+      );
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        filter: brightness(0.97);
+      }
+    }
+  }
+
+  @include sm-down {
+    &-root {
+      padding: 1rem;
+      align-items: flex-end;
+    }
+
+    &-modal {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+  }
+}

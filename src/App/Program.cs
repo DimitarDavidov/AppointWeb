@@ -124,6 +124,7 @@ app.UseCors("AllowFrontend");
 app.UseRateLimiter();
 
 app.UseAuthentication();
+app.UseMiddleware<SuspendedUserMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

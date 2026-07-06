@@ -71,6 +71,9 @@ public class AuthController : ControllerBase
         if (result == PasswordVerificationResult.Failed)
             return Unauthorized("Invalid credentials.");
 
+        if (user.IsSuspended)
+            return Unauthorized("This account has been suspended.");
+
         return Ok(AuthResponseMapper.MapAuthResponse(user, _jwt.CreateAccessToken(user)));
     }
 

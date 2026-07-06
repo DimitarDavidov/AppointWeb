@@ -5,6 +5,7 @@ using AppointWeb.Api.Dtos.Users;
 using AppointWeb.Api.Extensions;
 using AppointWeb.Api.Models;
 using AppointWeb.Api.Services;
+using AppointWeb.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

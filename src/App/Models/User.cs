@@ -20,6 +20,8 @@ public class User
 
     public string? PhoneNumber { get; set; }
 
+    public bool IsSuspended { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Appointment> CustomerAppointments { get; set; } = new List<Appointment>();
