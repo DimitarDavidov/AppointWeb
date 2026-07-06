@@ -8,6 +8,12 @@ import {
   updateAdminUser,
 } from "../api/admin";
 import { getErrorMessage } from "../api/auth";
+import {
+  AdminUserCard,
+  formatJoinedDate,
+  roleBadgeClass,
+  UserActionButtons,
+} from "../components/Admin/AdminUserCard";
 import EditUserModal from "../components/Admin/EditUserModal";
 import { SpinnerIcon } from "../components/Account/AccountIcons";
 import ConfirmDialog from "../components/ConfirmDialog/ConfirmDialog";
@@ -40,25 +46,6 @@ function SearchIcon() {
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   );
-}
-
-function formatJoinedDate(iso: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(iso));
-}
-
-function roleBadgeClass(role: UserRole): string {
-  switch (role) {
-    case UserRoles.Admin:
-      return "admin-badge admin-badge--admin";
-    case UserRoles.Provider:
-      return "admin-badge admin-badge--provider";
-    default:
-      return "admin-badge admin-badge--role";
-  }
 }
 
 function matchesSearch(user: AdminUser, query: string): boolean {
@@ -182,6 +169,23 @@ function AdminPanel() {
     setDialogAction(null);
     setDialogTarget(null);
     setDialogError("");
+  }
+
+  function openEdit(user: AdminUser) {
+    setEditError("");
+    setEditingUser(user);
+  }
+
+  function getUserHandlers(user: AdminUser) {
+    const isSelf = isCurrentUser(user.id);
+
+    return {
+      isSelf,
+      onEdit: () => openEdit(user),
+      onSuspend: () => openDialog("suspend", user),
+      onUnsuspend: () => openDialog("unsuspend", user),
+      onDelete: () => openDialog("delete", user),
+    };
   }
 
   async function handleSaveEdit(id: string, data: UpdateAdminUserRequest) {
@@ -328,48 +332,59 @@ function AdminPanel() {
           </p>
         )}
 
+        <div className="admin-stat-grid" aria-label="User statistics">
+          <div className="admin-stat-card">
+            <span className="admin-stat-card-value">{counts.total}</span>
+            <span className="admin-stat-card-label">Total users</span>
+          </div>
+          <div className="admin-stat-card admin-stat-card--active">
+            <span className="admin-stat-card-value">{counts.active}</span>
+            <span className="admin-stat-card-label">Active</span>
+          </div>
+          <div className="admin-stat-card admin-stat-card--suspended">
+            <span className="admin-stat-card-value">{counts.suspended}</span>
+            <span className="admin-stat-card-label">Suspended</span>
+          </div>
+        </div>
+
         <div className="admin-toolbar">
           <label className="admin-search" htmlFor="admin-user-search">
             <SearchIcon />
             <input
               id="admin-user-search"
               type="search"
-              placeholder="Search by username, email, or phone..."
+              placeholder="Search users..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoComplete="off"
             />
           </label>
 
-          <select
-            className="admin-filter"
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
-            aria-label="Filter by role"
-          >
-            <option value="all">All roles</option>
-            <option value={UserRoles.Customer}>Customers</option>
-            <option value={UserRoles.Provider}>Providers</option>
-            <option value={UserRoles.Admin}>Admins</option>
-          </select>
+          <div className="admin-filters">
+            <select
+              className="admin-filter"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
+              aria-label="Filter by role"
+            >
+              <option value="all">All roles</option>
+              <option value={UserRoles.Customer}>Customers</option>
+              <option value={UserRoles.Provider}>Providers</option>
+              <option value={UserRoles.Admin}>Admins</option>
+            </select>
 
-          <select
-            className="admin-filter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            aria-label="Filter by status"
-          >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
-          </select>
+            <select
+              className="admin-filter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              aria-label="Filter by status"
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
         </div>
-
-        <p className="admin-stats">
-          <strong>{counts.total}</strong> users ·{" "}
-          <strong>{counts.active}</strong> active ·{" "}
-          <strong>{counts.suspended}</strong> suspended
-        </p>
 
         {isLoading && (
           <div className="admin-loading" aria-live="polite">
@@ -384,11 +399,25 @@ function AdminPanel() {
           </p>
         )}
 
-        {!isLoading && !loadError && (
-          <div className="admin-table-wrap">
-            {filteredUsers.length === 0 ? (
-              <p className="admin-empty">No users match your filters.</p>
-            ) : (
+        {!isLoading && !loadError && filteredUsers.length === 0 && (
+          <p className="admin-empty">No users match your filters.</p>
+        )}
+
+        {!isLoading && !loadError && filteredUsers.length > 0 && (
+          <>
+            <ul className="admin-user-list">
+              {filteredUsers.map((user) => {
+                const handlers = getUserHandlers(user);
+
+                return (
+                  <li key={user.id}>
+                    <AdminUserCard user={user} {...handlers} />
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead>
                   <tr>
@@ -403,7 +432,7 @@ function AdminPanel() {
                 </thead>
                 <tbody>
                   {filteredUsers.map((user) => {
-                    const isSelf = isCurrentUser(user.id);
+                    const handlers = getUserHandlers(user);
 
                     return (
                       <tr
@@ -417,7 +446,7 @@ function AdminPanel() {
                             <strong>
                               {capitalizeFirstLetter(user.username)}
                             </strong>
-                            {isSelf && <span>Your account</span>}
+                            {handlers.isSelf && <span>Your account</span>}
                           </div>
                         </td>
                         <td>{user.email}</td>
@@ -440,70 +469,15 @@ function AdminPanel() {
                         </td>
                         <td>{formatJoinedDate(user.createdAt)}</td>
                         <td>
-                          <div className="admin-actions">
-                            <button
-                              type="button"
-                              className="admin-btn admin-btn--edit"
-                              onClick={() => {
-                                setEditError("");
-                                setEditingUser(user);
-                              }}
-                            >
-                              Edit
-                            </button>
-
-                            {user.isSuspended ? (
-                              <button
-                                type="button"
-                                className="admin-btn admin-btn--unsuspend"
-                                disabled={isSelf}
-                                title={
-                                  isSelf
-                                    ? "You cannot change your own account status"
-                                    : undefined
-                                }
-                                onClick={() => openDialog("unsuspend", user)}
-                              >
-                                Unsuspend
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="admin-btn admin-btn--suspend"
-                                disabled={isSelf}
-                                title={
-                                  isSelf
-                                    ? "You cannot change your own account status"
-                                    : undefined
-                                }
-                                onClick={() => openDialog("suspend", user)}
-                              >
-                                Suspend
-                              </button>
-                            )}
-
-                            <button
-                              type="button"
-                              className="admin-btn admin-btn--delete"
-                              disabled={isSelf}
-                              title={
-                                isSelf
-                                  ? "You cannot delete your own account here"
-                                  : undefined
-                              }
-                              onClick={() => openDialog("delete", user)}
-                            >
-                              Delete
-                            </button>
-                          </div>
+                          <UserActionButtons user={user} {...handlers} />
                         </td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
-            )}
-          </div>
+            </div>
+          </>
         )}
       </div>
     </div>
