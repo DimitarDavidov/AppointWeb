@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import welcomeBg from "../assets/images/welcome-bg.png";
 import { getCatalogOfferings } from "../api/catalog";
-import type { CatalogOffering } from "../types/catalog";
+import { useAsyncData } from "../hooks/useAsyncData";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
 import { formatDuration, formatPrice } from "../utils/formatService";
 import { useAppSelector } from "../store/hooks";
@@ -30,36 +30,14 @@ function Home() {
   const isLoggedIn = !!useAppSelector((state) => state.auth.accessToken);
   const catalogRef = useRef<HTMLElement>(null);
   const [catalogVisible, setCatalogVisible] = useState(false);
-  const [offerings, setOfferings] = useState<CatalogOffering[]>([]);
-  const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
-  const [catalogError, setCatalogError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCatalog() {
-      try {
-        const data = await getCatalogOfferings();
-        if (!cancelled) {
-          setOfferings(data);
-        }
-      } catch {
-        if (!cancelled) {
-          setCatalogError("Could not load services. Please try again later.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingCatalog(false);
-        }
-      }
-    }
-
-    loadCatalog();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const {
+    data: offerings = [],
+    isLoading: isLoadingCatalog,
+    error: catalogError,
+  } = useAsyncData(getCatalogOfferings, [], {
+    initialData: [],
+    errorMessage: "Could not load services. Please try again later.",
+  });
 
   useEffect(() => {
     const section = catalogRef.current;

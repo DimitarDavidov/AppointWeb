@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getErrorMessage, register } from "../api/auth";
+import { getErrorMessage } from "../api/errors";
+import { register } from "../api/auth";
 import { UserRoles, type UserRole } from "../constants/roles";
 import { setCredentials } from "../features/auth/authSlice";
 import { useAppDispatch } from "../store/hooks";

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import {
   deleteAdminUser,
   getAdminUsers,
@@ -7,69 +6,45 @@ import {
   unsuspendAdminUser,
   updateAdminUser,
 } from "../api/admin";
-import { getErrorMessage } from "../api/auth";
-import {
-  AdminUserCard,
-  formatJoinedDate,
-  roleBadgeClass,
-  UserActionButtons,
-} from "../components/Admin/AdminUserCard";
+import { getErrorMessage } from "../api/errors";
+import { AdminSearchToolbar } from "../components/Admin/AdminSearchToolbar";
+import type {
+  RoleFilter,
+  StatusFilter,
+} from "../components/Admin/AdminSearchToolbar";
+import { AdminStatsGrid } from "../components/Admin/AdminStatsGrid";
+import { AdminUserActionDialog } from "../components/Admin/AdminUserActionDialog";
+import { AdminUserCard } from "../components/Admin/AdminUserCard";
+import type { AdminUserHandlers } from "../components/Admin/AdminUserTable";
+import { AdminUserTable } from "../components/Admin/AdminUserTable";
 import EditUserModal from "../components/Admin/EditUserModal";
-import { SpinnerIcon } from "../components/Account/AccountIcons";
-import ConfirmDialog from "../components/ConfirmDialog/ConfirmDialog";
 import {
-  formatRoleLabel,
-  UserRoles,
-  type UserRole,
-} from "../constants/roles";
+  matchesSearch,
+  type DialogAction,
+} from "../components/Admin/adminPanelUtils";
+import { SpinnerIcon } from "../components/Account/AccountIcons";
+import { useAsyncData } from "../hooks/useAsyncData";
 import { useAppSelector } from "../store/hooks";
 import type { AdminUser, UpdateAdminUserRequest } from "../types/admin";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
 import "./AdminPanel.scss";
 
-type RoleFilter = "all" | UserRole;
-type StatusFilter = "all" | "active" | "suspended";
-type DialogAction = "suspend" | "unsuspend" | "delete" | null;
-
-function SearchIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-
-function matchesSearch(user: AdminUser, query: string): boolean {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) return true;
-
-  return (
-    user.username.toLowerCase().includes(normalized) ||
-    user.email.toLowerCase().includes(normalized) ||
-    (user.phoneNumber?.toLowerCase().includes(normalized) ?? false)
-  );
-}
-
 function AdminPanel() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { accessToken, role, userId } = useAppSelector((state) => state.auth);
+  const { userId } = useAppSelector((state) => state.auth);
 
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const {
+    data: users = [],
+    setData: setUsers,
+    isLoading,
+    error: loadError,
+  } = useAsyncData(getAdminUsers, [], {
+    initialData: [],
+    errorMessage: "Could not load users. Please try again.",
+  });
+
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [message, setMessage] = useState("");
 
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
@@ -80,53 +55,6 @@ function AdminPanel() {
   const [dialogTarget, setDialogTarget] = useState<AdminUser | null>(null);
   const [dialogError, setDialogError] = useState("");
   const [isDialogSubmitting, setIsDialogSubmitting] = useState(false);
-
-  const isAdmin = role === UserRoles.Admin;
-
-  useEffect(() => {
-    if (!accessToken) {
-      navigate("/login", { state: { from: location.pathname }, replace: true });
-      return;
-    }
-
-    if (!isAdmin) {
-      navigate("/", { replace: true });
-    }
-  }, [accessToken, isAdmin, location.pathname, navigate]);
-
-  useEffect(() => {
-    if (!accessToken || !isAdmin) return;
-
-    let cancelled = false;
-
-    async function loadUsers() {
-      setIsLoading(true);
-      setLoadError("");
-
-      try {
-        const data = await getAdminUsers();
-        if (!cancelled) {
-          setUsers(data);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setLoadError(
-            getErrorMessage(err, "Could not load users. Please try again.")
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadUsers();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [accessToken, isAdmin]);
 
   useEffect(() => {
     if (!message) return;
@@ -154,14 +82,31 @@ function AdminPanel() {
     };
   }, [users]);
 
-  function isCurrentUser(id: string): boolean {
-    return userId === id;
-  }
+  function getUserHandlers(user: AdminUser): AdminUserHandlers {
+    const isSelf = userId === user.id;
 
-  function openDialog(action: DialogAction, user: AdminUser) {
-    setDialogAction(action);
-    setDialogTarget(user);
-    setDialogError("");
+    return {
+      isSelf,
+      onEdit: () => {
+        setEditError("");
+        setEditingUser(user);
+      },
+      onSuspend: () => {
+        setDialogAction("suspend");
+        setDialogTarget(user);
+        setDialogError("");
+      },
+      onUnsuspend: () => {
+        setDialogAction("unsuspend");
+        setDialogTarget(user);
+        setDialogError("");
+      },
+      onDelete: () => {
+        setDialogAction("delete");
+        setDialogTarget(user);
+        setDialogError("");
+      },
+    };
   }
 
   function closeDialog() {
@@ -171,30 +116,13 @@ function AdminPanel() {
     setDialogError("");
   }
 
-  function openEdit(user: AdminUser) {
-    setEditError("");
-    setEditingUser(user);
-  }
-
-  function getUserHandlers(user: AdminUser) {
-    const isSelf = isCurrentUser(user.id);
-
-    return {
-      isSelf,
-      onEdit: () => openEdit(user),
-      onSuspend: () => openDialog("suspend", user),
-      onUnsuspend: () => openDialog("unsuspend", user),
-      onDelete: () => openDialog("delete", user),
-    };
-  }
-
   async function handleSaveEdit(id: string, data: UpdateAdminUserRequest) {
     setIsSavingEdit(true);
     setEditError("");
 
     try {
       const updated = await updateAdminUser(id, data);
-      setUsers((current) =>
+      setUsers((current = []) =>
         current.map((user) => (user.id === id ? updated : user))
       );
       setEditingUser(null);
@@ -215,19 +143,19 @@ function AdminPanel() {
     try {
       if (dialogAction === "delete") {
         await deleteAdminUser(dialogTarget.id);
-        setUsers((current) =>
+        setUsers((current = []) =>
           current.filter((user) => user.id !== dialogTarget.id)
         );
         setMessage(`Deleted ${capitalizeFirstLetter(dialogTarget.username)}.`);
       } else if (dialogAction === "suspend") {
         const updated = await suspendAdminUser(dialogTarget.id);
-        setUsers((current) =>
+        setUsers((current = []) =>
           current.map((user) => (user.id === updated.id ? updated : user))
         );
         setMessage(`Suspended ${capitalizeFirstLetter(updated.username)}.`);
       } else if (dialogAction === "unsuspend") {
         const updated = await unsuspendAdminUser(dialogTarget.id);
-        setUsers((current) =>
+        setUsers((current = []) =>
           current.map((user) => (user.id === updated.id ? updated : user))
         );
         setMessage(`Reactivated ${capitalizeFirstLetter(updated.username)}.`);
@@ -243,28 +171,6 @@ function AdminPanel() {
     }
   }
 
-  if (!accessToken || !isAdmin) {
-    return null;
-  }
-
-  const dialogTitle =
-    dialogAction === "delete"
-      ? "Delete user account?"
-      : dialogAction === "suspend"
-        ? "Suspend user?"
-        : dialogAction === "unsuspend"
-          ? "Reactivate user?"
-          : "";
-
-  const dialogConfirmLabel =
-    dialogAction === "delete"
-      ? "Delete account"
-      : dialogAction === "suspend"
-        ? "Suspend user"
-        : dialogAction === "unsuspend"
-          ? "Reactivate user"
-          : "Confirm";
-
   return (
     <div className="admin">
       <EditUserModal
@@ -279,44 +185,14 @@ function AdminPanel() {
         }}
       />
 
-      <ConfirmDialog
-        open={dialogAction !== null && dialogTarget !== null}
-        title={dialogTitle}
-        confirmLabel={dialogConfirmLabel}
-        cancelLabel="Cancel"
-        isConfirming={isDialogSubmitting}
+      <AdminUserActionDialog
+        action={dialogAction}
+        target={dialogTarget}
+        error={dialogError}
+        isSubmitting={isDialogSubmitting}
         onConfirm={handleConfirmDialog}
         onClose={closeDialog}
-      >
-        {dialogTarget && (
-          <>
-            {dialogAction === "delete" && (
-              <p>
-                This permanently removes{" "}
-                <strong>{capitalizeFirstLetter(dialogTarget.username)}</strong>{" "}
-                and all related data. This action cannot be undone.
-              </p>
-            )}
-            {dialogAction === "suspend" && (
-              <p>
-                <strong>{capitalizeFirstLetter(dialogTarget.username)}</strong>{" "}
-                will not be able to log in or book appointments while suspended.
-              </p>
-            )}
-            {dialogAction === "unsuspend" && (
-              <p>
-                <strong>{capitalizeFirstLetter(dialogTarget.username)}</strong>{" "}
-                will regain full access to their account.
-              </p>
-            )}
-          </>
-        )}
-        {dialogError && (
-          <p className="admin-status admin-status--error" role="alert">
-            {dialogError}
-          </p>
-        )}
-      </ConfirmDialog>
+      />
 
       <div className="admin-inner">
         <header className="admin-header">
@@ -332,59 +208,20 @@ function AdminPanel() {
           </p>
         )}
 
-        <div className="admin-stat-grid" aria-label="User statistics">
-          <div className="admin-stat-card">
-            <span className="admin-stat-card-value">{counts.total}</span>
-            <span className="admin-stat-card-label">Total users</span>
-          </div>
-          <div className="admin-stat-card admin-stat-card--active">
-            <span className="admin-stat-card-value">{counts.active}</span>
-            <span className="admin-stat-card-label">Active</span>
-          </div>
-          <div className="admin-stat-card admin-stat-card--suspended">
-            <span className="admin-stat-card-value">{counts.suspended}</span>
-            <span className="admin-stat-card-label">Suspended</span>
-          </div>
-        </div>
+        <AdminStatsGrid
+          total={counts.total}
+          active={counts.active}
+          suspended={counts.suspended}
+        />
 
-        <div className="admin-toolbar">
-          <label className="admin-search" htmlFor="admin-user-search">
-            <SearchIcon />
-            <input
-              id="admin-user-search"
-              type="search"
-              placeholder="Search users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              autoComplete="off"
-            />
-          </label>
-
-          <div className="admin-filters">
-            <select
-              className="admin-filter"
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
-              aria-label="Filter by role"
-            >
-              <option value="all">All roles</option>
-              <option value={UserRoles.Customer}>Customers</option>
-              <option value={UserRoles.Provider}>Providers</option>
-              <option value={UserRoles.Admin}>Admins</option>
-            </select>
-
-            <select
-              className="admin-filter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              aria-label="Filter by status"
-            >
-              <option value="all">All statuses</option>
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-            </select>
-          </div>
-        </div>
+        <AdminSearchToolbar
+          searchQuery={searchQuery}
+          roleFilter={roleFilter}
+          statusFilter={statusFilter}
+          onSearchChange={setSearchQuery}
+          onRoleFilterChange={setRoleFilter}
+          onStatusFilterChange={setStatusFilter}
+        />
 
         {isLoading && (
           <div className="admin-loading" aria-live="polite">
@@ -406,77 +243,17 @@ function AdminPanel() {
         {!isLoading && !loadError && filteredUsers.length > 0 && (
           <>
             <ul className="admin-user-list">
-              {filteredUsers.map((user) => {
-                const handlers = getUserHandlers(user);
-
-                return (
-                  <li key={user.id}>
-                    <AdminUserCard user={user} {...handlers} />
-                  </li>
-                );
-              })}
+              {filteredUsers.map((user) => (
+                <li key={user.id}>
+                  <AdminUserCard user={user} {...getUserHandlers(user)} />
+                </li>
+              ))}
             </ul>
 
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Joined</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user) => {
-                    const handlers = getUserHandlers(user);
-
-                    return (
-                      <tr
-                        key={user.id}
-                        className={
-                          user.isSuspended ? "admin-table-row--suspended" : ""
-                        }
-                      >
-                        <td>
-                          <div className="admin-user-cell">
-                            <strong>
-                              {capitalizeFirstLetter(user.username)}
-                            </strong>
-                            {handlers.isSelf && <span>Your account</span>}
-                          </div>
-                        </td>
-                        <td>{user.email}</td>
-                        <td>{user.phoneNumber || "—"}</td>
-                        <td>
-                          <span className={roleBadgeClass(user.role)}>
-                            {formatRoleLabel(user.role)}
-                          </span>
-                        </td>
-                        <td>
-                          <span
-                            className={
-                              user.isSuspended
-                                ? "admin-badge admin-badge--suspended"
-                                : "admin-badge admin-badge--active"
-                            }
-                          >
-                            {user.isSuspended ? "Suspended" : "Active"}
-                          </span>
-                        </td>
-                        <td>{formatJoinedDate(user.createdAt)}</td>
-                        <td>
-                          <UserActionButtons user={user} {...handlers} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <AdminUserTable
+              users={filteredUsers}
+              getUserHandlers={getUserHandlers}
+            />
           </>
         )}
       </div>

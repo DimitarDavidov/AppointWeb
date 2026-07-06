@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { forgotPassword, getErrorMessage } from "../api/auth";
+import { getErrorMessage } from "../api/errors";
+import { forgotPassword } from "../api/auth";
 import "./Auth.scss";
 
 function ForgotPassword() {

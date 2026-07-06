@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { createAppointment } from "../api/appointments";
-import { getErrorMessage } from "../api/auth";
+import { getErrorMessage } from "../api/errors";
 import { getCatalogOffering } from "../api/catalog";
 import type { Appointment } from "../types/appointment";
-import type { CatalogOffering } from "../types/catalog";
+import { useAsyncData } from "../hooks/useAsyncData";
 import { useAppSelector } from "../store/hooks";
 import {
   formatAppointmentDateTime,
@@ -22,10 +22,20 @@ function ServiceDetail() {
   const navigate = useNavigate();
   const location = useLocation();
   const isLoggedIn = !!useAppSelector((state) => state.auth.accessToken);
-
-  const [offering, setOffering] = useState<CatalogOffering | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const missingParams = !providerId || !serviceId;
+  const {
+    data: offering,
+    isLoading,
+    error: fetchError,
+  } = useAsyncData(
+    () => getCatalogOffering(providerId!, serviceId!),
+    [providerId, serviceId],
+    {
+      enabled: !missingParams,
+      errorMessage: "Service not found or unavailable.",
+    }
+  );
+  const error = missingParams ? "Service not found." : fetchError;
   const [showBooking, setShowBooking] = useState(false);
   const [startTime, setStartTime] = useState("");
   const [bookingError, setBookingError] = useState("");
@@ -34,41 +44,6 @@ function ServiceDetail() {
     useState<Appointment | null>(null);
 
   const minStartTime = useMemo(() => toDatetimeLocalValue(new Date()), []);
-
-  useEffect(() => {
-    if (!providerId || !serviceId) {
-      setError("Service not found.");
-      setIsLoading(false);
-      return;
-    }
-
-    const pid = providerId;
-    const sid = serviceId;
-    let cancelled = false;
-
-    async function loadOffering() {
-      try {
-        const data = await getCatalogOffering(pid, sid);
-        if (!cancelled) {
-          setOffering(data);
-        }
-      } catch {
-        if (!cancelled) {
-          setError("Service not found or unavailable.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadOffering();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [providerId, serviceId]);
 
   function handleBookClick() {
     if (!isLoggedIn) {

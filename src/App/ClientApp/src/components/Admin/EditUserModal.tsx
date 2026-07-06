@@ -56,6 +56,8 @@ function EditUserModal({
     return null;
   }
 
+  const userId = user.id;
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
@@ -73,7 +75,7 @@ function EditUserModal({
     }
 
     setValidationError("");
-    onSave(user.id, {
+    onSave(userId, {
       username: trimmedUsername,
       email: trimmedEmail,
       phoneNumber: phoneNumber.trim() || null,

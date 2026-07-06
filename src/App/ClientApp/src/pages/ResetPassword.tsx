@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { getErrorMessage, resetPassword } from "../api/auth";
+import { getErrorMessage } from "../api/errors";
+import { resetPassword } from "../api/auth";
 import "./Auth.scss";
 
 function ResetPassword() {

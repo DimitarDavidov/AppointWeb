@@ -1,5 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+import { UserRoles } from "./constants/roles";
 import Account from "./pages/Account";
 import AdminPanel from "./pages/AdminPanel";
 import ProviderPanel from "./pages/ProviderPanel";
@@ -25,10 +27,14 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/admin" element={<AdminPanel />} />
           <Route path="/provider" element={<ProviderPanel />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/appointments" element={<Appointments />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/account" element={<Account />} />
+            <Route path="/appointments" element={<Appointments />} />
+          </Route>
+          <Route element={<ProtectedRoute roles={[UserRoles.Admin]} />}>
+            <Route path="/admin" element={<AdminPanel />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

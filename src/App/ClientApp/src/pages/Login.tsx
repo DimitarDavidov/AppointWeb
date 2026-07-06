@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { getErrorMessage, login } from "../api/auth";
+import { getErrorMessage } from "../api/errors";
+import { login } from "../api/auth";
 import { setCredentials } from "../features/auth/authSlice";
 import { useAppDispatch } from "../store/hooks";
 import "./Auth.scss";
