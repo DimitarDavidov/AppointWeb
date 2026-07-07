@@ -2,12 +2,9 @@ import { Link } from "react-router-dom";
 import { getAppointments } from "../api/appointments";
 import { AppointmentCard } from "../components/Appointments/AppointmentCard";
 import { useAsyncData } from "../hooks/useAsyncData";
-import { useAppSelector } from "../store/hooks";
 import "./Appointments.scss";
 
 function Appointments() {
-  const { role } = useAppSelector((state) => state.auth);
-
   const {
     data: appointments = [],
     isLoading,
@@ -24,7 +21,7 @@ function Appointments() {
         <header className="appointments-header">
           <h1 className="appointments-title">Appointments</h1>
           <p className="appointments-subtitle">
-            View and manage your upcoming and past bookings.
+            View and manage appointments you booked with providers.
           </p>
         </header>
 
@@ -55,7 +52,6 @@ function Appointments() {
               <AppointmentCard
                 key={appointment.id}
                 appointment={appointment}
-                viewerRole={role}
                 onUpdated={reload}
               />
             ))}

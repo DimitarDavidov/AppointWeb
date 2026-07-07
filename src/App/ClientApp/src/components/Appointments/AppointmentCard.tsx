@@ -7,6 +7,8 @@ import { getErrorMessage } from "../../api/errors";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 import { isActiveAppointmentStatus } from "../../utils/providerPanelUtils";
 import { UserRoles } from "../../constants/roles";
+import { useAppSelector } from "../../store/hooks";
+import { isSameId } from "../../utils/isSameId";
 import type { AppointmentDetail } from "../../types/appointment";
 import {
   formatAppointmentDateTime,
@@ -58,23 +60,24 @@ function statusClassName(status: string): string {
 
 interface AppointmentCardProps {
   appointment: AppointmentDetail;
-  viewerRole: string | null;
   onUpdated: () => void;
 }
 
 export function AppointmentCard({
   appointment,
-  viewerRole,
   onUpdated,
 }: AppointmentCardProps) {
+  const { userId, role } = useAppSelector((state) => state.auth);
   const durationMinutes = getDurationMinutes(
     appointment.startTime,
     appointment.endTime
   );
-  const isProviderView = viewerRole === UserRoles.Provider;
-  const isAdminView = viewerRole === UserRoles.Admin;
+  const isCustomerView = isSameId(userId, appointment.customerId);
+  const isProviderView = isSameId(userId, appointment.providerId);
+  const isAdminView = role === UserRoles.Admin;
   const canModify = isActiveAppointmentStatus(appointment.status);
-  const showProviderCancelReason = isProviderView || isAdminView;
+  const showProviderCancelReason = isProviderView && !isCustomerView;
+  const showCustomerCancelReason = isCustomerView;
 
   const [isEditing, setIsEditing] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -85,12 +88,12 @@ export function AppointmentCard({
   const minStartTime = useMemo(() => toDatetimeLocalValue(new Date()), []);
 
   const counterpartName = capitalizeFirstLetter(
-    isProviderView || isAdminView
-      ? appointment.customerUsername
-      : appointment.providerUsername
+    isCustomerView || (isAdminView && !isProviderView)
+      ? appointment.providerUsername
+      : appointment.customerUsername
   );
   const counterpartLabel =
-    isProviderView || isAdminView ? "Customer" : "Provider";
+    isCustomerView || (isAdminView && !isProviderView) ? "Provider" : "Customer";
 
   function handleEditClick() {
     setEditStartTime(toDatetimeLocalValueFromIso(appointment.startTime));
@@ -121,7 +124,7 @@ export function AppointmentCard({
     try {
       await cancelAppointment(
         appointment.id,
-        showProviderCancelReason && reason ? { reason } : undefined
+        reason ? { reason } : undefined
       );
       setShowCancelDialog(false);
       onUpdated();
@@ -165,7 +168,10 @@ export function AppointmentCard({
     <li className="appointments-card">
       <CancelAppointmentDialog
         open={showCancelDialog}
-        showReasonField={showProviderCancelReason}
+        showReasonField={showProviderCancelReason || showCustomerCancelReason}
+        reasonAudience={
+          showCustomerCancelReason ? "provider" : "customer"
+        }
         isConfirming={isSubmitting}
         onConfirm={handleConfirmCancel}
         onClose={handleCloseCancelDialog}
@@ -173,7 +179,7 @@ export function AppointmentCard({
         <p>
           {showProviderCancelReason
             ? "This will cancel the customer's booking. They will be notified by email."
-            : "This will cancel your booking. You can always schedule a new appointment later if you change your mind."}
+            : "This will cancel your booking. Your provider will be notified by email."}
         </p>
         <ul className="confirm-dialog-summary">
           <li>
@@ -219,25 +225,31 @@ export function AppointmentCard({
       )}
 
       <dl className="appointments-card-meta">
-        {!isProviderView && (
+        {isCustomerView && (
           <div className="appointments-card-meta-item">
             <dt>Provider</dt>
             <dd>{capitalizeFirstLetter(appointment.providerUsername)}</dd>
           </div>
         )}
 
-        {(isProviderView || isAdminView) && (
+        {isProviderView && (
           <div className="appointments-card-meta-item">
             <dt>Customer</dt>
             <dd>{capitalizeFirstLetter(appointment.customerUsername)}</dd>
           </div>
         )}
 
-        {isAdminView && (
-          <div className="appointments-card-meta-item">
-            <dt>Provider</dt>
-            <dd>{capitalizeFirstLetter(appointment.providerUsername)}</dd>
-          </div>
+        {isAdminView && !isCustomerView && !isProviderView && (
+          <>
+            <div className="appointments-card-meta-item">
+              <dt>Customer</dt>
+              <dd>{capitalizeFirstLetter(appointment.customerUsername)}</dd>
+            </div>
+            <div className="appointments-card-meta-item">
+              <dt>Provider</dt>
+              <dd>{capitalizeFirstLetter(appointment.providerUsername)}</dd>
+            </div>
+          </>
         )}
 
         <div className="appointments-card-meta-item">

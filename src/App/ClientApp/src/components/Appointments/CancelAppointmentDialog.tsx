@@ -6,6 +6,7 @@ interface CancelAppointmentDialogProps {
   open: boolean;
   isConfirming: boolean;
   showReasonField?: boolean;
+  reasonAudience?: "customer" | "provider";
   onConfirm: (reason?: string) => void;
   onClose: () => void;
   children: ReactNode;
@@ -15,6 +16,7 @@ export function CancelAppointmentDialog({
   open,
   isConfirming,
   showReasonField = false,
+  reasonAudience = "customer",
   onConfirm,
   onClose,
   children,
@@ -37,6 +39,16 @@ export function CancelAppointmentDialog({
     onConfirm(trimmedReason || undefined);
   }
 
+  const reasonPlaceholder =
+    reasonAudience === "provider"
+      ? "Let the provider know why you are cancelling..."
+      : "Let the customer know why this appointment is being cancelled...";
+
+  const reasonHint =
+    reasonAudience === "provider"
+      ? "Your provider will receive an email about this cancellation. Any reason you add will be included."
+      : "The customer will receive an email about this cancellation. Any reason you add will be included.";
+
   return (
     <ConfirmDialog
       open={open}
@@ -58,15 +70,12 @@ export function CancelAppointmentDialog({
             className="cancel-appointment-reason-input"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Let the customer know why this appointment is being cancelled..."
+            placeholder={reasonPlaceholder}
             rows={4}
             maxLength={1000}
             disabled={isConfirming}
           />
-          <span className="cancel-appointment-reason-hint">
-            The customer will receive an email about this cancellation. Any reason
-            you add will be included.
-          </span>
+          <span className="cancel-appointment-reason-hint">{reasonHint}</span>
         </label>
       )}
     </ConfirmDialog>

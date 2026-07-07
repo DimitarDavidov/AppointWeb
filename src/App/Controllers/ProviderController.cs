@@ -1,4 +1,5 @@
 using AppointWeb.Api.Data;
+using AppointWeb.Api.Dtos.Appointments;
 using AppointWeb.Api.Dtos.Provider;
 using AppointWeb.Api.Extensions;
 using AppointWeb.Api.Models;
@@ -10,7 +11,7 @@ namespace AppointWeb.Api.Controllers;
 
 [ApiController]
 [Route("api/provider")]
-[Authorize(Roles = UserRoles.Provider)]
+[Authorize(Roles = $"{UserRoles.Provider},{UserRoles.Admin}")]
 public class ProviderController : ControllerBase
 {
     private readonly AppDbContext _db;
@@ -18,6 +19,38 @@ public class ProviderController : ControllerBase
     public ProviderController(AppDbContext db)
     {
         _db = db;
+    }
+
+    [HttpGet("appointments")]
+    public async Task<ActionResult<IEnumerable<AppointmentDetailResponse>>> GetAppointments(
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetUserId(out var providerId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        var appointments = await _db.Appointments
+            .AsNoTracking()
+            .Where(a => a.ProviderId == providerId)
+            .OrderByDescending(a => a.StartTime)
+            .Select(a => new AppointmentDetailResponse
+            {
+                Id = a.Id,
+                CustomerId = a.CustomerId,
+                CustomerUsername = a.Customer.Username,
+                CustomerPhoneNumber = a.Customer.PhoneNumber,
+                ProviderId = a.ProviderId,
+                ProviderUsername = a.Provider.Username,
+                ServiceId = a.ServiceId,
+                ServiceName = a.Service.Name,
+                StartTime = a.StartTime,
+                EndTime = a.EndTime,
+                Status = AppointmentStatusMapper.ToApiStatus(a.Status),
+                PriceAtBooking = a.PriceAtBooking,
+                CancellationReason = a.CancellationReason,
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(appointments);
     }
 
     [HttpGet("services")]

@@ -1,10 +1,16 @@
 import api from "./api";
+import type { AppointmentDetail } from "../types/appointment";
 import type {
   ProviderAvailabilitySlot,
   ProviderAvailabilitySlotInput,
   ProviderServiceDetail,
   UpdateProviderServiceRequest,
 } from "../types/provider";
+
+export async function getProviderAppointments(): Promise<AppointmentDetail[]> {
+  const response = await api.get<AppointmentDetail[]>("/api/provider/appointments");
+  return response.data;
+}
 
 export async function getProviderServices(): Promise<ProviderServiceDetail[]> {
   const response = await api.get<ProviderServiceDetail[]>("/api/provider/services");

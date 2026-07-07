@@ -2,10 +2,12 @@ using AppointWeb.Api.Data;
 using AppointWeb.Api.Dtos.Appointments;
 using AppointWeb.Api.Extensions;
 using AppointWeb.Api.Models;
+using AppointWeb.Api.Options;
 using AppointWeb.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Npgsql;
 using System.Globalization;
 using System.Security.Claims;
@@ -19,15 +21,18 @@ public class AppointmentsController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly IEmailService _emailService;
+    private readonly FrontendSettings _frontendSettings;
     private readonly ILogger<AppointmentsController> _logger;
 
     public AppointmentsController(
         AppDbContext db,
         IEmailService emailService,
+        IOptions<FrontendSettings> frontendSettings,
         ILogger<AppointmentsController> logger)
     {
         _db = db;
         _emailService = emailService;
+        _frontendSettings = frontendSettings.Value;
         _logger = logger;
     }
 
@@ -126,6 +131,13 @@ public class AppointmentsController : ControllerBase
         if (provider is null)
             return NotFound("Provider not found.");
 
+        var customer = await _db.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(u => u.Id == customerId, ct);
+
+        if (customer is null)
+            return Unauthorized("Invalid token: missing user id.");
+
         if (provider.Role != UserRoles.Provider)
             return BadRequest("The selected user is not a provider.");
 
@@ -175,6 +187,31 @@ public class AppointmentsController : ControllerBase
             return Conflict("This time slot is already booked.");
         }
 
+        try
+        {
+            var appointmentWhen = appointment.StartTime.ToString(
+                "dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'",
+                CultureInfo.InvariantCulture);
+            var providerPanelUrl = $"{_frontendSettings.BaseUrl.TrimEnd('/')}/provider";
+
+            await _emailService.SendAppointmentRequestEmailAsync(
+                provider.Email,
+                provider.Username,
+                customer.Username,
+                customer.PhoneNumber,
+                service.Name,
+                appointmentWhen,
+                providerPanelUrl,
+                ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to send appointment request email for appointment {AppointmentId}",
+                appointment.Id);
+        }
+
         return Ok(AppointmentMapper.MapResponse(appointment));
     }
 
@@ -205,30 +242,24 @@ public class AppointmentsController : ControllerBase
             return BadRequest("Only active appointments can be cancelled.");
 
         var notifyCustomer = appointment.CustomerId != userId;
-        var canProvideReason =
-            notifyCustomer &&
-            (role == UserRoles.Provider || role == UserRoles.Admin);
+        var notifyProvider = appointment.CustomerId == userId;
 
-        string? reason = null;
-        if (canProvideReason)
-        {
-            reason = string.IsNullOrWhiteSpace(request?.Reason)
-                ? null
-                : request!.Reason.Trim();
-            appointment.CancellationReason = reason;
-        }
+        var reason = string.IsNullOrWhiteSpace(request?.Reason)
+            ? null
+            : request!.Reason.Trim();
+        appointment.CancellationReason = reason;
 
         appointment.Status = AppointmentStatus.Cancelled;
         await _db.SaveChangesAsync(ct);
+
+        var appointmentWhen = appointment.StartTime.ToString(
+            "dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'",
+            CultureInfo.InvariantCulture);
 
         if (notifyCustomer)
         {
             try
             {
-                var appointmentWhen = appointment.StartTime.ToString(
-                    "dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'",
-                    CultureInfo.InvariantCulture);
-
                 await _emailService.SendAppointmentCancelledEmailAsync(
                     appointment.Customer.Email,
                     appointment.Customer.Username,
@@ -243,6 +274,28 @@ public class AppointmentsController : ControllerBase
                 _logger.LogError(
                     ex,
                     "Failed to send cancellation email for appointment {AppointmentId}",
+                    appointment.Id);
+            }
+        }
+
+        if (notifyProvider)
+        {
+            try
+            {
+                await _emailService.SendCustomerCancelledAppointmentEmailAsync(
+                    appointment.Provider.Email,
+                    appointment.Provider.Username,
+                    appointment.Customer.Username,
+                    appointment.Service.Name,
+                    appointmentWhen,
+                    reason,
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to send customer cancellation email for appointment {AppointmentId}",
                     appointment.Id);
             }
         }
@@ -367,9 +420,6 @@ public class AppointmentsController : ControllerBase
 
         if (role == UserRoles.Admin)
             return query;
-
-        if (role == UserRoles.Provider)
-            return query.Where(a => a.ProviderId == userId);
 
         return query.Where(a => a.CustomerId == userId);
     }

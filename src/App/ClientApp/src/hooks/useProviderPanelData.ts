@@ -1,5 +1,4 @@
-import { getAppointments } from "../api/appointments";
-import { getProviderServices } from "../api/provider";
+import { getProviderAppointments, getProviderServices } from "../api/provider";
 import { useAsyncData } from "./useAsyncData";
 import {
   computeProviderStats,
@@ -7,7 +6,7 @@ import {
 } from "../utils/providerPanelUtils";
 
 export function useProviderPanelData() {
-  const appointmentsQuery = useAsyncData(getAppointments, [], {
+  const appointmentsQuery = useAsyncData(getProviderAppointments, [], {
     initialData: [],
     errorMessage: "Could not load appointments. Please try again.",
   });
