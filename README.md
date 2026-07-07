@@ -1,6 +1,6 @@
 # AppointWeb
 
-A portfolio appointment booking application with a **React** frontend and **ASP.NET Core** backend. Users can register, log in, and book appointments. PostgreSQL runs locally via Docker.
+A portfolio appointment booking application with a **React** frontend and **ASP.NET Core** backend. Customers browse services and book appointments; providers manage their listings and availability; admins manage users.
 
 ## Documentation
 
@@ -181,13 +181,18 @@ The frontend runs on **http://localhost:5173** and talks to the API at `http://l
 
 ## Frontend pages
 
-| Route | Description |
-|-------|-------------|
-| `/` | Home |
-| `/login` | Log in |
-| `/register` | Create an account |
-| `/forgot-password` | Request a password reset email |
-| `/reset-password?token=...` | Set a new password from email link |
+| Route | Access | Description |
+|-------|--------|-------------|
+| `/` | Public | Home page and service catalog |
+| `/book/:providerId/:serviceId` | Public | Service detail and booking |
+| `/login` | Public | Log in |
+| `/register` | Public | Create an account (Customer or Provider) |
+| `/forgot-password` | Public | Request a password reset email |
+| `/reset-password?token=...` | Public | Set a new password from email link |
+| `/account` | Authenticated | Account settings |
+| `/appointments` | Authenticated | View and manage appointments |
+| `/provider` | Provider, Admin | Provider dashboard |
+| `/admin` | Admin | User management |
 
 After login or registration, a JWT is stored in Redux and `localStorage`. See [Authentication](docs/authentication.md) for details.
 
@@ -201,8 +206,14 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 | `POST` | `/api/auth/login` | No | Log in and receive a JWT |
 | `POST` | `/api/auth/forgot-password` | No | Request password reset email |
 | `POST` | `/api/auth/reset-password` | No | Reset password with email token |
-| `GET` | `/api/user/providers` | Yes | List provider accounts |
+| `GET` | `/api/catalog` | No | List bookable provider services |
+| `GET` | `/api/appointments` | Yes | List appointments (scoped by role) |
 | `POST` | `/api/appointments` | Yes | Create an appointment |
+| `PATCH` | `/api/appointments/{id}/cancel` | Yes | Cancel an appointment |
+| `PATCH` | `/api/appointments/{id}/reschedule` | Yes | Reschedule an appointment |
+| `GET` | `/api/account` | Yes | Get current user profile |
+| `GET` | `/api/provider/services` | Provider | List the provider's services |
+| `GET` | `/api/admin/users` | Admin | List all users |
 
 ## Troubleshooting
 

@@ -18,11 +18,25 @@ When a user registers or logs in, the backend creates a JWT containing:
 |-------|-------|
 | `sub` | User ID (Guid) |
 | `email` | User email |
-| `role` | User role (`Customer` by default) |
+| `unique_name` | Username |
+| `role` | User role (`Customer`, `Provider`, or `Admin`) |
 
 Tokens are signed with HMAC-SHA256 using the key from `appsettings.Development.json` (`Jwt:Key`).
 
 Default expiry: **60 minutes** (`Jwt:ExpiresMinutes`).
+
+### Auth response
+
+Login and register return:
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "username": "jane",
+  "email": "jane@example.com",
+  "role": "Customer"
+}
+```
 
 ### Password storage
 
@@ -32,10 +46,13 @@ Passwords are never stored in plain text. The backend uses ASP.NET Core's `Passw
 
 | Role | Description |
 |------|-------------|
-| `Customer` | Default role assigned on registration |
-| `Admin` | Intended for admin panel access (not yet enforced in API) |
+| `Customer` | Default role; can browse and book services |
+| `Provider` | Can manage services, availability, and incoming bookings |
+| `Admin` | Can manage all users via the admin panel and API |
 
-New users always register as `Customer`. To create an admin user for testing, update the `Role` column directly in the database:
+### Registration roles
+
+Users can register as **Customer** (default) or **Provider** by passing an optional `role` field. **Admin** cannot be self-assigned — set it manually in the database:
 
 ```sql
 UPDATE "Users" SET "Role" = 'Admin' WHERE "Email" = 'admin@example.com';
@@ -52,6 +69,7 @@ Auth state is managed with **Redux Toolkit** in `src/features/auth/authSlice.ts`
   accessToken: string | null;
   userId: string | null;
   email: string | null;
+  username: string | null;
   role: string | null;
 }
 ```
@@ -60,12 +78,13 @@ Auth state is managed with **Redux Toolkit** in `src/features/auth/authSlice.ts`
 
 | Action | When | Effect |
 |--------|------|--------|
-| `setCredentials(token)` | After login or register | Saves token, decodes JWT claims, persists to `localStorage` |
-| `logout()` | User clicks logout (not yet wired) | Clears state and `localStorage` |
+| `setCredentials(response)` | After login or register | Saves token and profile, persists to `localStorage` |
+| `logout()` | User clicks logout | Clears state and `localStorage` |
+| `updateProfile(partial)` | After account email/username change | Updates stored profile fields |
 
 ### Persistence
 
-The token is stored in `localStorage` under the key `accessToken`. On page refresh, the Redux store rehydrates from `localStorage` so the user stays logged in.
+The token is stored in `localStorage` under `accessToken`. Profile fields are stored under `authUser`. On page refresh, the Redux store rehydrates from `localStorage` so the user stays logged in.
 
 ### API requests
 
@@ -75,14 +94,29 @@ The axios instance (`src/api/api.ts`) adds the token to every request:
 Authorization: Bearer <accessToken>
 ```
 
+## Route protection
+
+The `ProtectedRoute` component guards frontend routes:
+
+- Redirects unauthenticated users to `/login` (preserving the intended destination)
+- Redirects authenticated users without the required role to `/`
+
+Role requirements are defined per route in `App.tsx`.
+
 ## Logout
 
 There is no backend logout endpoint — this is normal for stateless JWTs. Logout is handled entirely on the frontend:
 
 1. Dispatch `logout()` to clear Redux state
-2. Remove token from `localStorage`
+2. Remove token and profile from `localStorage`
 
 The token remains valid until it expires, but the frontend stops sending it.
+
+## Suspended accounts
+
+When an admin suspends a user, `IsSuspended` is set to `true` on the user record. The `SuspendedUserMiddleware` blocks all authenticated API requests for suspended accounts with `403 Forbidden`.
+
+Suspended users also cannot log in — the login endpoint returns `401 Unauthorized`.
 
 ## Password reset
 
@@ -121,16 +155,21 @@ Reset emails include a branded HTML template and link to `{Frontend:BaseUrl}/res
 
 ## Protected vs public endpoints
 
-| Endpoint | Auth required |
-|----------|---------------|
-| `POST /api/auth/register` | No |
-| `POST /api/auth/login` | No |
-| `POST /api/auth/forgot-password` | No |
-| `POST /api/auth/reset-password` | No |
-| `GET /api/user/providers` | Yes |
-| `POST /api/appointments` | Yes |
+| Endpoint group | Auth required | Role |
+|----------------|---------------|------|
+| `POST /api/auth/*` | No | — |
+| `GET /api/catalog` | No | — |
+| `GET /api/services` | No | — |
+| `GET /api/account` | Yes | Any |
+| `PATCH /api/account/*` | Yes | Any |
+| `DELETE /api/account` | Yes | Any |
+| `GET /api/appointments` | Yes | Any (scoped by role) |
+| `POST /api/appointments` | Yes | Any |
+| `GET /api/user/providers` | Yes | Any |
+| `GET /api/provider/*` | Yes | Provider |
+| `GET /api/admin/*` | Yes | Admin |
 
-Protected endpoints use the `[Authorize]` attribute. The backend reads the user ID from the JWT `sub` claim.
+Protected endpoints use the `[Authorize]` attribute (with optional role restrictions). The backend reads the user ID from the JWT `sub` claim.
 
 ## Configuration
 
@@ -181,4 +220,3 @@ See `appsettings.Development.example.json` for the full template.
 - The JWT key should be a long random string in production
 - There is no refresh token — users re-login after expiry
 - There is no token blacklist — logout is client-side only
-- User listing endpoint currently exposes password hashes (legacy, to be fixed)

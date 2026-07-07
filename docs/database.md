@@ -10,18 +10,40 @@ AppointWeb uses **PostgreSQL 16** with **Entity Framework Core** for data access
 ├──────────────┤       ├──────────────────┤       ├──────────────┤
 │ Id (PK)      │◄──┐   │ Id (PK)          │   ┌──►│ Id (PK)      │
 │ Email        │   ├───│ CustomerId (FK)  │   │   │ Name         │
-│ PasswordHash │   │   │ ProviderId (FK)  │───┘   │ Description  │
-│ Role         │   └───│ ServiceId (FK)   │───────│ DurationMin  │
-│ CreatedAt    │◄──────│ StartTime        │       │ Price        │
-└──────────────┘       │ EndTime          │       │ IsActive     │
-       ▲               │ Status           │       │ CreatedAt    │
-       │               │ PriceAtBooking   │       └──────────────┘
-       │               │ CreatedAt        │
-       └───────────────│                  │
-         (Provider)    └──────────────────┘
+│ Username     │   │   │ ProviderId (FK)  │───┘   │ Description  │
+│ PasswordHash │   └───│ ServiceId (FK)   │───────│ Category     │
+│ Role         │◄──────│ StartTime        │       │ DurationMin  │
+│ PhoneNumber  │       │ EndTime          │       │ Price        │
+│ IsSuspended  │       │ Status           │       │ IsActive     │
+│ CreatedAt    │       │ PriceAtBooking   │       │ CreatedAt    │
+└──────┬───────┘       │ CreatedAt        │       └──────┬───────┘
+       │               └──────────────────┘              │
+       │                                                 │
+       │         ┌──────────────────┐                    │
+       ├────────►│ ProviderServices │◄───────────────────┘
+       │         ├──────────────────┤
+       │         │ Id (PK)          │
+       │         │ ProviderId (FK)  │
+       │         │ ServiceId (FK)   │
+       │         │ IsActive         │
+       │         │ CreatedAt        │
+       │         └──────────────────┘
+       │
+       │         ┌──────────────────────┐
+       └────────►│ ProviderAvailabilities│
+                 ├──────────────────────┤
+                 │ Id (PK)              │
+                 │ ProviderId (FK)      │
+                 │ DayOfWeek            │
+                 │ StartTime            │
+                 │ EndTime              │
+                 │ CreatedAt            │
+                 └──────────────────────┘
 ```
 
-A user can be a **customer** (books appointments) or a **provider** (delivers services). The same `Users` table serves both roles.
+A user can be a **customer** (books appointments), a **provider** (delivers services), or an **admin** (manages users). The same `Users` table serves all roles.
+
+Services are linked to providers through the `ProviderServices` join table. The public catalog shows active provider–service pairings.
 
 ## Tables
 
@@ -31,8 +53,11 @@ A user can be a **customer** (books appointments) or a **provider** (delivers se
 |--------|------|-------|
 | `Id` | uuid | Primary key |
 | `Email` | text | Required, unique index |
+| `Username` | varchar(50) | Required, unique index |
 | `PasswordHash` | text | Required, ASP.NET Identity hasher |
 | `Role` | text | Required, default `"Customer"` |
+| `PhoneNumber` | text | Optional |
+| `IsSuspended` | boolean | Default `false` |
 | `CreatedAt` | timestamptz | UTC |
 
 ### Services
@@ -42,9 +67,37 @@ A user can be a **customer** (books appointments) or a **provider** (delivers se
 | `Id` | uuid | Primary key |
 | `Name` | varchar(200) | Required |
 | `Description` | varchar(1000) | Optional |
+| `Category` | varchar(100) | Optional |
 | `DurationMinutes` | integer | 1–1440 |
 | `Price` | numeric | 0–100000 |
 | `IsActive` | boolean | Default `true` |
+| `CreatedAt` | timestamptz | UTC |
+
+### ProviderServices
+
+Links providers to the services they offer.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `Id` | uuid | Primary key |
+| `ProviderId` | uuid | FK → Users |
+| `ServiceId` | uuid | FK → Services |
+| `IsActive` | boolean | Default `true` |
+| `CreatedAt` | timestamptz | UTC |
+
+Unique index on `(ProviderId, ServiceId)`.
+
+### ProviderAvailabilities
+
+Weekly availability windows for a provider.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `Id` | uuid | Primary key |
+| `ProviderId` | uuid | FK → Users |
+| `DayOfWeek` | integer | 0 = Sunday through 6 = Saturday |
+| `StartTime` | time | Local start time |
+| `EndTime` | time | Local end time |
 | `CreatedAt` | timestamptz | UTC |
 
 ### Appointments
@@ -57,27 +110,11 @@ A user can be a **customer** (books appointments) or a **provider** (delivers se
 | `ServiceId` | uuid | FK → Services |
 | `StartTime` | timestamptz | UTC |
 | `EndTime` | timestamptz | Calculated from service duration |
-| `Status` | integer | Enum: `Booked`, etc. |
+| `Status` | integer | Enum: `Booked`, `Cancelled`, `Completed`, `NoShow` |
 | `PriceAtBooking` | numeric | Snapshot of service price at booking time |
 | `CreatedAt` | timestamptz | UTC |
 
-## Constraints
-
-### Unique email
-
-Each user must have a unique email address (index `IX_Users_Email`).
-
-### Double-booking prevention
-
-A PostgreSQL **exclusion constraint** prevents overlapping appointments for the same provider:
-
-```
-EX_Appointments_NoOverlap_PerProvider
-```
-
-Two `Booked` appointments for the same provider cannot overlap in time. The application also checks for overlaps before inserting, and catches the constraint violation as a fallback.
-
-### Password reset tokens
+### PasswordResetTokens
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -90,6 +127,22 @@ Two `Booked` appointments for the same provider cannot overlap in time. The appl
 
 Raw reset tokens are never stored — only the hash. The plain token is sent by email and submitted once by the client.
 
+## Constraints
+
+### Unique email and username
+
+Each user must have a unique email address and username.
+
+### Double-booking prevention
+
+A PostgreSQL **exclusion constraint** prevents overlapping appointments for the same provider:
+
+```
+EX_Appointments_NoOverlap_PerProvider
+```
+
+Two `Booked` appointments for the same provider cannot overlap in time. The application also checks for overlaps before inserting, and catches the constraint violation as a fallback.
+
 ## Migrations
 
 Migrations live in `src/App/Migrations/` and are applied on API startup via `ApplyMigrations()` in `Program.cs`.
@@ -99,7 +152,13 @@ Migrations live in `src/App/Migrations/` and are applied on API startup via `App
 | `AddServicesAndAppointments` | Creates Users, Services, Appointments tables |
 | `AddUserAuthFields` | Adds PasswordHash, Role, CreatedAt to Users; unique email index |
 | `AddAppointmentDoubleBookingConstraint` | PostgreSQL exclusion constraint for provider overlap |
-| `AddPasswordResetTokens` | Creates PasswordResetTokens table for email password reset |
+| `AddUsernameToUser` | Adds Username column with unique index |
+| `AddPasswordResetTokens` | Creates PasswordResetTokens table |
+| `AddPhoneNumberToUser` | Adds PhoneNumber column to Users |
+| `AddProviderAvailability` | Creates ProviderAvailabilities table |
+| `AddCategoryToService` | Adds Category column to Services |
+| `AddProviderService` | Creates ProviderServices join table |
+| `AddIsSuspendedToUser` | Adds IsSuspended column to Users |
 
 ### Manual migration commands
 
@@ -147,10 +206,17 @@ Useful queries:
 
 ```sql
 -- List users
-SELECT "Id", "Email", "Role", "CreatedAt" FROM "Users";
+SELECT "Id", "Username", "Email", "Role", "IsSuspended", "CreatedAt" FROM "Users";
 
 -- List services
 SELECT * FROM "Services";
+
+-- List provider offerings
+SELECT ps."ProviderId", u."Username", s."Name"
+FROM "ProviderServices" ps
+JOIN "Users" u ON u."Id" = ps."ProviderId"
+JOIN "Services" s ON s."Id" = ps."ServiceId"
+WHERE ps."IsActive" = true;
 
 -- List appointments
 SELECT * FROM "Appointments";

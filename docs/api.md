@@ -18,21 +18,30 @@ POST /api/auth/register
 
 ```json
 {
+  "username": "jane",
   "email": "user@example.com",
-  "password": "password123"
+  "password": "password123",
+  "phoneNumber": "+1234567890",
+  "role": "Customer"
 }
 ```
 
 | Field | Type | Rules |
 |-------|------|-------|
-| `email` | string | Required, valid email |
+| `username` | string | Required, 3–50 characters, unique |
+| `email` | string | Required, valid email, unique |
 | `password` | string | Required, minimum 6 characters |
+| `phoneNumber` | string | Optional |
+| `role` | string | Optional. `Customer` (default) or `Provider`. Admin cannot be self-assigned |
 
 **Success response — `200 OK`**
 
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIs..."
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "username": "jane",
+  "email": "user@example.com",
+  "role": "Customer"
 }
 ```
 
@@ -40,7 +49,7 @@ POST /api/auth/register
 
 | Status | Condition |
 |--------|-----------|
-| `409 Conflict` | Email already registered |
+| `409 Conflict` | Email or username already registered |
 | `400 Bad Request` | Validation failed |
 
 ---
@@ -66,7 +75,10 @@ POST /api/auth/login
 
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIs..."
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "username": "jane",
+  "email": "user@example.com",
+  "role": "Customer"
 }
 ```
 
@@ -74,7 +86,7 @@ POST /api/auth/login
 
 | Status | Condition |
 |--------|-----------|
-| `401 Unauthorized` | Invalid email or password |
+| `401 Unauthorized` | Invalid email or password, or account suspended |
 
 ---
 
@@ -158,11 +170,76 @@ POST /api/auth/reset-password
 
 ---
 
+## Catalog endpoints
+
+### List offerings
+
+Returns all active provider–service pairings for the public catalog. No authentication required.
+
+```
+GET /api/catalog
+```
+
+**Success response — `200 OK`**
+
+```json
+[
+  {
+    "providerId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "providerUsername": "jane-provider",
+    "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+    "serviceName": "Dental Checkup",
+    "description": "Routine dental examination",
+    "category": "Healthcare",
+    "durationMinutes": 30,
+    "price": 25.00
+  }
+]
+```
+
+---
+
+### Get offering
+
+Returns a single catalog offering by provider and service ID.
+
+```
+GET /api/catalog/{providerId}/{serviceId}
+```
+
+**Success response — `200 OK`** — Same shape as a single item from the list above.
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `404 Not Found` | Offering not found or inactive |
+
+---
+
+## Service endpoints
+
+### List services
+
+Returns all active services. No authentication required.
+
+```
+GET /api/services
+```
+
+### Get service by ID
+
+```
+GET /api/services/{id}
+```
+
+---
+
 ## User endpoints
 
 ### List providers
 
-Returns users with the `Provider` role. Requires authentication. Only `id` and `username` are returned — no sensitive fields.
+Returns users with the `Provider` role. Only `id` and `username` are returned.
 
 ```
 GET /api/user/providers
@@ -180,19 +257,60 @@ Authorization: Bearer <accessToken>
 ]
 ```
 
-**Error responses**
-
-| Status | Condition |
-|--------|-----------|
-| `401 Unauthorized` | Missing or invalid JWT |
-
 ---
 
 ## Appointment endpoints
 
+All appointment endpoints require authentication. Listing is scoped by role:
+
+- **Customer** — appointments they booked
+- **Provider** — appointments where they are the provider
+- **Admin** — all appointments
+
+### List appointments
+
+```
+GET /api/appointments
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`**
+
+```json
+[
+  {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "customerId": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+    "customerUsername": "john",
+    "customerPhoneNumber": "+1234567890",
+    "providerId": "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+    "providerUsername": "jane-provider",
+    "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa9",
+    "serviceName": "Dental Checkup",
+    "startTime": "2026-06-15T10:00:00Z",
+    "endTime": "2026-06-15T10:30:00Z",
+    "status": "Booked",
+    "priceAtBooking": 25.00
+  }
+]
+```
+
+---
+
+### Get appointment by ID
+
+```
+GET /api/appointments/{id}
+Authorization: Bearer <accessToken>
+```
+
+Returns a single appointment if the user has access. `404` if not found or not accessible.
+
+---
+
 ### Create appointment
 
-Requires authentication. The customer ID is taken from the JWT — not from the request body.
+The customer ID is taken from the JWT — not from the request body.
 
 ```
 POST /api/appointments
@@ -235,15 +353,282 @@ Authorization: Bearer <accessToken>
 | Status | Condition |
 |--------|-----------|
 | `401 Unauthorized` | Missing or invalid JWT |
-| `400 Bad Request` | Start time is in the past |
+| `400 Bad Request` | Start time in the past, self-booking, provider doesn't offer service, or outside availability |
 | `404 Not Found` | Service or provider not found |
 | `409 Conflict` | Time slot already booked (double-booking) |
 
 **Business rules**
 
+- Users **cannot book their own services** (`customerId` must differ from `providerId`)
 - `endTime` is calculated automatically from the service duration
-- Only active services (`IsActive = true`) can be booked
+- Only active services (`IsActive = true`) linked via `ProviderServices` can be booked
+- Booking must fall within the provider's availability windows (if configured)
 - A PostgreSQL exclusion constraint prevents overlapping bookings for the same provider
+
+---
+
+### Cancel appointment
+
+```
+PATCH /api/appointments/{id}/cancel
+Authorization: Bearer <accessToken>
+```
+
+Only booked appointments can be cancelled. Accessible by the customer, provider, or admin.
+
+**Success response — `200 OK`** — Returns the updated appointment.
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `404 Not Found` | Appointment not found |
+| `403 Forbidden` | User does not have access |
+| `400 Bad Request` | Appointment is not in `Booked` status |
+
+---
+
+### Reschedule appointment
+
+```
+PATCH /api/appointments/{id}/reschedule
+Authorization: Bearer <accessToken>
+```
+
+**Request body**
+
+```json
+{
+  "startTime": "2026-06-16T14:00:00Z"
+}
+```
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `404 Not Found` | Appointment not found |
+| `403 Forbidden` | User does not have access |
+| `400 Bad Request` | Invalid time, inactive service, or outside availability |
+| `409 Conflict` | New time slot already booked |
+
+---
+
+## Account endpoints
+
+All require authentication.
+
+### Get profile
+
+```
+GET /api/account
+Authorization: Bearer <accessToken>
+```
+
+### Update email
+
+```
+PATCH /api/account/email
+```
+
+Returns a new JWT (email claim changes).
+
+### Update username
+
+```
+PATCH /api/account/username
+```
+
+Returns a new JWT (username claim changes).
+
+### Change password
+
+```
+PATCH /api/account/password
+```
+
+### Update phone number
+
+```
+PATCH /api/account/phone-number
+```
+
+### Delete account
+
+```
+DELETE /api/account
+```
+
+Permanently deletes the authenticated user's account and related data.
+
+---
+
+## Provider endpoints
+
+Require the `Provider` role.
+
+### List services
+
+Returns only the authenticated provider's active service listings.
+
+```
+GET /api/provider/services
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`**
+
+```json
+[
+  {
+    "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "serviceName": "Dental Checkup",
+    "description": "Routine examination",
+    "category": "Healthcare",
+    "durationMinutes": 30,
+    "price": 25.00
+  }
+]
+```
+
+---
+
+### Update service
+
+```
+PATCH /api/provider/services/{serviceId}
+Authorization: Bearer <accessToken>
+```
+
+**Request body**
+
+```json
+{
+  "name": "Updated Service Name",
+  "description": "New description",
+  "category": "Wellness",
+  "durationMinutes": 45,
+  "price": 30.00
+}
+```
+
+---
+
+### Get availability
+
+```
+GET /api/provider/availability
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`**
+
+```json
+[
+  {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "dayOfWeek": 1,
+    "startTime": "09:00",
+    "endTime": "17:00"
+  }
+]
+```
+
+---
+
+### Update availability
+
+Replaces all availability slots for the provider.
+
+```
+PUT /api/provider/availability
+Authorization: Bearer <accessToken>
+```
+
+**Request body**
+
+```json
+{
+  "slots": [
+    {
+      "dayOfWeek": 1,
+      "startTime": "09:00",
+      "endTime": "17:00"
+    }
+  ]
+}
+```
+
+---
+
+## Admin endpoints
+
+Require the `Admin` role.
+
+### List users
+
+```
+GET /api/admin/users
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`**
+
+```json
+[
+  {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "username": "jane",
+    "email": "jane@example.com",
+    "phoneNumber": "+1234567890",
+    "role": "Customer",
+    "isSuspended": false,
+    "createdAt": "2026-01-15T10:00:00Z"
+  }
+]
+```
+
+---
+
+### Update user
+
+```
+PATCH /api/admin/users/{id}
+Authorization: Bearer <accessToken>
+```
+
+**Request body** — partial update of username, email, phone number, and/or role.
+
+---
+
+### Suspend user
+
+```
+PATCH /api/admin/users/{id}/suspend
+Authorization: Bearer <accessToken>
+```
+
+Admins cannot suspend their own account.
+
+---
+
+### Unsuspend user
+
+```
+PATCH /api/admin/users/{id}/unsuspend
+Authorization: Bearer <accessToken>
+```
+
+---
+
+### Delete user
+
+```
+DELETE /api/admin/users/{id}
+Authorization: Bearer <accessToken>
+```
+
+Admins cannot delete their own account.
 
 ---
 
@@ -257,27 +642,26 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 
 The frontend axios client attaches this automatically when a token exists in `localStorage`.
 
+Suspended accounts receive `403 Forbidden` on all authenticated requests.
+
 ## Example workflow with curl
 
 ```bash
-# 1. Register
+# 1. Register as a customer
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"user@example.com\",\"password\":\"password123\"}"
+  -d "{\"username\":\"john\",\"email\":\"user@example.com\",\"password\":\"password123\",\"role\":\"Customer\"}"
 
-# 2. Request password reset
-curl -X POST http://localhost:8080/api/auth/forgot-password \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"user@example.com\"}"
+# 2. Browse the catalog
+curl http://localhost:8080/api/catalog
 
-# 3. Reset password with token from email
-curl -X POST http://localhost:8080/api/auth/reset-password \
-  -H "Content-Type: application/json" \
-  -d "{\"token\":\"TOKEN_FROM_EMAIL\",\"newPassword\":\"newpassword123\"}"
-
-# 4. Save the accessToken from login, then create an appointment
+# 3. Create an appointment (use token from register/login)
 curl -X POST http://localhost:8080/api/appointments \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -d "{\"providerId\":\"PROVIDER_GUID\",\"serviceId\":\"SERVICE_GUID\",\"startTime\":\"2026-06-15T10:00:00Z\"}"
+
+# 4. List your appointments
+curl http://localhost:8080/api/appointments \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
