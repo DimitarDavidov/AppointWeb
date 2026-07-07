@@ -17,4 +17,9 @@ public class AppointmentDetailResponse
     public string Status { get; set; } = "Booked";
     public decimal PriceAtBooking { get; set; }
     public string? CancellationReason { get; set; }
+
+    public DateTime? PendingRescheduleStartTime { get; set; }
+    public DateTime? PendingRescheduleEndTime { get; set; }
+    public string? RescheduleReason { get; set; }
+    public Guid? RescheduleRequestedByUserId { get; set; }
 }

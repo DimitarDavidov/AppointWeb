@@ -16,5 +16,9 @@ public static class AppointmentMapper
             Status = AppointmentStatusMapper.ToApiStatus(appointment.Status),
             PriceAtBooking = appointment.PriceAtBooking,
             CancellationReason = appointment.CancellationReason,
+            PendingRescheduleStartTime = appointment.PendingRescheduleStartTime,
+            PendingRescheduleEndTime = appointment.PendingRescheduleEndTime,
+            RescheduleReason = appointment.RescheduleReason,
+            RescheduleRequestedByUserId = appointment.RescheduleRequestedByUserId,
         };
 }

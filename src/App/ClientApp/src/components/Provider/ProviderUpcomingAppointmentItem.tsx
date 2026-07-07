@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import {
+  acceptReschedule,
   cancelAppointment,
   confirmAppointment,
   rescheduleAppointment,
@@ -8,6 +9,12 @@ import { getErrorMessage } from "../../api/errors";
 import { PhoneIcon } from "../Account/AccountIcons";
 import { CancelAppointmentDialog } from "../Appointments/CancelAppointmentDialog";
 import type { AppointmentDetail } from "../../types/appointment";
+import {
+  canAcceptReschedule,
+  hasPendingReschedule,
+  isRescheduleAwaitingResponse,
+} from "../../utils/appointmentRescheduleUtils";
+import { useAppSelector } from "../../store/hooks";
 import {
   toDatetimeLocalValue,
   toDatetimeLocalValueFromIso,
@@ -47,6 +54,7 @@ export function ProviderUpcomingAppointmentItem({
   index,
   onUpdated,
 }: ProviderUpcomingAppointmentItemProps) {
+  const { userId } = useAppSelector((state) => state.auth);
   const durationMinutes = getDurationMinutes(
     appointment.startTime,
     appointment.endTime
@@ -56,6 +64,12 @@ export function ProviderUpcomingAppointmentItem({
   const timingLabel = getAppointmentTimingLabel(appointment.startTime);
   const serviceInitial = appointment.serviceName.charAt(0).toUpperCase();
   const isPending = appointment.status === "Pending";
+  const pendingReschedule = hasPendingReschedule(appointment);
+  const canAcceptRescheduleRequest = canAcceptReschedule(appointment, userId);
+  const awaitingRescheduleResponse = isRescheduleAwaitingResponse(
+    appointment,
+    userId
+  );
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showRescheduleForm, setShowRescheduleForm] = useState(false);
@@ -120,6 +134,25 @@ export function ProviderUpcomingAppointmentItem({
         getErrorMessage(err, "Could not cancel this appointment. Please try again.")
       );
       setShowCancelDialog(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleAcceptReschedule() {
+    setActionError("");
+    setIsSubmitting(true);
+
+    try {
+      await acceptReschedule(appointment.id);
+      onUpdated();
+    } catch (err) {
+      setActionError(
+        getErrorMessage(
+          err,
+          "Could not accept this reschedule. Please try again."
+        )
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -257,9 +290,57 @@ export function ProviderUpcomingAppointmentItem({
               <dd>{formatPrice(appointment.priceAtBooking)}</dd>
             </div>
           </dl>
+
+          {pendingReschedule && (
+            <div className="provider-appointment-reschedule-pending">
+              <p className="provider-appointment-reschedule-pending-title">
+                {canAcceptRescheduleRequest
+                  ? "Reschedule request from customer"
+                  : "Reschedule request sent"}
+              </p>
+              <p className="provider-appointment-reschedule-pending-copy">
+                {canAcceptRescheduleRequest
+                  ? `${customerName} has proposed a different time for this appointment.`
+                  : "Waiting for the customer to respond to your reschedule request."}
+              </p>
+              <dl className="provider-appointment-reschedule-pending-times">
+                <div>
+                  <dt>Current time</dt>
+                  <dd>
+                    {formatAppointmentDate(appointment.startTime)} at{" "}
+                    {formatAppointmentTime(appointment.startTime)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Requested time</dt>
+                  <dd>
+                    {formatAppointmentDate(appointment.pendingRescheduleStartTime!)}{" "}
+                    at {formatAppointmentTime(appointment.pendingRescheduleStartTime!)}
+                  </dd>
+                </div>
+              </dl>
+              {appointment.rescheduleReason && (
+                <p className="provider-appointment-reschedule-pending-reason">
+                  <span>Reason</span>
+                  {appointment.rescheduleReason}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="provider-appointment-actions">
+          {canAcceptRescheduleRequest && (
+            <button
+              type="button"
+              className="provider-btn provider-btn--primary"
+              disabled={isSubmitting || showRescheduleForm}
+              onClick={handleAcceptReschedule}
+            >
+              <ProviderRescheduleIcon className="provider-btn-icon" />
+              Accept reschedule
+            </button>
+          )}
           {isPending && (
             <button
               type="button"
@@ -283,7 +364,7 @@ export function ProviderUpcomingAppointmentItem({
           <button
             type="button"
             className={`provider-btn provider-btn--secondary${showRescheduleForm ? " provider-btn--active" : ""}`}
-            disabled={isSubmitting}
+            disabled={isSubmitting || awaitingRescheduleResponse}
             onClick={
               showRescheduleForm ? handleCloseReschedule : handleOpenReschedule
             }

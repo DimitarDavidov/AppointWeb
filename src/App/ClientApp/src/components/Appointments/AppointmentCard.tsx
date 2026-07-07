@@ -1,11 +1,17 @@
 import { useMemo, useState, type FormEvent } from "react";
 import {
+  acceptReschedule,
   cancelAppointment,
   rescheduleAppointment,
 } from "../../api/appointments";
 import { getErrorMessage } from "../../api/errors";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 import { isActiveAppointmentStatus } from "../../utils/providerPanelUtils";
+import {
+  canAcceptReschedule,
+  hasPendingReschedule,
+  isRescheduleAwaitingResponse,
+} from "../../utils/appointmentRescheduleUtils";
 import { UserRoles } from "../../constants/roles";
 import { useAppSelector } from "../../store/hooks";
 import { isSameId } from "../../utils/isSameId";
@@ -78,8 +84,15 @@ export function AppointmentCard({
   const canModify = isActiveAppointmentStatus(appointment.status);
   const showProviderCancelReason = isProviderView && !isCustomerView;
   const showCustomerCancelReason = isCustomerView;
+  const pendingReschedule = hasPendingReschedule(appointment);
+  const canAcceptRescheduleRequest = canAcceptReschedule(appointment, userId);
+  const awaitingRescheduleResponse = isRescheduleAwaitingResponse(
+    appointment,
+    userId
+  );
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showCounterProposalForm, setShowCounterProposalForm] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [editStartTime, setEditStartTime] = useState("");
   const [editReason, setEditReason] = useState("");
@@ -105,9 +118,40 @@ export function AppointmentCard({
 
   function handleCancelEdit() {
     setIsEditing(false);
+    setShowCounterProposalForm(false);
     setActionError("");
     setEditStartTime("");
     setEditReason("");
+  }
+
+  function handleOpenCounterProposal() {
+    setEditStartTime(
+      toDatetimeLocalValueFromIso(
+        appointment.pendingRescheduleStartTime ?? appointment.startTime
+      )
+    );
+    setEditReason("");
+    setActionError("");
+    setShowCounterProposalForm(true);
+  }
+
+  async function handleAcceptReschedule() {
+    setActionError("");
+    setIsSubmitting(true);
+
+    try {
+      await acceptReschedule(appointment.id);
+      onUpdated();
+    } catch (err) {
+      setActionError(
+        getErrorMessage(
+          err,
+          "Could not accept this reschedule. Please try again."
+        )
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleCancelClick() {
@@ -161,6 +205,7 @@ export function AppointmentCard({
         ...(trimmedReason ? { reason: trimmedReason } : {}),
       });
       setIsEditing(false);
+      setShowCounterProposalForm(false);
       setEditReason("");
       onUpdated();
     } catch (err) {
@@ -274,13 +319,46 @@ export function AppointmentCard({
         </div>
       </dl>
 
-      {isEditing ? (
+      {pendingReschedule && (
+        <div className="appointments-card-reschedule-pending">
+          <p className="appointments-card-reschedule-pending-title">
+            {canAcceptRescheduleRequest
+              ? "Reschedule request"
+              : "Reschedule pending"}
+          </p>
+          <p className="appointments-card-reschedule-pending-copy">
+            {canAcceptRescheduleRequest
+              ? `${counterpartName} has requested to move this appointment to a new time.`
+              : `Waiting for ${counterpartName} to respond to your reschedule request.`}
+          </p>
+          <dl className="appointments-card-reschedule-pending-times">
+            <div>
+              <dt>Current time</dt>
+              <dd>{formatAppointmentDateTime(appointment.startTime)}</dd>
+            </div>
+            <div>
+              <dt>Requested time</dt>
+              <dd>
+                {formatAppointmentDateTime(appointment.pendingRescheduleStartTime!)}
+              </dd>
+            </div>
+          </dl>
+          {appointment.rescheduleReason && (
+            <p className="appointments-card-reschedule-pending-reason">
+              <span>Reason</span>
+              {appointment.rescheduleReason}
+            </p>
+          )}
+        </div>
+      )}
+
+      {(isEditing || showCounterProposalForm) ? (
         <form className="appointments-card-edit" onSubmit={handleSaveEdit}>
           <label
             className="appointments-card-edit-field"
             htmlFor={`edit-${appointment.id}`}
           >
-            New date and time
+            {showCounterProposalForm ? "Propose another time" : "New date and time"}
             <input
               id={`edit-${appointment.id}`}
               type="datetime-local"
@@ -319,9 +397,9 @@ export function AppointmentCard({
               disabled={isSubmitting}
             />
             <span className="appointments-card-edit-hint">
-              {isCustomerView
-                ? "Your provider will receive an email about this reschedule."
-                : "The customer will receive an email about this reschedule."}
+              {showCounterProposalForm || isCustomerView
+                ? "Your provider will receive an email about this reschedule request."
+                : "The customer will receive an email about this reschedule request."}
             </span>
           </label>
 
@@ -339,9 +417,11 @@ export function AppointmentCard({
             >
               {isSubmitting
                 ? "Sending..."
-                : isCustomerView
-                  ? "Request reschedule"
-                  : "Save changes"}
+                : showCounterProposalForm
+                  ? "Send proposal"
+                  : isCustomerView
+                    ? "Request reschedule"
+                    : "Send reschedule request"}
             </button>
             <button
               type="button"
@@ -349,7 +429,7 @@ export function AppointmentCard({
               disabled={isSubmitting}
               onClick={handleCancelEdit}
             >
-              Cancel edit
+              {showCounterProposalForm ? "Back" : "Cancel edit"}
             </button>
           </div>
         </form>
@@ -361,7 +441,38 @@ export function AppointmentCard({
             </p>
           )}
 
-          {canModify && (
+          {canModify && canAcceptRescheduleRequest && !showCounterProposalForm && (
+            <div className="appointments-card-actions">
+              <button
+                type="button"
+                className="appointments-btn appointments-btn-primary"
+                disabled={isSubmitting}
+                onClick={handleAcceptReschedule}
+              >
+                {isSubmitting ? "Accepting..." : "Accept reschedule"}
+              </button>
+              <button
+                type="button"
+                className="appointments-btn appointments-btn-secondary"
+                disabled={isSubmitting}
+                onClick={handleOpenCounterProposal}
+              >
+                Propose another time
+              </button>
+              <button
+                type="button"
+                className="appointments-btn appointments-btn-danger"
+                disabled={isSubmitting}
+                onClick={handleCancelClick}
+              >
+                Cancel appointment
+              </button>
+            </div>
+          )}
+
+          {canModify &&
+            !canAcceptRescheduleRequest &&
+            !awaitingRescheduleResponse && (
             <div className="appointments-card-actions">
               <button
                 type="button"
@@ -369,7 +480,7 @@ export function AppointmentCard({
                 disabled={isSubmitting}
                 onClick={handleEditClick}
               >
-                Edit
+                Request reschedule
               </button>
               <button
                 type="button"
@@ -378,6 +489,19 @@ export function AppointmentCard({
                 onClick={handleCancelClick}
               >
                 Cancel
+              </button>
+            </div>
+          )}
+
+          {canModify && awaitingRescheduleResponse && (
+            <div className="appointments-card-actions">
+              <button
+                type="button"
+                className="appointments-btn appointments-btn-danger"
+                disabled={isSubmitting}
+                onClick={handleCancelClick}
+              >
+                Cancel appointment
               </button>
             </div>
           )}

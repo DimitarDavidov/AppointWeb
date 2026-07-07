@@ -62,6 +62,10 @@ public class AppointmentsController : ControllerBase
                 Status = AppointmentStatusMapper.ToApiStatus(a.Status),
                 PriceAtBooking = a.PriceAtBooking,
                 CancellationReason = a.CancellationReason,
+                PendingRescheduleStartTime = a.PendingRescheduleStartTime,
+                PendingRescheduleEndTime = a.PendingRescheduleEndTime,
+                RescheduleReason = a.RescheduleReason,
+                RescheduleRequestedByUserId = a.RescheduleRequestedByUserId,
             })
             .ToListAsync(ct);
 
@@ -93,6 +97,10 @@ public class AppointmentsController : ControllerBase
                 Status = AppointmentStatusMapper.ToApiStatus(a.Status),
                 PriceAtBooking = a.PriceAtBooking,
                 CancellationReason = a.CancellationReason,
+                PendingRescheduleStartTime = a.PendingRescheduleStartTime,
+                PendingRescheduleEndTime = a.PendingRescheduleEndTime,
+                RescheduleReason = a.RescheduleReason,
+                RescheduleRequestedByUserId = a.RescheduleRequestedByUserId,
             })
             .SingleOrDefaultAsync(ct);
 
@@ -248,6 +256,7 @@ public class AppointmentsController : ControllerBase
             ? null
             : request!.Reason.Trim();
         appointment.CancellationReason = reason;
+        ClearPendingReschedule(appointment);
 
         appointment.Status = AppointmentStatus.Cancelled;
         await _db.SaveChangesAsync(ct);
@@ -385,9 +394,7 @@ public class AppointmentsController : ControllerBase
             : request.Reason.Trim();
 
         if (notifyCustomer && reason is null)
-            return BadRequest("A reason is required when rescheduling a customer's appointment.");
-
-        var previousStartUtc = appointment.StartTime;
+            return BadRequest("A reason is required when requesting to reschedule a customer's appointment.");
 
         var startUtc = request.StartTime.Kind == DateTimeKind.Utc
             ? request.StartTime
@@ -395,6 +402,9 @@ public class AppointmentsController : ControllerBase
 
         if (startUtc < DateTime.UtcNow.AddMinutes(-1))
             return BadRequest("Invalid start time.");
+
+        if (startUtc == appointment.StartTime)
+            return BadRequest("The requested time must be different from the current appointment time.");
 
         if (!appointment.Service.IsActive)
             return BadRequest("This service is no longer available.");
@@ -404,35 +414,19 @@ public class AppointmentsController : ControllerBase
         if (!await FitsProviderAvailabilityAsync(appointment.ProviderId, startUtc, endUtc, ct))
             return BadRequest("The selected time is outside the provider's availability.");
 
-        var overlaps = await _db.Appointments.AsNoTracking().AnyAsync(a =>
-            a.Id != id &&
-            a.ProviderId == appointment.ProviderId &&
-            (a.Status == AppointmentStatus.Booked || a.Status == AppointmentStatus.Pending) &&
-            a.StartTime < endUtc &&
-            a.EndTime > startUtc, ct);
-
-        if (overlaps)
+        if (!await IsProposedSlotAvailableAsync(appointment, startUtc, endUtc, ct))
             return Conflict("This time slot is already booked.");
 
-        appointment.StartTime = startUtc;
-        appointment.EndTime = endUtc;
-
-        try
-        {
-            await _db.SaveChangesAsync(ct);
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23P01")
-        {
-            return Conflict("This time slot is already booked.");
-        }
-
-        var previousWhen = previousStartUtc.ToString(
-            "dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'",
-            CultureInfo.InvariantCulture);
-        var newWhen = startUtc.ToString(
-            "dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'",
-            CultureInfo.InvariantCulture);
+        var previousWhen = FormatAppointmentWhen(appointment.StartTime);
+        var newWhen = FormatAppointmentWhen(startUtc);
         var frontendBaseUrl = _frontendSettings.BaseUrl.TrimEnd('/');
+
+        appointment.PendingRescheduleStartTime = startUtc;
+        appointment.PendingRescheduleEndTime = endUtc;
+        appointment.RescheduleReason = reason;
+        appointment.RescheduleRequestedByUserId = userId;
+
+        await _db.SaveChangesAsync(ct);
 
         if (notifyProvider)
         {
@@ -483,6 +477,92 @@ public class AppointmentsController : ControllerBase
         }
 
         return Ok(AppointmentMapper.MapResponse(appointment));
+    }
+
+    [HttpPatch("{id:guid}/reschedule/accept")]
+    public async Task<ActionResult<AppointmentResponse>> AcceptReschedule(
+        Guid id,
+        CancellationToken ct)
+    {
+        if (!User.TryGetUserId(out var userId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        var appointment = await _db.Appointments
+            .Include(a => a.Service)
+            .SingleOrDefaultAsync(a => a.Id == id, ct);
+
+        if (appointment is null)
+            return NotFound();
+
+        if (!CanAccessAppointment(appointment, userId, role))
+            return Forbid();
+
+        if (!AppointmentStatusMapper.CanBeModified(appointment.Status))
+            return BadRequest("Only active appointments can be updated.");
+
+        if (appointment.PendingRescheduleStartTime is null ||
+            appointment.PendingRescheduleEndTime is null ||
+            appointment.RescheduleRequestedByUserId is null)
+        {
+            return BadRequest("There is no pending reschedule request for this appointment.");
+        }
+
+        if (appointment.RescheduleRequestedByUserId == userId)
+            return BadRequest("You cannot accept your own reschedule request.");
+
+        if (!appointment.Service.IsActive)
+            return BadRequest("This service is no longer available.");
+
+        if (!await IsProposedSlotAvailableAsync(
+                appointment,
+                appointment.PendingRescheduleStartTime.Value,
+                appointment.PendingRescheduleEndTime.Value,
+                ct))
+        {
+            return Conflict("The requested time slot is no longer available.");
+        }
+
+        appointment.StartTime = appointment.PendingRescheduleStartTime.Value;
+        appointment.EndTime = appointment.PendingRescheduleEndTime.Value;
+        ClearPendingReschedule(appointment);
+
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23P01")
+        {
+            return Conflict("The requested time slot is no longer available.");
+        }
+
+        return Ok(AppointmentMapper.MapResponse(appointment));
+    }
+
+    private static void ClearPendingReschedule(Appointment appointment)
+    {
+        appointment.PendingRescheduleStartTime = null;
+        appointment.PendingRescheduleEndTime = null;
+        appointment.RescheduleReason = null;
+        appointment.RescheduleRequestedByUserId = null;
+    }
+
+    private static string FormatAppointmentWhen(DateTime utc) =>
+        utc.ToString("dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'", CultureInfo.InvariantCulture);
+
+    private async Task<bool> IsProposedSlotAvailableAsync(
+        Appointment appointment,
+        DateTime startUtc,
+        DateTime endUtc,
+        CancellationToken ct)
+    {
+        return !await _db.Appointments.AsNoTracking().AnyAsync(a =>
+            a.Id != appointment.Id &&
+            a.ProviderId == appointment.ProviderId &&
+            (a.Status == AppointmentStatus.Booked || a.Status == AppointmentStatus.Pending) &&
+            a.StartTime < endUtc &&
+            a.EndTime > startUtc, ct);
     }
 
     private IQueryable<Appointment> FilterAppointmentsForUser(Guid userId, string? role)

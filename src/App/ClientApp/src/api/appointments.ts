@@ -49,3 +49,10 @@ export async function rescheduleAppointment(
   );
   return response.data;
 }
+
+export async function acceptReschedule(id: string): Promise<Appointment> {
+  const response = await api.patch<Appointment>(
+    `/api/appointments/${id}/reschedule/accept`
+  );
+  return response.data;
+}

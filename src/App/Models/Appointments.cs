@@ -32,6 +32,15 @@ public class Appointment
     [MaxLength(1000)]
     public string? CancellationReason { get; set; }
 
+    public DateTime? PendingRescheduleStartTime { get; set; }
+
+    public DateTime? PendingRescheduleEndTime { get; set; }
+
+    [MaxLength(1000)]
+    public string? RescheduleReason { get; set; }
+
+    public Guid? RescheduleRequestedByUserId { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public User Customer { get; set; } = null!;
