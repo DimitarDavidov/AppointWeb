@@ -77,6 +77,8 @@ public class ProviderController : ControllerBase
                 ServiceName = ps.Service.Name,
                 Description = ps.Service.Description,
                 Category = ps.Service.Category,
+                Country = ps.Service.Country,
+                City = ps.Service.City,
                 DurationMinutes = ps.Service.DurationMinutes,
                 Price = ps.Service.Price,
             })
@@ -111,6 +113,8 @@ public class ProviderController : ControllerBase
         service.Category = string.IsNullOrWhiteSpace(request.Category)
             ? null
             : request.Category.Trim();
+        service.Country = request.Country.Trim();
+        service.City = request.City.Trim();
         service.DurationMinutes = request.DurationMinutes;
         service.Price = request.Price;
 
@@ -122,6 +126,8 @@ public class ProviderController : ControllerBase
             ServiceName = service.Name,
             Description = service.Description,
             Category = service.Category,
+            Country = service.Country,
+            City = service.City,
             DurationMinutes = service.DurationMinutes,
             Price = service.Price,
         });

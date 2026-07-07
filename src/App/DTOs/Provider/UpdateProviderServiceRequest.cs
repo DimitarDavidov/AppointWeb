@@ -15,6 +15,16 @@ public class UpdateProviderServiceRequest
     [MaxLength(100)]
     public string? Category { get; set; }
 
+    [Required]
+    [MinLength(1)]
+    [MaxLength(100)]
+    public string Country { get; set; } = string.Empty;
+
+    [Required]
+    [MinLength(1)]
+    [MaxLength(100)]
+    public string City { get; set; } = string.Empty;
+
     [Range(1, 1440)]
     public int DurationMinutes { get; set; }
 

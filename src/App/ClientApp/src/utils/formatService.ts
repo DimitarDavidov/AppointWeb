@@ -12,3 +12,7 @@ export function formatDuration(minutes: number): string {
   const remainder = minutes % 60;
   return remainder > 0 ? `${hours}h ${remainder}m` : `${hours}h`;
 }
+
+export function formatServiceLocation(city: string, country: string): string {
+  return `${city}, ${country}`;
+}

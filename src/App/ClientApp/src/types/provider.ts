@@ -3,6 +3,8 @@ export interface ProviderServiceDetail {
   serviceName: string;
   description: string | null;
   category: string | null;
+  country: string;
+  city: string;
   durationMinutes: number;
   price: number;
 }
@@ -11,6 +13,8 @@ export interface UpdateProviderServiceRequest {
   name: string;
   description: string | null;
   category: string | null;
+  country: string;
+  city: string;
   durationMinutes: number;
   price: number;
 }

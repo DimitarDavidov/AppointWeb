@@ -33,6 +33,8 @@ function EditProviderServiceModal({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("");
   const [price, setPrice] = useState("");
   const [validationError, setValidationError] = useState("");
@@ -40,6 +42,8 @@ function EditProviderServiceModal({
   const nameRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const categoryRef = useRef<HTMLInputElement>(null);
+  const countryRef = useRef<HTMLInputElement>(null);
+  const cityRef = useRef<HTMLInputElement>(null);
   const durationRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
 
@@ -49,6 +53,8 @@ function EditProviderServiceModal({
     setName(service.serviceName);
     setDescription(service.description ?? "");
     setCategory(service.category ?? "");
+    setCountry(service.country);
+    setCity(service.city);
     setDurationMinutes(String(service.durationMinutes));
     setPrice(String(service.price));
     setValidationError("");
@@ -110,6 +116,19 @@ function EditProviderServiceModal({
       return;
     }
 
+    const trimmedCountry = country.trim();
+    const trimmedCity = city.trim();
+
+    if (!trimmedCountry) {
+      setValidationError("Country is required.");
+      return;
+    }
+
+    if (!trimmedCity) {
+      setValidationError("City is required.");
+      return;
+    }
+
     if (!Number.isFinite(parsedDuration) || parsedDuration < 1) {
       setValidationError("Duration must be at least 1 minute.");
       return;
@@ -125,6 +144,8 @@ function EditProviderServiceModal({
       name: trimmedName,
       description: description.trim() || null,
       category: category.trim() || null,
+      country: trimmedCountry,
+      city: trimmedCity,
       durationMinutes: parsedDuration,
       price: parsedPrice,
     });
@@ -186,6 +207,36 @@ function EditProviderServiceModal({
               maxLength={100}
               placeholder="Optional"
             />
+          </div>
+
+          <div className="provider-modal-field-row">
+            <div className="provider-modal-field">
+              <label htmlFor="provider-service-country">Country</label>
+              <input
+                ref={countryRef}
+                id="provider-service-country"
+                type="text"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                disabled={isSaving}
+                required
+                maxLength={100}
+              />
+            </div>
+
+            <div className="provider-modal-field">
+              <label htmlFor="provider-service-city">City</label>
+              <input
+                ref={cityRef}
+                id="provider-service-city"
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                disabled={isSaving}
+                required
+                maxLength={100}
+              />
+            </div>
           </div>
 
           <div className="provider-modal-field">

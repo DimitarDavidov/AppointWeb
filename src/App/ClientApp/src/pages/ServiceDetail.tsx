@@ -11,7 +11,7 @@ import {
   toDatetimeLocalValue,
 } from "../utils/formatAppointment";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
-import { formatDuration, formatPrice } from "../utils/formatService";
+import { formatDuration, formatPrice, formatServiceLocation } from "../utils/formatService";
 import { isSameId } from "../utils/isSameId";
 import { UserRoles } from "../constants/roles";
 import "./ServiceDetail.scss";
@@ -175,6 +175,10 @@ function ServiceDetail() {
           <strong>{capitalizeFirstLetter(offering.providerUsername)}</strong>
         </p>
 
+        <p className="service-detail-location">
+          {formatServiceLocation(offering.city, offering.country)}
+        </p>
+
         {offering.description ? (
           <p className="service-detail-description">{offering.description}</p>
         ) : (
@@ -187,6 +191,10 @@ function ServiceDetail() {
           <div className="service-detail-meta-item">
             <dt>Provider</dt>
             <dd>{capitalizeFirstLetter(offering.providerUsername)}</dd>
+          </div>
+          <div className="service-detail-meta-item">
+            <dt>Location</dt>
+            <dd>{formatServiceLocation(offering.city, offering.country)}</dd>
           </div>
           <div className="service-detail-meta-item">
             <dt>Duration</dt>

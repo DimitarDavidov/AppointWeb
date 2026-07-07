@@ -20,6 +20,14 @@ public class ServiceConfiguration : IEntityTypeConfiguration<Service>
         builder.Property(s => s.Category)
                .HasMaxLength(100);
 
+        builder.Property(s => s.Country)
+               .IsRequired()
+               .HasMaxLength(100);
+
+        builder.Property(s => s.City)
+               .IsRequired()
+               .HasMaxLength(100);
+
         builder.Property(s => s.DurationMinutes)
                .IsRequired();
     }

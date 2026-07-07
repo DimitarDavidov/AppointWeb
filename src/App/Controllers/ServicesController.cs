@@ -28,6 +28,8 @@ public class ServicesController : ControllerBase
                 Id = s.Id,
                 Name = s.Name,
                 Description = s.Description,
+                Country = s.Country,
+                City = s.City,
                 DurationMinutes = s.DurationMinutes,
                 Price = s.Price
             })
@@ -47,6 +49,8 @@ public class ServicesController : ControllerBase
                 Id = s.Id,
                 Name = s.Name,
                 Description = s.Description,
+                Country = s.Country,
+                City = s.City,
                 DurationMinutes = s.DurationMinutes,
                 Price = s.Price
             })

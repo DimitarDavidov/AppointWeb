@@ -4,7 +4,7 @@ import welcomeBg from "../assets/images/welcome-bg.png";
 import { getCatalogOfferings } from "../api/catalog";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
-import { formatDuration, formatPrice } from "../utils/formatService";
+import { formatDuration, formatPrice, formatServiceLocation } from "../utils/formatService";
 import { isSameId } from "../utils/isSameId";
 import { useAppSelector } from "../store/hooks";
 import "./Home.scss";
@@ -164,6 +164,9 @@ function Home() {
                     )}
                     <p className="catalog-card-provider">
                       {capitalizeFirstLetter(offering.providerUsername)}
+                    </p>
+                    <p className="catalog-card-location">
+                      {formatServiceLocation(offering.city, offering.country)}
                     </p>
                     <h3 className="catalog-card-name">{offering.serviceName}</h3>
                     {offering.description && (

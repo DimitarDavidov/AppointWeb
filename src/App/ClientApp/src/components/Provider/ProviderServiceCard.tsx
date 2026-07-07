@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { EditActionIcon } from "../Admin/AdminActionIcons";
 import type { ProviderServiceDetail, ProviderServiceEditFocus } from "../../types/provider";
-import { formatDuration, formatPrice } from "../../utils/formatService";
+import { formatDuration, formatPrice, formatServiceLocation } from "../../utils/formatService";
 import {
   ProviderClockIcon,
   ProviderExternalLinkIcon,
@@ -51,6 +51,9 @@ export function ProviderServiceCard({
       )}
 
       <div className="provider-service-meta">
+        <span className="provider-service-meta-item">
+          {formatServiceLocation(service.city, service.country)}
+        </span>
         <span className="provider-service-meta-item">
           <ProviderClockIcon />
           {formatDuration(service.durationMinutes)}

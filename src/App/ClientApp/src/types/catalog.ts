@@ -5,6 +5,8 @@ export interface CatalogOffering {
   serviceName: string;
   description: string | null;
   category: string | null;
+  country: string;
+  city: string;
   durationMinutes: number;
   price: number;
 }

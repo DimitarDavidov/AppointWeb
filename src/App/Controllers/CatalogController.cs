@@ -58,6 +58,8 @@ public class CatalogController : ControllerBase
                 ServiceName = ps.Service.Name,
                 Description = ps.Service.Description,
                 Category = ps.Service.Category,
+                Country = ps.Service.Country,
+                City = ps.Service.City,
                 DurationMinutes = ps.Service.DurationMinutes,
                 Price = ps.Service.Price
             });
