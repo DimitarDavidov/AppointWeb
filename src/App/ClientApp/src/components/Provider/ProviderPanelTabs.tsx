@@ -1,3 +1,8 @@
+import {
+  ProviderAppointmentsTabIcon,
+  ProviderServicesTabIcon,
+} from "./ProviderIcons";
+
 export type ProviderPanelTab = "appointments" | "services";
 
 interface ProviderPanelTabsProps {
@@ -24,7 +29,8 @@ export function ProviderPanelTabs({
         className={`provider-tab${activeTab === "appointments" ? " provider-tab--active" : ""}`}
         onClick={() => onTabChange("appointments")}
       >
-        Upcoming appointments
+        <ProviderAppointmentsTabIcon className="provider-tab-icon" />
+        <span>Upcoming appointments</span>
       </button>
       <button
         type="button"
@@ -35,7 +41,8 @@ export function ProviderPanelTabs({
         className={`provider-tab${activeTab === "services" ? " provider-tab--active" : ""}`}
         onClick={() => onTabChange("services")}
       >
-        My services
+        <ProviderServicesTabIcon className="provider-tab-icon" />
+        <span>My services</span>
       </button>
     </div>
   );

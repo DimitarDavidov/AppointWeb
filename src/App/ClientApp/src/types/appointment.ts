@@ -11,6 +11,7 @@ export interface Appointment {
 
 export interface AppointmentDetail extends Appointment {
   customerUsername: string;
+  customerPhoneNumber: string | null;
   providerUsername: string;
   serviceName: string;
 }

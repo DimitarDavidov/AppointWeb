@@ -4,15 +4,29 @@ import {
   rescheduleAppointment,
 } from "../../api/appointments";
 import { getErrorMessage } from "../../api/errors";
+import { PhoneIcon } from "../Account/AccountIcons";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import type { AppointmentDetail } from "../../types/appointment";
 import {
-  formatAppointmentDateTime,
   toDatetimeLocalValue,
   toDatetimeLocalValueFromIso,
 } from "../../utils/formatAppointment";
+import {
+  formatAppointmentDate,
+  formatAppointmentTime,
+  getAppointmentTimingLabel,
+} from "../../utils/providerPanelUtils";
 import { capitalizeFirstLetter } from "../../utils/formatDisplayName";
 import { formatDuration, formatPrice } from "../../utils/formatService";
+import {
+  ProviderCalendarIcon,
+  ProviderCancelIcon,
+  ProviderClockIcon,
+  ProviderCustomerIcon,
+  ProviderDurationIcon,
+  ProviderPriceIcon,
+  ProviderRescheduleIcon,
+} from "./ProviderIcons";
 
 function getDurationMinutes(startTime: string, endTime: string): number {
   return Math.round(
@@ -22,11 +36,13 @@ function getDurationMinutes(startTime: string, endTime: string): number {
 
 interface ProviderUpcomingAppointmentItemProps {
   appointment: AppointmentDetail;
+  index: number;
   onUpdated: () => void;
 }
 
 export function ProviderUpcomingAppointmentItem({
   appointment,
+  index,
   onUpdated,
 }: ProviderUpcomingAppointmentItemProps) {
   const durationMinutes = getDurationMinutes(
@@ -34,6 +50,9 @@ export function ProviderUpcomingAppointmentItem({
     appointment.endTime
   );
   const customerName = capitalizeFirstLetter(appointment.customerUsername);
+  const customerPhone = appointment.customerPhoneNumber?.trim() || null;
+  const timingLabel = getAppointmentTimingLabel(appointment.startTime);
+  const serviceInitial = appointment.serviceName.charAt(0).toUpperCase();
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showRescheduleForm, setShowRescheduleForm] = useState(false);
@@ -112,7 +131,10 @@ export function ProviderUpcomingAppointmentItem({
   }
 
   return (
-    <li className="provider-appointment-item">
+    <li
+      className={`provider-appointment-item${showRescheduleForm ? " provider-appointment-item--expanded" : ""}`}
+      style={{ animationDelay: `${0.08 + index * 0.07}s` }}
+    >
       <ConfirmDialog
         open={showCancelDialog}
         title="Cancel appointment?"
@@ -129,12 +151,76 @@ export function ProviderUpcomingAppointmentItem({
       </ConfirmDialog>
 
       <div className="provider-appointment-row">
-        <p className="provider-appointment-description">
-          <strong>{appointment.serviceName}</strong> with {customerName} on{" "}
-          {formatAppointmentDateTime(appointment.startTime)} ·{" "}
-          {formatDuration(durationMinutes)} ·{" "}
-          {formatPrice(appointment.priceAtBooking)}
-        </p>
+        <div className="provider-appointment-main">
+          <div className="provider-appointment-heading">
+            <span className="provider-appointment-avatar" aria-hidden="true">
+              {serviceInitial}
+            </span>
+            <div className="provider-appointment-heading-text">
+              <div className="provider-appointment-title-row">
+                <h3 className="provider-appointment-title">
+                  {appointment.serviceName}
+                </h3>
+                {timingLabel && (
+                  <span className="provider-appointment-timing">
+                    {timingLabel}
+                  </span>
+                )}
+              </div>
+              <p className="provider-appointment-subtitle">
+                Booked with {customerName}
+                {customerPhone
+                  ? ` · ${customerPhone}`
+                  : " · No phone number provided"}
+              </p>
+            </div>
+          </div>
+
+          <dl className="provider-appointment-meta">
+            <div className="provider-appointment-meta-item">
+              <dt>
+                <ProviderCustomerIcon />
+                Customer
+              </dt>
+              <dd>{customerName}</dd>
+            </div>
+            <div className="provider-appointment-meta-item">
+              <dt>
+                <PhoneIcon />
+                Phone
+              </dt>
+              <dd>{customerPhone ?? "Not provided"}</dd>
+            </div>
+            <div className="provider-appointment-meta-item">
+              <dt>
+                <ProviderCalendarIcon />
+                Date
+              </dt>
+              <dd>{formatAppointmentDate(appointment.startTime)}</dd>
+            </div>
+            <div className="provider-appointment-meta-item">
+              <dt>
+                <ProviderClockIcon />
+                Time
+              </dt>
+              <dd>{formatAppointmentTime(appointment.startTime)}</dd>
+            </div>
+            <div className="provider-appointment-meta-item">
+              <dt>
+                <ProviderDurationIcon />
+                Duration
+              </dt>
+              <dd>{formatDuration(durationMinutes)}</dd>
+            </div>
+            <div className="provider-appointment-meta-item">
+              <dt>
+                <ProviderPriceIcon />
+                Price
+              </dt>
+              <dd>{formatPrice(appointment.priceAtBooking)}</dd>
+            </div>
+          </dl>
+        </div>
 
         <div className="provider-appointment-actions">
           <button
@@ -143,16 +229,18 @@ export function ProviderUpcomingAppointmentItem({
             disabled={isSubmitting || showRescheduleForm}
             onClick={handleOpenCancelDialog}
           >
+            <ProviderCancelIcon className="provider-btn-icon" />
             Cancel appointment
           </button>
           <button
             type="button"
-            className="provider-btn provider-btn--secondary"
+            className={`provider-btn provider-btn--secondary${showRescheduleForm ? " provider-btn--active" : ""}`}
             disabled={isSubmitting}
             onClick={
               showRescheduleForm ? handleCloseReschedule : handleOpenReschedule
             }
           >
+            <ProviderRescheduleIcon className="provider-btn-icon" />
             Request reschedule
           </button>
         </div>
@@ -163,11 +251,23 @@ export function ProviderUpcomingAppointmentItem({
           className="provider-appointment-reschedule"
           onSubmit={handleSubmitReschedule}
         >
+          <div className="provider-appointment-reschedule-header">
+            <ProviderRescheduleIcon className="provider-appointment-reschedule-icon" />
+            <div>
+              <p className="provider-appointment-reschedule-title">
+                Propose a new time
+              </p>
+              <p className="provider-appointment-reschedule-copy">
+                Choose when you would like to move this appointment.
+              </p>
+            </div>
+          </div>
+
           <label
             className="provider-appointment-reschedule-field"
             htmlFor={`reschedule-${appointment.id}`}
           >
-            Proposed new date and time
+            New date and time
             <input
               id={`reschedule-${appointment.id}`}
               type="datetime-local"

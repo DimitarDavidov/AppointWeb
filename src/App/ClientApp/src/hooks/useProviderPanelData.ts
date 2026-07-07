@@ -1,41 +1,31 @@
-import { useMemo } from "react";
 import { getAppointments } from "../api/appointments";
-import { getCatalogOfferings } from "../api/catalog";
+import { getProviderServices } from "../api/provider";
 import { useAsyncData } from "./useAsyncData";
 import {
   computeProviderStats,
   getUpcomingAppointments,
 } from "../utils/providerPanelUtils";
 
-export function useProviderPanelData(userId: string | null) {
+export function useProviderPanelData() {
   const appointmentsQuery = useAsyncData(getAppointments, [], {
     initialData: [],
     errorMessage: "Could not load appointments. Please try again.",
   });
 
-  const catalogQuery = useAsyncData(getCatalogOfferings, [], {
+  const servicesQuery = useAsyncData(getProviderServices, [], {
     initialData: [],
     errorMessage: "Could not load your services. Please try again.",
   });
 
-  const services = useMemo(
-    () =>
-      userId
-        ? (catalogQuery.data ?? []).filter(
-            (offering) => offering.providerId === userId
-          )
-        : [],
-    [catalogQuery.data, userId]
+  const services = servicesQuery.data ?? [];
+
+  const upcomingAppointments = getUpcomingAppointments(
+    appointmentsQuery.data ?? []
   );
 
-  const upcomingAppointments = useMemo(
-    () => getUpcomingAppointments(appointmentsQuery.data ?? []),
-    [appointmentsQuery.data]
-  );
-
-  const stats = useMemo(
-    () => computeProviderStats(appointmentsQuery.data ?? [], services.length),
-    [appointmentsQuery.data, services.length]
+  const stats = computeProviderStats(
+    appointmentsQuery.data ?? [],
+    services.length
   );
 
   return {
@@ -43,7 +33,8 @@ export function useProviderPanelData(userId: string | null) {
     upcomingAppointments,
     stats,
     appointmentsQuery,
-    catalogQuery,
+    servicesQuery,
     reloadAppointments: appointmentsQuery.reload,
+    reloadServices: servicesQuery.reload,
   };
 }

@@ -21,22 +21,31 @@ function ProviderPanel() {
     upcomingAppointments,
     stats,
     appointmentsQuery,
-    catalogQuery,
+    servicesQuery,
     reloadAppointments,
-  } = useProviderPanelData(userId);
+    reloadServices,
+  } = useProviderPanelData();
 
   const displayName = capitalizeFirstLetter(username ?? "Provider");
+  const userInitial = displayName.charAt(0).toUpperCase();
   const isInitialLoading =
-    appointmentsQuery.isLoading && catalogQuery.isLoading;
+    appointmentsQuery.isLoading && servicesQuery.isLoading;
 
   return (
     <div className="provider">
       <div className="provider-inner">
         <header className="provider-header">
-          <h1 className="provider-title">Provider Panel</h1>
-          <p className="provider-subtitle">
-            Hi {displayName} — manage your bookings and service listings.
-          </p>
+          <div className="provider-header-content">
+            <span className="provider-header-avatar" aria-hidden="true">
+              {userInitial}
+            </span>
+            <div>
+              <h1 className="provider-title">Provider Panel</h1>
+              <p className="provider-subtitle">
+                Hi {displayName} — manage your bookings and service listings.
+              </p>
+            </div>
+          </div>
         </header>
 
         {isInitialLoading ? (
@@ -50,20 +59,24 @@ function ProviderPanel() {
 
             <ProviderPanelTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-            {activeTab === "appointments" ? (
-              <ProviderAppointmentsSection
-                upcomingAppointments={upcomingAppointments}
-                isLoading={appointmentsQuery.isLoading}
-                error={appointmentsQuery.error}
-                onUpdated={reloadAppointments}
-              />
-            ) : (
-              <ProviderServicesSection
-                services={services}
-                isLoading={catalogQuery.isLoading}
-                error={catalogQuery.error}
-              />
-            )}
+            <div key={activeTab} className="provider-tab-panel-wrap">
+              {activeTab === "appointments" ? (
+                <ProviderAppointmentsSection
+                  upcomingAppointments={upcomingAppointments}
+                  isLoading={appointmentsQuery.isLoading}
+                  error={appointmentsQuery.error}
+                  onUpdated={reloadAppointments}
+                />
+              ) : (
+                <ProviderServicesSection
+                  providerId={userId}
+                  services={services}
+                  isLoading={servicesQuery.isLoading}
+                  error={servicesQuery.error}
+                  onUpdated={reloadServices}
+                />
+              )}
+            </div>
           </>
         )}
       </div>

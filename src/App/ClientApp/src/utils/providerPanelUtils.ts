@@ -32,6 +32,37 @@ export function getUpcomingAppointments(
     );
 }
 
+export function getAppointmentTimingLabel(iso: string): string | null {
+  const start = new Date(iso);
+  const now = new Date();
+  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays = Math.round(
+    (startDay.getTime() - today.getTime()) / 86_400_000
+  );
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Tomorrow";
+  if (diffDays > 1 && diffDays <= 7) return `In ${diffDays} days`;
+  return null;
+}
+
+export function formatAppointmentDate(iso: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(iso));
+}
+
+export function formatAppointmentTime(iso: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
 export function computeProviderStats(
   appointments: AppointmentDetail[],
   servicesCount: number

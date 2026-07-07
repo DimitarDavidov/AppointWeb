@@ -1,28 +1,78 @@
 import type { ProviderStats } from "../../utils/providerPanelUtils";
+import {
+  ProviderStatBookedIcon,
+  ProviderStatServicesIcon,
+  ProviderStatTodayIcon,
+  ProviderStatUpcomingIcon,
+} from "./ProviderIcons";
 
 interface ProviderStatsGridProps {
   stats: ProviderStats;
 }
 
+const statCards = [
+  {
+    key: "upcoming",
+    label: "Upcoming",
+    hint: "Scheduled ahead",
+    icon: ProviderStatUpcomingIcon,
+    modifier: "provider-stat-card--upcoming",
+  },
+  {
+    key: "today",
+    label: "Today",
+    hint: "Happening today",
+    icon: ProviderStatTodayIcon,
+    modifier: "provider-stat-card--today",
+  },
+  {
+    key: "booked",
+    label: "Active bookings",
+    hint: "Currently booked",
+    icon: ProviderStatBookedIcon,
+    modifier: "provider-stat-card--booked",
+  },
+  {
+    key: "services",
+    label: "Listed services",
+    hint: "On your catalog",
+    icon: ProviderStatServicesIcon,
+    modifier: "provider-stat-card--services",
+  },
+] as const;
+
 export function ProviderStatsGrid({ stats }: ProviderStatsGridProps) {
+  const values = {
+    upcoming: stats.upcoming,
+    today: stats.today,
+    booked: stats.booked,
+    services: stats.services,
+  };
+
   return (
     <div className="provider-stat-grid" aria-label="Provider statistics">
-      <div className="provider-stat-card provider-stat-card--upcoming">
-        <span className="provider-stat-card-value">{stats.upcoming}</span>
-        <span className="provider-stat-card-label">Upcoming</span>
-      </div>
-      <div className="provider-stat-card provider-stat-card--today">
-        <span className="provider-stat-card-value">{stats.today}</span>
-        <span className="provider-stat-card-label">Today</span>
-      </div>
-      <div className="provider-stat-card">
-        <span className="provider-stat-card-value">{stats.booked}</span>
-        <span className="provider-stat-card-label">Active bookings</span>
-      </div>
-      <div className="provider-stat-card provider-stat-card--services">
-        <span className="provider-stat-card-value">{stats.services}</span>
-        <span className="provider-stat-card-label">Listed services</span>
-      </div>
+      {statCards.map((card, index) => {
+        const Icon = card.icon;
+
+        return (
+          <article
+            key={card.key}
+            className={`provider-stat-card ${card.modifier}`}
+            style={{ animationDelay: `${0.05 + index * 0.06}s` }}
+          >
+            <span className="provider-stat-card-icon" aria-hidden="true">
+              <Icon />
+            </span>
+            <div className="provider-stat-card-body">
+              <span className="provider-stat-card-value">
+                {values[card.key]}
+              </span>
+              <span className="provider-stat-card-label">{card.label}</span>
+              <span className="provider-stat-card-hint">{card.hint}</span>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }
