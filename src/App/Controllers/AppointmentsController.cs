@@ -542,6 +542,44 @@ public class AppointmentsController : ControllerBase
         return Ok(AppointmentMapper.MapResponse(appointment));
     }
 
+    [HttpPatch("{id:guid}/status")]
+    public async Task<ActionResult<AppointmentResponse>> UpdateStatus(
+        Guid id,
+        UpdateAppointmentStatusRequest request,
+        CancellationToken ct)
+    {
+        if (!User.TryGetUserId(out var userId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        if (!AppointmentStatusMapper.TryParseOutcomeStatus(request.Status, out var newStatus))
+            return BadRequest("Status must be Completed or NoShow.");
+
+        var appointment = await _db.Appointments
+            .SingleOrDefaultAsync(a => a.Id == id, ct);
+
+        if (appointment is null)
+            return NotFound();
+
+        if (role != UserRoles.Admin &&
+            appointment.ProviderId != userId &&
+            appointment.CustomerId != userId)
+            return Forbid();
+
+        if (!AppointmentStatusMapper.CanSetOutcome(appointment.Status))
+            return BadRequest("Only confirmed appointments can be updated with an outcome.");
+
+        if (appointment.EndTime > DateTime.UtcNow)
+            return BadRequest("This appointment has not finished yet.");
+
+        appointment.Status = newStatus;
+        ClearPendingReschedule(appointment);
+        await _db.SaveChangesAsync(ct);
+
+        return Ok(AppointmentMapper.MapResponse(appointment));
+    }
+
     private static void ClearPendingReschedule(Appointment appointment)
     {
         appointment.PendingRescheduleStartTime = null;

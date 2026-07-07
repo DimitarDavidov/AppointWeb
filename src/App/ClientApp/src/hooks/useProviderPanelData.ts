@@ -2,6 +2,7 @@ import { getProviderAppointments, getProviderServices } from "../api/provider";
 import { useAsyncData } from "./useAsyncData";
 import {
   computeProviderStats,
+  getAppointmentsNeedingOutcome,
   getUpcomingAppointments,
 } from "../utils/providerPanelUtils";
 
@@ -22,6 +23,10 @@ export function useProviderPanelData() {
     appointmentsQuery.data ?? []
   );
 
+  const outcomeAppointments = getAppointmentsNeedingOutcome(
+    appointmentsQuery.data ?? []
+  );
+
   const stats = computeProviderStats(
     appointmentsQuery.data ?? [],
     services.length
@@ -30,6 +35,7 @@ export function useProviderPanelData() {
   return {
     services,
     upcomingAppointments,
+    outcomeAppointments,
     stats,
     appointmentsQuery,
     servicesQuery,

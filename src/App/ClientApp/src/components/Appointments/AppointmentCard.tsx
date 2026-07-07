@@ -3,15 +3,21 @@ import {
   acceptReschedule,
   cancelAppointment,
   rescheduleAppointment,
+  updateAppointmentStatus,
 } from "../../api/appointments";
 import { getErrorMessage } from "../../api/errors";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
+import { AppointmentOutcomeActions } from "./AppointmentOutcomeActions";
 import { isActiveAppointmentStatus } from "../../utils/providerPanelUtils";
 import {
   canAcceptReschedule,
   hasPendingReschedule,
   isRescheduleAwaitingResponse,
 } from "../../utils/appointmentRescheduleUtils";
+import {
+  getOutcomeStatusLabel,
+  needsAppointmentOutcome,
+} from "../../utils/appointmentOutcomeUtils";
 import { UserRoles } from "../../constants/roles";
 import { useAppSelector } from "../../store/hooks";
 import { isSameId } from "../../utils/isSameId";
@@ -32,10 +38,15 @@ function getDurationMinutes(startTime: string, endTime: string): number {
 
 function formatStatusLabel(
   status: string,
-  hasReschedulePending: boolean
+  hasReschedulePending: boolean,
+  viewer: "customer" | "provider"
 ): string {
   if (hasReschedulePending) {
     return "Reschedule pending";
+  }
+
+  if (status === "Completed" || status === "NoShow") {
+    return getOutcomeStatusLabel(status, viewer);
   }
 
   switch (status) {
@@ -92,6 +103,9 @@ export function AppointmentCard({
   const showProviderCancelReason = isProviderView && !isCustomerView;
   const showCustomerCancelReason = isCustomerView;
   const pendingReschedule = hasPendingReschedule(appointment);
+  const needsOutcome = needsAppointmentOutcome(appointment);
+  const outcomeViewer = isCustomerView ? "customer" : "provider";
+  const canManageActive = canModify && !needsOutcome;
   const canAcceptRescheduleRequest = canAcceptReschedule(appointment, userId);
   const awaitingRescheduleResponse = isRescheduleAwaitingResponse(
     appointment,
@@ -105,6 +119,17 @@ export function AppointmentCard({
   const [editReason, setEditReason] = useState("");
   const [actionError, setActionError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSetOutcome(status: "Completed" | "NoShow") {
+    setIsSubmitting(true);
+
+    try {
+      await updateAppointmentStatus(appointment.id, status);
+      onUpdated();
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const minStartTime = useMemo(() => toDatetimeLocalValue(new Date()), []);
 
@@ -270,7 +295,7 @@ export function AppointmentCard({
           <span
             className={`appointments-card-status ${statusClassName(appointment.status)}`}
           >
-            {formatStatusLabel(appointment.status, pendingReschedule)}
+            {formatStatusLabel(appointment.status, pendingReschedule, outcomeViewer)}
           </span>
         </div>
       </div>
@@ -356,6 +381,17 @@ export function AppointmentCard({
               {appointment.rescheduleReason}
             </p>
           )}
+        </div>
+      )}
+
+      {needsOutcome && isCustomerView && (
+        <div className="appointments-card-outcome">
+          <span className="appointments-card-outcome-badge">Needs update</span>
+          <AppointmentOutcomeActions
+            viewer="customer"
+            isSubmitting={isSubmitting}
+            onSubmit={handleSetOutcome}
+          />
         </div>
       )}
 
@@ -448,7 +484,7 @@ export function AppointmentCard({
             </p>
           )}
 
-          {canModify && canAcceptRescheduleRequest && !showCounterProposalForm && (
+          {canManageActive && canAcceptRescheduleRequest && !showCounterProposalForm && (
             <div className="appointments-card-actions">
               <button
                 type="button"
@@ -477,7 +513,7 @@ export function AppointmentCard({
             </div>
           )}
 
-          {canModify &&
+          {canManageActive &&
             !canAcceptRescheduleRequest &&
             !awaitingRescheduleResponse && (
             <div className="appointments-card-actions">
@@ -500,7 +536,7 @@ export function AppointmentCard({
             </div>
           )}
 
-          {canModify && awaitingRescheduleResponse && (
+          {canManageActive && awaitingRescheduleResponse && (
             <div className="appointments-card-actions">
               <button
                 type="button"

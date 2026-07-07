@@ -28,7 +28,7 @@ export function getUpcomingAppointments(
     .filter(
       (appointment) =>
         isActiveAppointmentStatus(appointment.status) &&
-        new Date(appointment.startTime).getTime() >= now
+        new Date(appointment.endTime).getTime() >= now
     )
     .sort((a, b) => {
       if (a.status === "Pending" && b.status !== "Pending") return -1;
@@ -39,6 +39,11 @@ export function getUpcomingAppointments(
       );
     });
 }
+
+export {
+  getAppointmentsNeedingOutcome,
+  needsAppointmentOutcome,
+} from "./appointmentOutcomeUtils";
 
 export function getAppointmentTimingLabel(iso: string): string | null {
   const start = new Date(iso);

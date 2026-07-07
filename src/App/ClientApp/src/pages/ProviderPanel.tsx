@@ -19,6 +19,7 @@ function ProviderPanel() {
   const {
     services,
     upcomingAppointments,
+    outcomeAppointments,
     stats,
     appointmentsQuery,
     servicesQuery,
@@ -63,6 +64,7 @@ function ProviderPanel() {
               {activeTab === "appointments" ? (
                 <ProviderAppointmentsSection
                   upcomingAppointments={upcomingAppointments}
+                  outcomeAppointments={outcomeAppointments}
                   isLoading={appointmentsQuery.isLoading}
                   error={appointmentsQuery.error}
                   onUpdated={reloadAppointments}

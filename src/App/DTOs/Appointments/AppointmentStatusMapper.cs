@@ -20,4 +20,23 @@ public static class AppointmentStatusMapper
 
     public static bool CanBeModified(AppointmentStatus status) =>
         status is AppointmentStatus.Booked or AppointmentStatus.Pending;
+
+    public static bool CanSetOutcome(AppointmentStatus status) =>
+        status == AppointmentStatus.Booked;
+
+    public static bool TryParseOutcomeStatus(string status, out AppointmentStatus parsed)
+    {
+        switch (status)
+        {
+            case "Completed":
+                parsed = AppointmentStatus.Completed;
+                return true;
+            case "NoShow":
+                parsed = AppointmentStatus.NoShow;
+                return true;
+            default:
+                parsed = default;
+                return false;
+        }
+    }
 }

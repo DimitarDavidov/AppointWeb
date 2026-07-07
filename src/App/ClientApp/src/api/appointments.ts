@@ -56,3 +56,15 @@ export async function acceptReschedule(id: string): Promise<Appointment> {
   );
   return response.data;
 }
+
+export type AppointmentOutcomeStatus = "Completed" | "NoShow";
+
+export async function updateAppointmentStatus(
+  id: string,
+  status: AppointmentOutcomeStatus
+): Promise<Appointment> {
+  const response = await api.patch<Appointment>(`/api/appointments/${id}/status`, {
+    status,
+  });
+  return response.data;
+}

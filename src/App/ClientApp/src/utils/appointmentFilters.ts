@@ -24,7 +24,7 @@ export function filterAppointmentsByStatus(
         .filter(
           (appointment) =>
             appointment.status === "Booked" &&
-            new Date(appointment.startTime).getTime() >= now
+            new Date(appointment.endTime).getTime() >= now
         )
         .sort(
           (a, b) =>
@@ -54,7 +54,7 @@ export function filterAppointmentsByStatus(
             appointment.status === "Completed" ||
             appointment.status === "NoShow" ||
             (appointment.status === "Booked" &&
-              new Date(appointment.startTime).getTime() < now)
+              new Date(appointment.endTime).getTime() < now)
         )
         .sort(
           (a, b) =>
