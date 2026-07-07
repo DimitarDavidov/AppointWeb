@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import welcomeBg from "../assets/images/welcome-bg.png";
 import { getCatalogOfferings } from "../api/catalog";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
 import { formatDuration, formatPrice } from "../utils/formatService";
+import { isSameId } from "../utils/isSameId";
 import { useAppSelector } from "../store/hooks";
 import "./Home.scss";
 
@@ -27,7 +28,8 @@ function SearchIcon() {
 }
 
 function Home() {
-  const isLoggedIn = !!useAppSelector((state) => state.auth.accessToken);
+  const { accessToken, userId } = useAppSelector((state) => state.auth);
+  const isLoggedIn = !!accessToken;
   const catalogRef = useRef<HTMLElement>(null);
   const [catalogVisible, setCatalogVisible] = useState(false);
   const {
@@ -38,6 +40,13 @@ function Home() {
     initialData: [],
     errorMessage: "Could not load services. Please try again later.",
   });
+  const bookableOfferings = useMemo(
+    () =>
+      offerings.filter(
+        (offering) => !isSameId(userId, offering.providerId)
+      ),
+    [offerings, userId]
+  );
 
   useEffect(() => {
     const section = catalogRef.current;
@@ -132,13 +141,13 @@ function Home() {
             </p>
           )}
 
-          {!isLoadingCatalog && !catalogError && offerings.length === 0 && (
+          {!isLoadingCatalog && !catalogError && bookableOfferings.length === 0 && (
             <p className="catalog-status">No services available yet.</p>
           )}
 
-          {!isLoadingCatalog && !catalogError && offerings.length > 0 && (
+          {!isLoadingCatalog && !catalogError && bookableOfferings.length > 0 && (
             <ul className="catalog-grid">
-              {offerings.map((offering, index) => (
+              {bookableOfferings.map((offering, index) => (
                 <li
                   key={`${offering.providerId}-${offering.serviceId}`}
                   className="catalog-card"

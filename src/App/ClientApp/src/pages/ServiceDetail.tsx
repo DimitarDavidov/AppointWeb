@@ -12,6 +12,8 @@ import {
 } from "../utils/formatAppointment";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
 import { formatDuration, formatPrice } from "../utils/formatService";
+import { isSameId } from "../utils/isSameId";
+import { UserRoles } from "../constants/roles";
 import "./ServiceDetail.scss";
 
 function ServiceDetail() {
@@ -21,7 +23,12 @@ function ServiceDetail() {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const isLoggedIn = !!useAppSelector((state) => state.auth.accessToken);
+  const { accessToken, userId, role } = useAppSelector((state) => state.auth);
+  const isLoggedIn = !!accessToken;
+  const isOwnService = isLoggedIn && isSameId(userId, providerId);
+  const canManageOwnService =
+    isOwnService &&
+    (role === UserRoles.Provider || role === UserRoles.Admin);
   const missingParams = !providerId || !serviceId;
   const {
     data: offering,
@@ -46,6 +53,8 @@ function ServiceDetail() {
   const minStartTime = useMemo(() => toDatetimeLocalValue(new Date()), []);
 
   function handleBookClick() {
+    if (isOwnService) return;
+
     if (!isLoggedIn) {
       navigate("/login", { state: { from: location.pathname } });
       return;
@@ -58,7 +67,7 @@ function ServiceDetail() {
   async function handleBookingSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (!offering || !providerId || !serviceId || !startTime) return;
+    if (!offering || !providerId || !serviceId || !startTime || isOwnService) return;
 
     setBookingError("");
     setIsSubmitting(true);
@@ -174,7 +183,22 @@ function ServiceDetail() {
           </div>
         </dl>
 
-        {showBooking ? (
+        {isOwnService ? (
+          <div className="service-detail-own-service">
+            <p className="service-detail-own-service-text">
+              This is your service. You cannot book appointments for your own
+              offerings.
+            </p>
+            {canManageOwnService && (
+              <Link
+                to="/provider"
+                className="service-detail-btn service-detail-btn-primary"
+              >
+                Manage in provider panel
+              </Link>
+            )}
+          </div>
+        ) : showBooking ? (
           <form
             className="service-detail-booking"
             onSubmit={handleBookingSubmit}

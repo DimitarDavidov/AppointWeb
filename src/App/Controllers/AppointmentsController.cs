@@ -98,7 +98,7 @@ public class AppointmentsController : ControllerBase
             return Unauthorized("Invalid token: missing user id.");
 
         if (customerId == request.ProviderId)
-            return BadRequest("You cannot book an appointment with yourself.");
+            return BadRequest("You cannot book your own services.");
 
         var startUtc = request.StartTime.Kind == DateTimeKind.Utc
             ? request.StartTime

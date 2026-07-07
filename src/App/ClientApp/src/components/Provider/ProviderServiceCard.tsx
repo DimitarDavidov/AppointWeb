@@ -108,7 +108,7 @@ export function ProviderServiceCard({
         to={`/book/${providerId}/${service.serviceId}`}
         className="provider-service-link"
       >
-        View booking page
+        Preview listing
         <ProviderExternalLinkIcon className="provider-service-link-icon" />
       </Link>
     </li>
