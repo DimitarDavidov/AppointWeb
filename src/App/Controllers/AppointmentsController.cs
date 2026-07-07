@@ -362,6 +362,8 @@ public class AppointmentsController : ControllerBase
         var role = User.FindFirstValue(ClaimTypes.Role);
 
         var appointment = await _db.Appointments
+            .Include(a => a.Customer)
+            .Include(a => a.Provider)
             .Include(a => a.Service)
             .SingleOrDefaultAsync(a => a.Id == id, ct);
 
@@ -373,6 +375,19 @@ public class AppointmentsController : ControllerBase
 
         if (!AppointmentStatusMapper.CanBeModified(appointment.Status))
             return BadRequest("Only active appointments can be rescheduled.");
+
+        var isCustomerRescheduling = appointment.CustomerId == userId;
+        var notifyProvider = isCustomerRescheduling;
+        var notifyCustomer = !isCustomerRescheduling;
+
+        var reason = string.IsNullOrWhiteSpace(request.Reason)
+            ? null
+            : request.Reason.Trim();
+
+        if (notifyCustomer && reason is null)
+            return BadRequest("A reason is required when rescheduling a customer's appointment.");
+
+        var previousStartUtc = appointment.StartTime;
 
         var startUtc = request.StartTime.Kind == DateTimeKind.Utc
             ? request.StartTime
@@ -409,6 +424,62 @@ public class AppointmentsController : ControllerBase
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23P01")
         {
             return Conflict("This time slot is already booked.");
+        }
+
+        var previousWhen = previousStartUtc.ToString(
+            "dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'",
+            CultureInfo.InvariantCulture);
+        var newWhen = startUtc.ToString(
+            "dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'",
+            CultureInfo.InvariantCulture);
+        var frontendBaseUrl = _frontendSettings.BaseUrl.TrimEnd('/');
+
+        if (notifyProvider)
+        {
+            try
+            {
+                await _emailService.SendCustomerRescheduledAppointmentEmailAsync(
+                    appointment.Provider.Email,
+                    appointment.Provider.Username,
+                    appointment.Customer.Username,
+                    appointment.Service.Name,
+                    previousWhen,
+                    newWhen,
+                    reason,
+                    $"{frontendBaseUrl}/provider",
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to send customer reschedule email for appointment {AppointmentId}",
+                    appointment.Id);
+            }
+        }
+
+        if (notifyCustomer)
+        {
+            try
+            {
+                await _emailService.SendProviderRescheduledAppointmentEmailAsync(
+                    appointment.Customer.Email,
+                    appointment.Customer.Username,
+                    appointment.Provider.Username,
+                    appointment.Service.Name,
+                    previousWhen,
+                    newWhen,
+                    reason!,
+                    $"{frontendBaseUrl}/appointments",
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to send provider reschedule email for appointment {AppointmentId}",
+                    appointment.Id);
+            }
         }
 
         return Ok(AppointmentMapper.MapResponse(appointment));

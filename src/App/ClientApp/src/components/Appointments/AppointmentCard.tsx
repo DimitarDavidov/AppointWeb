@@ -82,6 +82,7 @@ export function AppointmentCard({
   const [isEditing, setIsEditing] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [editStartTime, setEditStartTime] = useState("");
+  const [editReason, setEditReason] = useState("");
   const [actionError, setActionError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -97,6 +98,7 @@ export function AppointmentCard({
 
   function handleEditClick() {
     setEditStartTime(toDatetimeLocalValueFromIso(appointment.startTime));
+    setEditReason("");
     setActionError("");
     setIsEditing(true);
   }
@@ -105,6 +107,7 @@ export function AppointmentCard({
     setIsEditing(false);
     setActionError("");
     setEditStartTime("");
+    setEditReason("");
   }
 
   function handleCancelClick() {
@@ -143,14 +146,22 @@ export function AppointmentCard({
 
     if (!editStartTime) return;
 
+    const trimmedReason = editReason.trim();
+    if (isProviderView && !trimmedReason) {
+      setActionError("Please add a reason for the reschedule.");
+      return;
+    }
+
     setActionError("");
     setIsSubmitting(true);
 
     try {
       await rescheduleAppointment(appointment.id, {
         startTime: new Date(editStartTime).toISOString(),
+        ...(trimmedReason ? { reason: trimmedReason } : {}),
       });
       setIsEditing(false);
+      setEditReason("");
       onUpdated();
     } catch (err) {
       setActionError(
@@ -281,6 +292,39 @@ export function AppointmentCard({
             />
           </label>
 
+          <label
+            className="appointments-card-edit-field"
+            htmlFor={`edit-reason-${appointment.id}`}
+          >
+            Reason for reschedule
+            {!isCustomerView && (
+              <span className="appointments-card-edit-required">(required)</span>
+            )}
+            {isCustomerView && (
+              <span className="appointments-card-edit-optional">(optional)</span>
+            )}
+            <textarea
+              id={`edit-reason-${appointment.id}`}
+              className="appointments-card-edit-textarea"
+              value={editReason}
+              onChange={(e) => setEditReason(e.target.value)}
+              placeholder={
+                isCustomerView
+                  ? "Let your provider know why you need a different time..."
+                  : "Let the customer know why this appointment is being rescheduled..."
+              }
+              rows={4}
+              maxLength={1000}
+              required={!isCustomerView}
+              disabled={isSubmitting}
+            />
+            <span className="appointments-card-edit-hint">
+              {isCustomerView
+                ? "Your provider will receive an email about this reschedule."
+                : "The customer will receive an email about this reschedule."}
+            </span>
+          </label>
+
           {actionError && (
             <p className="appointments-card-action-error" role="alert">
               {actionError}
@@ -293,7 +337,11 @@ export function AppointmentCard({
               className="appointments-btn appointments-btn-primary"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Saving..." : "Save changes"}
+              {isSubmitting
+                ? "Sending..."
+                : isCustomerView
+                  ? "Request reschedule"
+                  : "Save changes"}
             </button>
             <button
               type="button"

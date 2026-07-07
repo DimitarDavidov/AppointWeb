@@ -60,6 +60,7 @@ export function ProviderUpcomingAppointmentItem({
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showRescheduleForm, setShowRescheduleForm] = useState(false);
   const [rescheduleTime, setRescheduleTime] = useState("");
+  const [rescheduleReason, setRescheduleReason] = useState("");
   const [actionError, setActionError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -67,6 +68,7 @@ export function ProviderUpcomingAppointmentItem({
 
   function handleOpenReschedule() {
     setRescheduleTime(toDatetimeLocalValueFromIso(appointment.startTime));
+    setRescheduleReason("");
     setActionError("");
     setShowRescheduleForm(true);
   }
@@ -75,6 +77,7 @@ export function ProviderUpcomingAppointmentItem({
     if (isSubmitting) return;
     setShowRescheduleForm(false);
     setRescheduleTime("");
+    setRescheduleReason("");
     setActionError("");
   }
 
@@ -127,15 +130,23 @@ export function ProviderUpcomingAppointmentItem({
 
     if (!rescheduleTime) return;
 
+    const trimmedReason = rescheduleReason.trim();
+    if (!trimmedReason) {
+      setActionError("Please add a reason for the reschedule.");
+      return;
+    }
+
     setActionError("");
     setIsSubmitting(true);
 
     try {
       await rescheduleAppointment(appointment.id, {
         startTime: new Date(rescheduleTime).toISOString(),
+        reason: trimmedReason,
       });
       setShowRescheduleForm(false);
       setRescheduleTime("");
+      setRescheduleReason("");
       onUpdated();
     } catch (err) {
       setActionError(
@@ -295,7 +306,8 @@ export function ProviderUpcomingAppointmentItem({
                 Propose a new time
               </p>
               <p className="provider-appointment-reschedule-copy">
-                Choose when you would like to move this appointment.
+                Choose when you would like to move this appointment. The customer
+                will be notified by email.
               </p>
             </div>
           </div>
@@ -311,6 +323,25 @@ export function ProviderUpcomingAppointmentItem({
               value={rescheduleTime}
               min={minStartTime}
               onChange={(e) => setRescheduleTime(e.target.value)}
+              required
+              disabled={isSubmitting}
+            />
+          </label>
+
+          <label
+            className="provider-appointment-reschedule-field"
+            htmlFor={`reschedule-reason-${appointment.id}`}
+          >
+            Reason for reschedule
+            <span className="provider-appointment-reschedule-required">(required)</span>
+            <textarea
+              id={`reschedule-reason-${appointment.id}`}
+              className="provider-appointment-reschedule-textarea"
+              value={rescheduleReason}
+              onChange={(e) => setRescheduleReason(e.target.value)}
+              placeholder="Let the customer know why this appointment is being rescheduled..."
+              rows={4}
+              maxLength={1000}
               required
               disabled={isSubmitting}
             />

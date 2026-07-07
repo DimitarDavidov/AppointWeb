@@ -110,4 +110,72 @@ public class LoggingEmailService : IEmailService
 
         return Task.CompletedTask;
     }
+
+    public Task SendCustomerRescheduledAppointmentEmailAsync(
+        string toEmail,
+        string providerName,
+        string customerName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string? reason,
+        string providerPanelUrl,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogWarning(
+            """
+            Email:Host is not configured. Customer reschedule email for {Email}:
+            Provider: {ProviderName}
+            Customer: {CustomerName}
+            Service: {ServiceName}
+            Previous: {PreviousWhen}
+            New: {NewWhen}
+            Reason: {Reason}
+            Provider panel: {ProviderPanelUrl}
+            """,
+            toEmail,
+            providerName,
+            customerName,
+            serviceName,
+            previousWhen,
+            newWhen,
+            reason ?? "(none)",
+            providerPanelUrl);
+
+        return Task.CompletedTask;
+    }
+
+    public Task SendProviderRescheduledAppointmentEmailAsync(
+        string toEmail,
+        string customerName,
+        string providerName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string reason,
+        string appointmentsUrl,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogWarning(
+            """
+            Email:Host is not configured. Provider reschedule email for {Email}:
+            Customer: {CustomerName}
+            Provider: {ProviderName}
+            Service: {ServiceName}
+            Previous: {PreviousWhen}
+            New: {NewWhen}
+            Reason: {Reason}
+            Appointments: {AppointmentsUrl}
+            """,
+            toEmail,
+            customerName,
+            providerName,
+            serviceName,
+            previousWhen,
+            newWhen,
+            reason,
+            appointmentsUrl);
+
+        return Task.CompletedTask;
+    }
 }

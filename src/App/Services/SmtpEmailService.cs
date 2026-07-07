@@ -269,4 +269,145 @@ public class SmtpEmailService : IEmailService
         message.Body = body.ToMessageBody();
         return message;
     }
+
+    public async Task SendCustomerRescheduledAppointmentEmailAsync(
+        string toEmail,
+        string providerName,
+        string customerName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string? reason,
+        string providerPanelUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var message = BuildCustomerRescheduleMessage(
+            toEmail,
+            providerName,
+            customerName,
+            serviceName,
+            previousWhen,
+            newWhen,
+            reason,
+            providerPanelUrl);
+
+        await SendMessageAsync(message, cancellationToken);
+    }
+
+    public async Task SendProviderRescheduledAppointmentEmailAsync(
+        string toEmail,
+        string customerName,
+        string providerName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string reason,
+        string appointmentsUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var message = BuildProviderRescheduleMessage(
+            toEmail,
+            customerName,
+            providerName,
+            serviceName,
+            previousWhen,
+            newWhen,
+            reason,
+            appointmentsUrl);
+
+        await SendMessageAsync(message, cancellationToken);
+    }
+
+    private async Task SendMessageAsync(MimeMessage message, CancellationToken cancellationToken)
+    {
+        using var client = new SmtpClient();
+        await client.ConnectAsync(
+            _settings.Host,
+            _settings.Port,
+            _settings.UseSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto,
+            cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(_settings.Username))
+        {
+            await client.AuthenticateAsync(
+                _settings.Username,
+                _settings.Password,
+                cancellationToken);
+        }
+
+        await client.SendAsync(message, cancellationToken);
+        await client.DisconnectAsync(true, cancellationToken);
+    }
+
+    private MimeMessage BuildCustomerRescheduleMessage(
+        string toEmail,
+        string providerName,
+        string customerName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string? reason,
+        string providerPanelUrl)
+    {
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromAddress));
+        message.To.Add(MailboxAddress.Parse(toEmail));
+        message.Subject = "AppointWeb reschedule request from customer";
+
+        var (htmlBody, textBody) = AppointmentRescheduleEmailBuilder.BuildForProvider(
+            providerName,
+            customerName,
+            serviceName,
+            previousWhen,
+            newWhen,
+            reason,
+            providerPanelUrl);
+
+        var body = new BodyBuilder
+        {
+            TextBody = textBody,
+            HtmlBody = htmlBody
+        };
+
+        AppointmentRescheduleEmailBuilder.AttachLogo(body);
+
+        message.Body = body.ToMessageBody();
+        return message;
+    }
+
+    private MimeMessage BuildProviderRescheduleMessage(
+        string toEmail,
+        string customerName,
+        string providerName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string reason,
+        string appointmentsUrl)
+    {
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromAddress));
+        message.To.Add(MailboxAddress.Parse(toEmail));
+        message.Subject = "AppointWeb reschedule request from your provider";
+
+        var (htmlBody, textBody) = AppointmentRescheduleEmailBuilder.BuildForCustomer(
+            customerName,
+            providerName,
+            serviceName,
+            previousWhen,
+            newWhen,
+            reason,
+            appointmentsUrl);
+
+        var body = new BodyBuilder
+        {
+            TextBody = textBody,
+            HtmlBody = htmlBody
+        };
+
+        AppointmentRescheduleEmailBuilder.AttachLogo(body);
+
+        message.Body = body.ToMessageBody();
+        return message;
+    }
 }

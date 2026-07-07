@@ -34,4 +34,26 @@ public interface IEmailService
         string appointmentWhen,
         string? reason,
         CancellationToken cancellationToken = default);
+
+    Task SendCustomerRescheduledAppointmentEmailAsync(
+        string toEmail,
+        string providerName,
+        string customerName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string? reason,
+        string providerPanelUrl,
+        CancellationToken cancellationToken = default);
+
+    Task SendProviderRescheduledAppointmentEmailAsync(
+        string toEmail,
+        string customerName,
+        string providerName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string reason,
+        string appointmentsUrl,
+        CancellationToken cancellationToken = default);
 }

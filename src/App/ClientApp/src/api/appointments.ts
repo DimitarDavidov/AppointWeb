@@ -36,6 +36,7 @@ export async function confirmAppointment(id: string): Promise<Appointment> {
 
 export interface RescheduleAppointmentRequest {
   startTime: string;
+  reason?: string;
 }
 
 export async function rescheduleAppointment(

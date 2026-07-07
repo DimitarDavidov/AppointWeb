@@ -20,12 +20,10 @@
 @keyframes provider-slide-down {
   from {
     opacity: 0;
-    max-height: 0;
     transform: translateY(-8px);
   }
   to {
     opacity: 1;
-    max-height: 320px;
     transform: translateY(0);
   }
 }
@@ -518,7 +516,6 @@
     padding-top: 1rem;
     border-top: 1px solid var(--color-border);
     animation: provider-slide-down 0.28s ease both;
-    overflow: hidden;
   }
 
   &-appointment-reschedule-header {
@@ -574,6 +571,36 @@
         box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
       }
     }
+  }
+
+  &-appointment-reschedule-textarea {
+    width: 100%;
+    min-height: 96px;
+    padding: 0.75rem 0.8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    font: inherit;
+    line-height: 1.5;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    resize: vertical;
+    box-sizing: border-box;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+  }
+
+  &-appointment-reschedule-required {
+    margin-left: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #b91c1c;
   }
 
   &-appointment-reschedule-actions {
