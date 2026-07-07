@@ -67,3 +67,30 @@ export function getAppointmentFilterEmptyMessage(filter: AppointmentFilter): str
       return "No past appointments.";
   }
 }
+
+export interface AppointmentCounts {
+  upcoming: number;
+  pending: number;
+}
+
+export function getAppointmentCounts(
+  appointments: AppointmentDetail[]
+): AppointmentCounts {
+  const now = Date.now();
+
+  return appointments.reduce<AppointmentCounts>(
+    (counts, appointment) => {
+      if (appointment.status === "Pending") {
+        counts.pending += 1;
+      } else if (
+        appointment.status === "Booked" &&
+        new Date(appointment.endTime).getTime() >= now
+      ) {
+        counts.upcoming += 1;
+      }
+
+      return counts;
+    },
+    { upcoming: 0, pending: 0 }
+  );
+}

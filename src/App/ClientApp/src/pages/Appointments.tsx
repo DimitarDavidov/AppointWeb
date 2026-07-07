@@ -6,10 +6,27 @@ import { useAsyncData } from "../hooks/useAsyncData";
 import {
   APPOINTMENT_FILTERS,
   filterAppointmentsByStatus,
+  getAppointmentCounts,
   getAppointmentFilterEmptyMessage,
+  type AppointmentCounts,
   type AppointmentFilter,
 } from "../utils/appointmentFilters";
 import "./Appointments.scss";
+
+function getFilterBadgeCount(
+  filter: AppointmentFilter,
+  counts: AppointmentCounts
+): number | null {
+  if (filter === "upcoming") {
+    return counts.upcoming;
+  }
+
+  if (filter === "pending") {
+    return counts.pending;
+  }
+
+  return null;
+}
 
 function Appointments() {
   const [activeFilter, setActiveFilter] = useState<AppointmentFilter>("upcoming");
@@ -26,6 +43,11 @@ function Appointments() {
   const filteredAppointments = useMemo(
     () => filterAppointmentsByStatus(appointments, activeFilter),
     [appointments, activeFilter]
+  );
+
+  const appointmentCounts = useMemo(
+    () => getAppointmentCounts(appointments),
+    [appointments]
   );
 
   return (
@@ -57,20 +79,39 @@ function Appointments() {
               role="tablist"
               aria-label="Appointment filters"
             >
-              {APPOINTMENT_FILTERS.map((filter) => (
-                <button
-                  key={filter.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeFilter === filter.id}
-                  className={`appointments-filter${
-                    activeFilter === filter.id ? " appointments-filter--active" : ""
-                  }`}
-                  onClick={() => setActiveFilter(filter.id)}
-                >
-                  {filter.label}
-                </button>
-              ))}
+              {APPOINTMENT_FILTERS.map((filter) => {
+                const badgeCount = getFilterBadgeCount(filter.id, appointmentCounts);
+
+                return (
+                  <button
+                    key={filter.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeFilter === filter.id}
+                    aria-label={
+                      badgeCount != null
+                        ? `${filter.label}, ${badgeCount} appointment${
+                            badgeCount === 1 ? "" : "s"
+                          }`
+                        : filter.label
+                    }
+                    className={`appointments-filter${
+                      activeFilter === filter.id ? " appointments-filter--active" : ""
+                    }`}
+                    onClick={() => setActiveFilter(filter.id)}
+                  >
+                    <span>{filter.label}</span>
+                    {badgeCount != null && badgeCount > 0 && (
+                      <span
+                        className={`appointments-filter-badge appointments-filter-badge--${filter.id}`}
+                        aria-hidden="true"
+                      >
+                        {badgeCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {appointments.length === 0 && (
