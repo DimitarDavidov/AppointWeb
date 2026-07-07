@@ -4,6 +4,7 @@ import {
   computeProviderStats,
   getCancelledAppointments,
   getPastAppointments,
+  getPendingAppointments,
   getUpcomingAppointments,
 } from "../utils/providerPanelUtils";
 
@@ -24,6 +25,10 @@ export function useProviderPanelData() {
     appointmentsQuery.data ?? []
   );
 
+  const pendingAppointments = getPendingAppointments(
+    appointmentsQuery.data ?? []
+  );
+
   const pastAppointments = getPastAppointments(appointmentsQuery.data ?? []);
 
   const cancelledAppointments = getCancelledAppointments(
@@ -38,6 +43,7 @@ export function useProviderPanelData() {
   return {
     services,
     upcomingAppointments,
+    pendingAppointments,
     pastAppointments,
     cancelledAppointments,
     stats,

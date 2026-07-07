@@ -20,6 +20,16 @@ function isSameLocalDay(a: Date, b: Date): boolean {
   );
 }
 
+export function filterUpcomingAppointmentsForToday(
+  appointments: AppointmentDetail[]
+): AppointmentDetail[] {
+  const now = new Date();
+
+  return appointments.filter((appointment) =>
+    isSameLocalDay(new Date(appointment.startTime), now)
+  );
+}
+
 export function isActiveAppointmentStatus(status: string): boolean {
   return status === "Booked" || status === "Pending";
 }
@@ -45,6 +55,14 @@ export function getCancelledAppointments(
     .sort(compareAppointmentsByStartDateDesc);
 }
 
+export function getPendingAppointments(
+  appointments: AppointmentDetail[]
+): AppointmentDetail[] {
+  return appointments
+    .filter((appointment) => appointment.status === "Pending")
+    .sort(compareAppointmentsByStartDateAsc);
+}
+
 export function getUpcomingAppointments(
   appointments: AppointmentDetail[]
 ): AppointmentDetail[] {
@@ -53,7 +71,7 @@ export function getUpcomingAppointments(
   return appointments
     .filter(
       (appointment) =>
-        isActiveAppointmentStatus(appointment.status) &&
+        appointment.status === "Booked" &&
         new Date(appointment.endTime).getTime() >= now
     )
     .sort(compareAppointmentsByStartDateAsc);
@@ -101,14 +119,14 @@ export function computeProviderStats(
 ): ProviderStats {
   const now = new Date();
   const upcoming = getUpcomingAppointments(appointments);
+  const pending = getPendingAppointments(appointments);
 
   return {
     upcoming: upcoming.length,
     today: upcoming.filter((appointment) =>
       isSameLocalDay(new Date(appointment.startTime), now)
     ).length,
-    pending: appointments.filter((appointment) => appointment.status === "Pending")
-      .length,
+    pending: pending.length,
     services: servicesCount,
   };
 }

@@ -52,7 +52,7 @@
     padding: 0.75rem 0.85rem;
     border: none;
     border-radius: 12px;
-    background: transparent;
+    background-color: transparent;
     font: inherit;
     font-size: 0.9rem;
     font-weight: 600;
@@ -66,6 +66,7 @@
 
     &:hover {
       color: var(--color-brand-slate-dark);
+      background-color: rgba(207, 250, 254, 0.45);
       transform: translateY(-1px);
     }
 
@@ -77,6 +78,20 @@
         rgba(207, 250, 254, 0.55) 100%
       );
       box-shadow: 0 8px 20px rgba(6, 182, 212, 0.12);
+
+      &:hover {
+        background: linear-gradient(
+          180deg,
+          var(--color-bg-subtle) 0%,
+          rgba(207, 250, 254, 0.55) 100%
+        );
+      }
+    }
+
+    &:focus,
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-light);
+      outline-offset: 2px;
     }
 
     @include sm-up {

@@ -3,35 +3,32 @@ import { ProviderUpcomingAppointmentItem } from "./ProviderUpcomingAppointmentIt
 import { ProviderEmptyAppointmentsIcon } from "./ProviderIcons";
 import type { AppointmentDetail } from "../../types/appointment";
 
-interface ProviderAppointmentsSectionProps {
-  upcomingAppointments: AppointmentDetail[];
-  todayOnly?: boolean;
+interface ProviderPendingAppointmentsSectionProps {
+  pendingAppointments: AppointmentDetail[];
   isLoading: boolean;
   error: string;
   onUpdated: () => void;
 }
 
-export function ProviderAppointmentsSection({
-  upcomingAppointments,
-  todayOnly = false,
+export function ProviderPendingAppointmentsSection({
+  pendingAppointments,
   isLoading,
   error,
   onUpdated,
-}: ProviderAppointmentsSectionProps) {
-  const hasUpcoming = upcomingAppointments.length > 0;
+}: ProviderPendingAppointmentsSectionProps) {
+  const hasPending = pendingAppointments.length > 0;
 
   return (
     <section
-      id="provider-panel-appointments"
+      id="provider-panel-pending"
       role="tabpanel"
-      aria-labelledby="provider-tab-appointments"
+      aria-labelledby="provider-tab-pending"
       className="provider-tab-panel"
     >
       <div className="provider-tab-panel-intro">
         <p>
-          {todayOnly
-            ? "Confirmed bookings scheduled for today."
-            : "Manage confirmed upcoming bookings, cancel when needed, or request a new time."}
+          Review booking requests and reschedule proposals waiting for your
+          confirmation.
         </p>
       </div>
 
@@ -48,23 +45,20 @@ export function ProviderAppointmentsSection({
         </p>
       )}
 
-      {!isLoading && !error && !hasUpcoming && (
+      {!isLoading && !error && !hasPending && (
         <div className="provider-empty">
           <ProviderEmptyAppointmentsIcon className="provider-empty-icon" />
-          <p className="provider-empty-title">
-            {todayOnly ? "No appointments today" : "No upcoming appointments"}
-          </p>
+          <p className="provider-empty-title">No pending appointments</p>
           <p className="provider-empty-text">
-            {todayOnly
-              ? "You have no confirmed bookings scheduled for today."
-              : "Confirmed upcoming bookings will appear here."}
+            New booking requests and reschedule proposals will appear here until
+            you confirm them.
           </p>
         </div>
       )}
 
-      {!isLoading && !error && hasUpcoming && (
+      {!isLoading && !error && hasPending && (
         <ul className="provider-appointment-list">
-          {upcomingAppointments.map((appointment, index) => (
+          {pendingAppointments.map((appointment, index) => (
             <ProviderUpcomingAppointmentItem
               key={appointment.id}
               appointment={appointment}
