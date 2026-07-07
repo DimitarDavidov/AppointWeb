@@ -191,6 +191,8 @@ GET /api/catalog
     "serviceName": "Dental Checkup",
     "description": "Routine dental examination",
     "category": "Healthcare",
+    "country": "United States",
+    "city": "New York",
     "durationMinutes": 30,
     "price": 25.00
   }
@@ -261,13 +263,29 @@ Authorization: Bearer <accessToken>
 
 ## Appointment endpoints
 
-All appointment endpoints require authentication. Listing is scoped by role:
+All appointment endpoints require authentication.
 
-- **Customer** — appointments they booked
-- **Provider** — appointments where they are the provider
-- **Admin** — all appointments
+**Listing scope**
 
-### List appointments
+| Role | Endpoint | What is returned |
+|------|----------|-------------------|
+| Customer | `GET /api/appointments` | Appointments the user booked as a customer |
+| Admin | `GET /api/appointments` | All appointments |
+| Provider | `GET /api/provider/appointments` | Appointments where the user is the provider |
+
+Providers should use `/api/provider/appointments` for their dashboard. The general `/api/appointments` endpoint only returns rows where the authenticated user is the **customer** (unless the user is an admin).
+
+### Appointment status values
+
+| Status | Meaning |
+|--------|---------|
+| `Pending` | Awaiting provider confirmation, or a reschedule request is in progress |
+| `Booked` | Confirmed and scheduled |
+| `Cancelled` | Cancelled by customer, provider, or admin |
+| `Completed` | Appointment took place |
+| `NoShow` | Customer did not attend |
+
+### List appointments (customer / admin)
 
 ```
 GET /api/appointments
@@ -289,8 +307,18 @@ Authorization: Bearer <accessToken>
     "serviceName": "Dental Checkup",
     "startTime": "2026-06-15T10:00:00Z",
     "endTime": "2026-06-15T10:30:00Z",
+    "createdAt": "2026-06-01T08:00:00Z",
     "status": "Booked",
-    "priceAtBooking": 25.00
+    "priceAtBooking": 25.00,
+    "cancellationReason": null,
+    "cancelledByUserId": null,
+    "pendingRescheduleStartTime": null,
+    "pendingRescheduleEndTime": null,
+    "rescheduleReason": null,
+    "rescheduleRequestedByUserId": null,
+    "providerRescheduleCount": 0,
+    "customerRescheduleCount": 0,
+    "previousStartTime": null
   }
 ]
 ```
@@ -343,7 +371,7 @@ Authorization: Bearer <accessToken>
   "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
   "startTime": "2026-06-15T10:00:00Z",
   "endTime": "2026-06-15T10:30:00Z",
-  "status": "Booked",
+  "status": "Pending",
   "priceAtBooking": 25.00
 }
 ```
@@ -360,10 +388,33 @@ Authorization: Bearer <accessToken>
 **Business rules**
 
 - Users **cannot book their own services** (`customerId` must differ from `providerId`)
+- New appointments are created with status **`Pending`** until the provider confirms
+- The provider receives an email notification when a booking is requested
 - `endTime` is calculated automatically from the service duration
 - Only active services (`IsActive = true`) linked via `ProviderServices` can be booked
 - Booking must fall within the provider's availability windows (if configured)
-- A PostgreSQL exclusion constraint prevents overlapping bookings for the same provider
+- Overlapping `Booked` or `Pending` appointments for the same provider are blocked by application logic and a PostgreSQL exclusion constraint
+
+---
+
+### Confirm appointment
+
+Provider or admin confirms a pending booking.
+
+```
+PATCH /api/appointments/{id}/confirm
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`** — Returns the updated appointment with status `Booked`.
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `403 Forbidden` | Caller is not the provider (unless admin) |
+| `400 Bad Request` | Appointment is not in `Pending` status |
+| `409 Conflict` | Time slot is no longer available |
 
 ---
 
@@ -374,9 +425,19 @@ PATCH /api/appointments/{id}/cancel
 Authorization: Bearer <accessToken>
 ```
 
-Only booked appointments can be cancelled. Accessible by the customer, provider, or admin.
+Cancels a `Pending` or `Booked` appointment. Accessible by the customer, provider, or admin.
 
-**Success response — `200 OK`** — Returns the updated appointment.
+**Request body** (optional)
+
+```json
+{
+  "reason": "Schedule conflict"
+}
+```
+
+The API records `cancelledByUserId` from the authenticated user. The other party is notified by email.
+
+**Success response — `200 OK`** — Returns the updated appointment with status `Cancelled`.
 
 **Error responses**
 
@@ -384,11 +445,13 @@ Only booked appointments can be cancelled. Accessible by the customer, provider,
 |--------|-----------|
 | `404 Not Found` | Appointment not found |
 | `403 Forbidden` | User does not have access |
-| `400 Bad Request` | Appointment is not in `Booked` status |
+| `400 Bad Request` | Appointment is not in a cancellable status (`Pending` or `Booked`) |
 
 ---
 
-### Reschedule appointment
+### Request reschedule
+
+Proposes a new time. Creates a pending reschedule request that the other party must accept.
 
 ```
 PATCH /api/appointments/{id}/reschedule
@@ -399,9 +462,22 @@ Authorization: Bearer <accessToken>
 
 ```json
 {
-  "startTime": "2026-06-16T14:00:00Z"
+  "startTime": "2026-06-16T14:00:00Z",
+  "reason": "Running late that day"
 }
 ```
+
+| Field | Type | Rules |
+|-------|------|-------|
+| `startTime` | DateTime | Required, must differ from the current start time |
+| `reason` | string | Required when the **provider** requests a reschedule; optional for customers |
+
+**Business rules**
+
+- Sets `pendingRescheduleStartTime`, `pendingRescheduleEndTime`, `rescheduleReason`, and `rescheduleRequestedByUserId`
+- Sets status to **`Pending`** while the request is open
+- Sends an email to the other party
+- If the appointment had never been confirmed, accepting the request updates the time but does **not** increment reschedule counts
 
 **Error responses**
 
@@ -409,8 +485,49 @@ Authorization: Bearer <accessToken>
 |--------|-----------|
 | `404 Not Found` | Appointment not found |
 | `403 Forbidden` | User does not have access |
-| `400 Bad Request` | Invalid time, inactive service, or outside availability |
+| `400 Bad Request` | Invalid time, inactive service, outside availability, or missing reason (provider) |
 | `409 Conflict` | New time slot already booked |
+
+---
+
+### Accept reschedule
+
+Accepts a pending reschedule request from the other party.
+
+```
+PATCH /api/appointments/{id}/reschedule/accept
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`** — Returns the updated appointment with status `Booked` and the new time applied.
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `400 Bad Request` | No pending reschedule, or you requested the reschedule yourself |
+| `409 Conflict` | Proposed slot is no longer available |
+
+---
+
+### Update appointment outcome
+
+Mark a finished appointment as completed or no-show.
+
+```
+PATCH /api/appointments/{id}/status
+Authorization: Bearer <accessToken>
+```
+
+**Request body**
+
+```json
+{
+  "status": "Completed"
+}
+```
+
+Allowed values: `Completed`, `NoShow`. Only **confirmed** (`Booked`) appointments whose end time is in the past can be updated.
 
 ---
 
@@ -465,7 +582,20 @@ Permanently deletes the authenticated user's account and related data.
 
 ## Provider endpoints
 
-Require the `Provider` role.
+Require the `Provider` or `Admin` role.
+
+### List provider appointments
+
+Returns appointments where the authenticated user is the provider.
+
+```
+GET /api/provider/appointments
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`** — Same shape as `GET /api/appointments` (see [List appointments](#list-appointments-customer--admin)).
+
+---
 
 ### List services
 

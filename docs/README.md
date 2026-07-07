@@ -12,6 +12,16 @@ Detailed documentation for the AppointWeb project. For a quick start guide, see 
 | [Database](database.md) | Schema, entities, and relationships |
 | [Frontend](frontend.md) | React app structure, routing, and state management |
 
+## Feature overview
+
+| Area | Highlights |
+|------|------------|
+| Booking | Catalog browse → book → provider confirms → appointment is active |
+| Reschedule | Either party proposes a new time; the other accepts; tracked separately from initial pending time changes |
+| Cancellation | Records who cancelled and optional reason; emails the other party |
+| Provider panel | Stats, upcoming/pending/past/cancelled tabs, service and availability management |
+| Admin | User search, edit, suspend, delete |
+
 ## Quick links
 
 - **Run locally:** [README → Local setup](../README.md#local-setup)

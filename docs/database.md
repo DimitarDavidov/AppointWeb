@@ -68,6 +68,8 @@ Services are linked to providers through the `ProviderServices` join table. The 
 | `Name` | varchar(200) | Required |
 | `Description` | varchar(1000) | Optional |
 | `Category` | varchar(100) | Optional |
+| `Country` | varchar(100) | Required |
+| `City` | varchar(100) | Required |
 | `DurationMinutes` | integer | 1–1440 |
 | `Price` | numeric | 0–100000 |
 | `IsActive` | boolean | Default `true` |
@@ -110,8 +112,18 @@ Weekly availability windows for a provider.
 | `ServiceId` | uuid | FK → Services |
 | `StartTime` | timestamptz | UTC |
 | `EndTime` | timestamptz | Calculated from service duration |
-| `Status` | integer | Enum: `Booked`, `Cancelled`, `Completed`, `NoShow` |
+| `Status` | integer | Enum: `Booked` (0), `Cancelled` (1), `Completed` (2), `NoShow` (3), `Pending` (4) |
 | `PriceAtBooking` | numeric | Snapshot of service price at booking time |
+| `CancellationReason` | varchar(1000) | Optional, set on cancel |
+| `CancelledByUserId` | uuid | Optional, user who cancelled |
+| `PendingRescheduleStartTime` | timestamptz | Proposed start time during reschedule |
+| `PendingRescheduleEndTime` | timestamptz | Proposed end time during reschedule |
+| `PendingRescheduleFromConfirmedSlot` | boolean | Whether the open reschedule started from a confirmed slot |
+| `RescheduleReason` | varchar(1000) | Reason for the current reschedule request |
+| `RescheduleRequestedByUserId` | uuid | User who requested the reschedule |
+| `ProviderRescheduleCount` | integer | Times the provider rescheduled after confirmation |
+| `CustomerRescheduleCount` | integer | Times the customer rescheduled after confirmation |
+| `PreviousStartTime` | timestamptz | Start time before the last confirmed reschedule |
 | `CreatedAt` | timestamptz | UTC |
 
 ### PasswordResetTokens
@@ -141,7 +153,9 @@ A PostgreSQL **exclusion constraint** prevents overlapping appointments for the 
 EX_Appointments_NoOverlap_PerProvider
 ```
 
-Two `Booked` appointments for the same provider cannot overlap in time. The application also checks for overlaps before inserting, and catches the constraint violation as a fallback.
+Two **`Booked`** or **`Pending`** appointments for the same provider cannot overlap in time. Cancelled, completed, and no-show rows are excluded from the constraint.
+
+The application also checks for overlaps before inserting or rescheduling, and catches the constraint violation as a fallback.
 
 ## Migrations
 
@@ -159,6 +173,14 @@ Migrations live in `src/App/Migrations/` and are applied on API startup via `App
 | `AddCategoryToService` | Adds Category column to Services |
 | `AddProviderService` | Creates ProviderServices join table |
 | `AddIsSuspendedToUser` | Adds IsSuspended column to Users |
+| `AddCancellationReasonToAppointment` | Adds CancellationReason to Appointments |
+| `IncludePendingInAppointmentOverlapConstraint` | Extends overlap constraint to Pending bookings |
+| `AddPendingRescheduleFields` | Adds pending reschedule columns |
+| `AddCountryAndCityToService` | Adds Country and City to Services |
+| `AddAppointmentRescheduleHistory` | Adds PreviousStartTime and reschedule count |
+| `SplitAppointmentRescheduleCounts` | Splits count into provider/customer columns |
+| `AddPendingRescheduleFromConfirmedSlot` | Tracks whether reschedule started from a confirmed slot |
+| `AddCancelledByUserIdToAppointment` | Records who cancelled an appointment |
 
 ### Manual migration commands
 

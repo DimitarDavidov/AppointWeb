@@ -33,9 +33,9 @@ ClientApp/src/
 │   ├── ProtectedRoute/     # Auth and role guards
 │   ├── Account/            # Account settings fields and icons
 │   ├── Admin/              # Admin panel tables, cards, modals
-│   ├── Appointments/       # Appointment cards
+│   ├── Appointments/       # Appointment cards, cancel dialog, reschedule meta
 │   ├── ConfirmDialog/      # Reusable confirmation dialog
-│   └── Provider/           # Provider panel sections and modals
+│   └── Provider/           # Provider panel sections, stats grid, tabs, icons
 ├── constants/
 │   └── roles.ts            # Role constants and labels
 ├── features/
@@ -44,7 +44,7 @@ ClientApp/src/
 ├── hooks/
 │   ├── useAsyncData.ts     # Generic async data loading hook
 │   ├── useAccountSettings.ts
-│   └── useProviderPanelData.ts
+│   └── useProviderPanelData.ts  # Provider appointments + services data
 ├── pages/
 │   ├── Home.tsx            # Landing page + service catalog
 │   ├── ServiceDetail.tsx   # Service detail and booking flow
@@ -61,7 +61,12 @@ ClientApp/src/
 │   ├── store.ts            # Redux store configuration
 │   └── hooks.ts            # Typed useAppDispatch / useAppSelector
 ├── types/                  # TypeScript interfaces for API DTOs
-├── utils/                  # Formatting, JWT parsing, helpers
+├── utils/                  # Formatting, filters, appointment helpers
+│   ├── appointmentFilters.ts       # Customer appointment tab filters
+│   ├── appointmentCancellationUtils.ts
+│   ├── appointmentRescheduleUtils.ts
+│   ├── appointmentOutcomeUtils.ts
+│   └── providerPanelUtils.ts       # Provider stats and appointment grouping
 ├── App.tsx                 # Router setup
 ├── main.tsx                # Entry point (Provider wrapper)
 └── index.scss              # Global styles
@@ -121,14 +126,23 @@ The navbar adapts based on auth state and role:
 
 ### Appointments (`/appointments`)
 
-- Lists the user's appointments (scoped by role on the backend)
-- Supports cancel and reschedule actions
+- Lists the user's appointments from `GET /api/appointments`
+- Filter tabs: **Upcoming**, **Pending**, **Cancelled**, **Past**
+- **Upcoming** and **Pending** tabs show count badges when greater than zero
+- Supports cancel, reschedule request/accept, and outcome actions (Completed / NoShow)
+- Cancelled appointments show who cancelled and the cancellation reason (when available)
 
 ### Provider panel (`/provider`)
 
-- Stats grid: upcoming, today, active bookings, listed services
-- Tabs for upcoming appointments and service management
-- Edit service details, manage availability, preview public listing
+- Stats grid: upcoming, today, pending, listed services (clickable to jump to the relevant section)
+- Appointment tabs:
+  - **Upcoming** — confirmed future bookings
+  - **Pending** — new booking requests and open reschedule proposals (badge when count > 0)
+  - **Past** — completed, no-show, and appointments needing an outcome
+  - **Cancelled** — cancelled bookings with cancellation details
+- **Services** tab — edit service details, manage weekly availability, preview public listing
+- Provider actions: confirm bookings, cancel, request/accept reschedules, mark outcomes
+- Data loaded via `GET /api/provider/appointments` and `GET /api/provider/services`
 
 ### Admin panel (`/admin`)
 
@@ -183,9 +197,10 @@ Domain-specific API calls are split across `src/api/*.ts` modules.
 
 ## Styling
 
-- Global styles in `index.scss` (dark/light mode via `prefers-color-scheme`)
+- Global styles in `index.scss` (CSS custom properties for brand colors)
 - Component and page styles use SCSS with nesting
 - Shared breakpoint mixins in `styles/_breakpoints.scss`
+- Custom-styled buttons (filters, stat cards, tabs) override global `button` hover styles to avoid the default teal fill
 
 ## Scripts
 

@@ -208,9 +208,13 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 | `POST` | `/api/auth/reset-password` | No | Reset password with email token |
 | `GET` | `/api/catalog` | No | List bookable provider services |
 | `GET` | `/api/appointments` | Yes | List appointments (scoped by role) |
-| `POST` | `/api/appointments` | Yes | Create an appointment |
+| `POST` | `/api/appointments` | Yes | Create an appointment (starts as Pending) |
 | `PATCH` | `/api/appointments/{id}/cancel` | Yes | Cancel an appointment |
-| `PATCH` | `/api/appointments/{id}/reschedule` | Yes | Reschedule an appointment |
+| `PATCH` | `/api/appointments/{id}/confirm` | Provider, Admin | Confirm a pending booking |
+| `PATCH` | `/api/appointments/{id}/reschedule` | Yes | Request a new time |
+| `PATCH` | `/api/appointments/{id}/reschedule/accept` | Yes | Accept a pending reschedule |
+| `PATCH` | `/api/appointments/{id}/status` | Yes | Mark Completed or NoShow |
+| `GET` | `/api/provider/appointments` | Provider, Admin | List provider-scoped appointments |
 | `GET` | `/api/account` | Yes | Get current user profile |
 | `GET` | `/api/provider/services` | Provider | List the provider's services |
 | `GET` | `/api/admin/users` | Admin | List all users |

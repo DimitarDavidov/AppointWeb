@@ -78,14 +78,25 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 4. User picks a date/time and submits the booking form
 5. Frontend sends `POST /api/appointments` with provider, service, and start time
 6. Backend validates availability, prevents double-booking, and rejects self-booking
-7. User sees a confirmation and can view the appointment at `/appointments`
+7. Appointment is created with status **Pending**; the provider receives a request email
+8. Provider confirms via `PATCH /api/appointments/{id}/confirm` → status becomes **Booked**
+9. Customer can view and manage the appointment at `/appointments`
+
+## Request flow (example: reschedule)
+
+1. Customer or provider proposes a new time via `PATCH /api/appointments/{id}/reschedule`
+2. Backend stores the proposed time in `pendingRescheduleStartTime` / `pendingRescheduleEndTime` and sets status to **Pending**
+3. The other party receives an email notification
+4. The other party accepts via `PATCH /api/appointments/{id}/reschedule/accept`
+5. If the appointment had a **confirmed** time before the request, reschedule counts and `previousStartTime` are updated; otherwise the change is treated as an initial time adjustment (not counted as a reschedule)
+6. Status returns to **Booked** with the new time
 
 ## Request flow (example: provider panel)
 
 1. A provider opens `/provider`
 2. Frontend loads the provider's services from `GET /api/provider/services`
-3. Frontend loads appointments from `GET /api/appointments` (filtered server-side by provider ID)
-4. Provider can edit services, manage availability, and handle upcoming bookings
+3. Frontend loads appointments from `GET /api/provider/appointments` (scoped to the authenticated provider)
+4. Provider can confirm pending bookings, request/accept reschedules, cancel, mark outcomes, edit services, and manage availability
 
 ## Request flow (example: password reset)
 
@@ -95,6 +106,25 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 4. User clicks the link in the email → `/reset-password?token=...`
 5. User enters a new password; frontend sends `POST /api/auth/reset-password`
 6. Backend validates the token, updates the password, and marks the token as used
+
+## Appointment lifecycle
+
+```
+Customer books → Pending
+                    │
+         Provider confirms
+                    ▼
+                 Booked ──────► Completed / NoShow (after end time)
+                    │
+        Cancel (customer/provider/admin)
+                    ▼
+                Cancelled
+
+Reschedule request (from Pending or Booked):
+  → status Pending with proposed new time
+  → other party accepts → Booked (with new time)
+  → reschedule counts updated only if there was a confirmed time before
+```
 
 ## Backend layers
 
@@ -139,3 +169,6 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 - Appointment lists are scoped by role: customers see their bookings, providers see bookings where they are the provider, admins see all
 - Double-booking is prevented by application checks and a PostgreSQL exclusion constraint
 - Suspended users cannot use authenticated endpoints
+- New bookings start as **Pending** until the provider confirms them
+- Reschedule requests require acceptance by the other party; only changes from a previously confirmed slot count toward reschedule history
+- Email notifications are sent for booking requests, cancellations, and reschedule proposals (SMTP in production, console logging when `Email:Host` is empty)
