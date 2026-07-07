@@ -5,6 +5,7 @@ public class AppointmentDetailResponse
     public Guid Id { get; set; }
     public Guid CustomerId { get; set; }
     public string CustomerUsername { get; set; } = string.Empty;
+    public string? CustomerPhoneNumber { get; set; }
     public Guid ProviderId { get; set; }
     public string ProviderUsername { get; set; } = string.Empty;
     public Guid ServiceId { get; set; }
