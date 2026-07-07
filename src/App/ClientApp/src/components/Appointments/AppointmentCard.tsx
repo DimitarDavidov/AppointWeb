@@ -30,7 +30,14 @@ function getDurationMinutes(startTime: string, endTime: string): number {
   );
 }
 
-function formatStatusLabel(status: string): string {
+function formatStatusLabel(
+  status: string,
+  hasReschedulePending: boolean
+): string {
+  if (hasReschedulePending) {
+    return "Reschedule pending";
+  }
+
   switch (status) {
     case "Booked":
       return "Confirmed";
@@ -263,7 +270,7 @@ export function AppointmentCard({
           <span
             className={`appointments-card-status ${statusClassName(appointment.status)}`}
           >
-            {formatStatusLabel(appointment.status)}
+            {formatStatusLabel(appointment.status, pendingReschedule)}
           </span>
         </div>
       </div>

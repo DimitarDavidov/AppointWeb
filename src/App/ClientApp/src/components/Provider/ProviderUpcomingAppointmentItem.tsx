@@ -65,6 +65,7 @@ export function ProviderUpcomingAppointmentItem({
   const serviceInitial = appointment.serviceName.charAt(0).toUpperCase();
   const isPending = appointment.status === "Pending";
   const pendingReschedule = hasPendingReschedule(appointment);
+  const isNewBookingPending = isPending && !pendingReschedule;
   const canAcceptRescheduleRequest = canAcceptReschedule(appointment, userId);
   const awaitingRescheduleResponse = isRescheduleAwaitingResponse(
     appointment,
@@ -229,7 +230,11 @@ export function ProviderUpcomingAppointmentItem({
                       : " provider-appointment-status--confirmed"
                   }`}
                 >
-                  {isPending ? "Pending" : "Confirmed"}
+                  {pendingReschedule
+                    ? "Reschedule pending"
+                    : isPending
+                      ? "Pending"
+                      : "Confirmed"}
                 </span>
                 {timingLabel && (
                   <span className="provider-appointment-timing">
@@ -238,7 +243,7 @@ export function ProviderUpcomingAppointmentItem({
                 )}
               </div>
               <p className="provider-appointment-subtitle">
-                {isPending ? "Requested by" : "Booked with"} {customerName}
+                {isNewBookingPending ? "Requested by" : "Booked with"} {customerName}
                 {customerPhone
                   ? ` · ${customerPhone}`
                   : " · No phone number provided"}
@@ -341,7 +346,7 @@ export function ProviderUpcomingAppointmentItem({
               Accept reschedule
             </button>
           )}
-          {isPending && (
+          {isNewBookingPending && (
             <button
               type="button"
               className="provider-btn provider-btn--primary"

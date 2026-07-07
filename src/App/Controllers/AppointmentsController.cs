@@ -425,6 +425,7 @@ public class AppointmentsController : ControllerBase
         appointment.PendingRescheduleEndTime = endUtc;
         appointment.RescheduleReason = reason;
         appointment.RescheduleRequestedByUserId = userId;
+        appointment.Status = AppointmentStatus.Pending;
 
         await _db.SaveChangesAsync(ct);
 
@@ -526,6 +527,7 @@ public class AppointmentsController : ControllerBase
 
         appointment.StartTime = appointment.PendingRescheduleStartTime.Value;
         appointment.EndTime = appointment.PendingRescheduleEndTime.Value;
+        appointment.Status = AppointmentStatus.Booked;
         ClearPendingReschedule(appointment);
 
         try
