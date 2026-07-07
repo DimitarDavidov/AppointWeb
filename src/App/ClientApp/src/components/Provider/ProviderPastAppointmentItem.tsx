@@ -7,17 +7,20 @@ import {
 } from "../../utils/appointmentOutcomeUtils";
 import { capitalizeFirstLetter } from "../../utils/formatDisplayName";
 import { formatDuration, formatPrice } from "../../utils/formatService";
+import { formatAppointmentDateTime } from "../../utils/formatAppointment";
 import {
   formatAppointmentDate,
   formatAppointmentTime,
 } from "../../utils/providerPanelUtils";
 import { AppointmentOutcomeActions } from "../Appointments/AppointmentOutcomeActions";
+import { AppointmentRescheduleMeta } from "../Appointments/AppointmentRescheduleMeta";
 import {
   ProviderCalendarIcon,
   ProviderClockIcon,
   ProviderCustomerIcon,
   ProviderDurationIcon,
   ProviderPriceIcon,
+  ProviderStatBookedIcon,
 } from "./ProviderIcons";
 
 function getDurationMinutes(startTime: string, endTime: string): number {
@@ -152,6 +155,14 @@ export function ProviderPastAppointmentItem({
               </dt>
               <dd>{formatPrice(appointment.priceAtBooking)}</dd>
             </div>
+            <div className="provider-appointment-meta-item">
+              <dt>
+                <ProviderStatBookedIcon />
+                Created
+              </dt>
+              <dd>{formatAppointmentDateTime(appointment.createdAt)}</dd>
+            </div>
+            <AppointmentRescheduleMeta appointment={appointment} />
           </dl>
 
           {appointment.status === "Cancelled" &&

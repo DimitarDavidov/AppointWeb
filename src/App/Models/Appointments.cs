@@ -41,6 +41,12 @@ public class Appointment
 
     public Guid? RescheduleRequestedByUserId { get; set; }
 
+    public int ProviderRescheduleCount { get; set; }
+
+    public int CustomerRescheduleCount { get; set; }
+
+    public DateTime? PreviousStartTime { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public User Customer { get; set; } = null!;

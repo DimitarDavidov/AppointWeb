@@ -46,7 +46,7 @@ public class AppointmentsController : ControllerBase
         var role = User.FindFirstValue(ClaimTypes.Role);
 
         var appointments = await FilterAppointmentsForUser(userId, role)
-            .OrderByDescending(a => a.StartTime)
+            .OrderBy(a => a.StartTime)
             .Select(a => new AppointmentDetailResponse
             {
                 Id = a.Id,
@@ -59,6 +59,7 @@ public class AppointmentsController : ControllerBase
                 ServiceName = a.Service.Name,
                 StartTime = a.StartTime,
                 EndTime = a.EndTime,
+                CreatedAt = a.CreatedAt,
                 Status = AppointmentStatusMapper.ToApiStatus(a.Status),
                 PriceAtBooking = a.PriceAtBooking,
                 CancellationReason = a.CancellationReason,
@@ -66,6 +67,9 @@ public class AppointmentsController : ControllerBase
                 PendingRescheduleEndTime = a.PendingRescheduleEndTime,
                 RescheduleReason = a.RescheduleReason,
                 RescheduleRequestedByUserId = a.RescheduleRequestedByUserId,
+                ProviderRescheduleCount = a.ProviderRescheduleCount,
+                CustomerRescheduleCount = a.CustomerRescheduleCount,
+                PreviousStartTime = a.PreviousStartTime,
             })
             .ToListAsync(ct);
 
@@ -94,6 +98,7 @@ public class AppointmentsController : ControllerBase
                 ServiceName = a.Service.Name,
                 StartTime = a.StartTime,
                 EndTime = a.EndTime,
+                CreatedAt = a.CreatedAt,
                 Status = AppointmentStatusMapper.ToApiStatus(a.Status),
                 PriceAtBooking = a.PriceAtBooking,
                 CancellationReason = a.CancellationReason,
@@ -101,6 +106,9 @@ public class AppointmentsController : ControllerBase
                 PendingRescheduleEndTime = a.PendingRescheduleEndTime,
                 RescheduleReason = a.RescheduleReason,
                 RescheduleRequestedByUserId = a.RescheduleRequestedByUserId,
+                ProviderRescheduleCount = a.ProviderRescheduleCount,
+                CustomerRescheduleCount = a.CustomerRescheduleCount,
+                PreviousStartTime = a.PreviousStartTime,
             })
             .SingleOrDefaultAsync(ct);
 
@@ -525,8 +533,15 @@ public class AppointmentsController : ControllerBase
             return Conflict("The requested time slot is no longer available.");
         }
 
+        appointment.PreviousStartTime = appointment.StartTime;
         appointment.StartTime = appointment.PendingRescheduleStartTime.Value;
         appointment.EndTime = appointment.PendingRescheduleEndTime.Value;
+
+        if (appointment.RescheduleRequestedByUserId == appointment.ProviderId)
+            appointment.ProviderRescheduleCount++;
+        else if (appointment.RescheduleRequestedByUserId == appointment.CustomerId)
+            appointment.CustomerRescheduleCount++;
+
         appointment.Status = AppointmentStatus.Booked;
         ClearPendingReschedule(appointment);
 

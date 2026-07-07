@@ -1,5 +1,24 @@
 import type { AppointmentDetail } from "../types/appointment";
 import { isSameId } from "./isSameId";
+import { formatAppointmentDateTime } from "./formatAppointment";
+
+export function getReschedulePartyCountLabel(count: number): string {
+  if (count === 0) {
+    return "Not rescheduled";
+  }
+
+  return count === 1 ? "1 time" : `${count} times`;
+}
+
+export function getPreviousRescheduleTimeLabel(
+  previousStartTime: string | null
+): string {
+  if (!previousStartTime) {
+    return "No previous reschedule";
+  }
+
+  return formatAppointmentDateTime(previousStartTime);
+}
 
 export function hasPendingReschedule(
   appointment: AppointmentDetail

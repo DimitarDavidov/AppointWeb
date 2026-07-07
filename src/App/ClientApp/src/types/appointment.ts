@@ -5,6 +5,7 @@ export interface Appointment {
   serviceId: string;
   startTime: string;
   endTime: string;
+  createdAt: string;
   status: string;
   priceAtBooking: number;
 }
@@ -19,6 +20,9 @@ export interface AppointmentDetail extends Appointment {
   pendingRescheduleEndTime: string | null;
   rescheduleReason: string | null;
   rescheduleRequestedByUserId: string | null;
+  providerRescheduleCount: number;
+  customerRescheduleCount: number;
+  previousStartTime: string | null;
 }
 
 export interface CancelAppointmentRequest {

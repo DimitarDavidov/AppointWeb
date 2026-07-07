@@ -1,5 +1,9 @@
 import type { AppointmentDetail } from "../types/appointment";
 import { needsAppointmentOutcome } from "./appointmentOutcomeUtils";
+import {
+  compareAppointmentsByStartDateAsc,
+  compareAppointmentsByStartDateDesc,
+} from "./appointmentSort";
 
 export interface ProviderStats {
   upcoming: number;
@@ -30,17 +34,7 @@ export function getPastAppointments(
         appointment.status === "Completed" ||
         appointment.status === "NoShow"
     )
-    .sort((a, b) => {
-      const aNeedsOutcome = needsAppointmentOutcome(a);
-      const bNeedsOutcome = needsAppointmentOutcome(b);
-
-      if (aNeedsOutcome && !bNeedsOutcome) return -1;
-      if (bNeedsOutcome && !aNeedsOutcome) return 1;
-
-      return (
-        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-      );
-    });
+    .sort(compareAppointmentsByStartDateDesc);
 }
 
 export function getCancelledAppointments(
@@ -48,10 +42,7 @@ export function getCancelledAppointments(
 ): AppointmentDetail[] {
   return appointments
     .filter((appointment) => appointment.status === "Cancelled")
-    .sort(
-      (a, b) =>
-        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-    );
+    .sort(compareAppointmentsByStartDateDesc);
 }
 
 export function getUpcomingAppointments(
@@ -65,14 +56,7 @@ export function getUpcomingAppointments(
         isActiveAppointmentStatus(appointment.status) &&
         new Date(appointment.endTime).getTime() >= now
     )
-    .sort((a, b) => {
-      if (a.status === "Pending" && b.status !== "Pending") return -1;
-      if (b.status === "Pending" && a.status !== "Pending") return 1;
-
-      return (
-        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-      );
-    });
+    .sort(compareAppointmentsByStartDateAsc);
 }
 
 export {

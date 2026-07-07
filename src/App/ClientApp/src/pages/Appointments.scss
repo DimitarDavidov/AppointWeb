@@ -354,6 +354,20 @@
           font-weight: 600;
           color: var(--color-brand-slate-dark);
         }
+
+        &--with-icon {
+          dt {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+
+            svg {
+              width: 0.9rem;
+              height: 0.9rem;
+              flex-shrink: 0;
+            }
+          }
+        }
       }
     }
 

@@ -1,4 +1,8 @@
 import type { AppointmentDetail } from "../types/appointment";
+import {
+  compareAppointmentsByStartDateAsc,
+  compareAppointmentsByStartDateDesc,
+} from "./appointmentSort";
 
 export type AppointmentFilter = "upcoming" | "pending" | "cancelled" | "past";
 
@@ -26,26 +30,17 @@ export function filterAppointmentsByStatus(
             appointment.status === "Booked" &&
             new Date(appointment.endTime).getTime() >= now
         )
-        .sort(
-          (a, b) =>
-            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-        );
+        .sort(compareAppointmentsByStartDateAsc);
 
     case "pending":
       return appointments
         .filter((appointment) => appointment.status === "Pending")
-        .sort(
-          (a, b) =>
-            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-        );
+        .sort(compareAppointmentsByStartDateAsc);
 
     case "cancelled":
       return appointments
         .filter((appointment) => appointment.status === "Cancelled")
-        .sort(
-          (a, b) =>
-            new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-        );
+        .sort(compareAppointmentsByStartDateDesc);
 
     case "past":
       return appointments
@@ -56,10 +51,7 @@ export function filterAppointmentsByStatus(
             (appointment.status === "Booked" &&
               new Date(appointment.endTime).getTime() < now)
         )
-        .sort(
-          (a, b) =>
-            new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-        );
+        .sort(compareAppointmentsByStartDateDesc);
   }
 }
 

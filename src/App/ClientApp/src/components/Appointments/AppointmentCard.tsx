@@ -8,6 +8,7 @@ import {
 import { getErrorMessage } from "../../api/errors";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 import { AppointmentOutcomeActions } from "./AppointmentOutcomeActions";
+import { AppointmentRescheduleMeta } from "./AppointmentRescheduleMeta";
 import { isActiveAppointmentStatus } from "../../utils/providerPanelUtils";
 import {
   canAcceptReschedule,
@@ -349,6 +350,8 @@ export function AppointmentCard({
           <dt>Duration</dt>
           <dd>{formatDuration(durationMinutes)}</dd>
         </div>
+
+        <AppointmentRescheduleMeta appointment={appointment} variant="appointments" />
       </dl>
 
       {pendingReschedule && (

@@ -31,7 +31,7 @@ public class ProviderController : ControllerBase
         var appointments = await _db.Appointments
             .AsNoTracking()
             .Where(a => a.ProviderId == providerId)
-            .OrderByDescending(a => a.StartTime)
+            .OrderBy(a => a.StartTime)
             .Select(a => new AppointmentDetailResponse
             {
                 Id = a.Id,
@@ -44,6 +44,7 @@ public class ProviderController : ControllerBase
                 ServiceName = a.Service.Name,
                 StartTime = a.StartTime,
                 EndTime = a.EndTime,
+                CreatedAt = a.CreatedAt,
                 Status = AppointmentStatusMapper.ToApiStatus(a.Status),
                 PriceAtBooking = a.PriceAtBooking,
                 CancellationReason = a.CancellationReason,
@@ -51,6 +52,9 @@ public class ProviderController : ControllerBase
                 PendingRescheduleEndTime = a.PendingRescheduleEndTime,
                 RescheduleReason = a.RescheduleReason,
                 RescheduleRequestedByUserId = a.RescheduleRequestedByUserId,
+                ProviderRescheduleCount = a.ProviderRescheduleCount,
+                CustomerRescheduleCount = a.CustomerRescheduleCount,
+                PreviousStartTime = a.PreviousStartTime,
             })
             .ToListAsync(cancellationToken);
 

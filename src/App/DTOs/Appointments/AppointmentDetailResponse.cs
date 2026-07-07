@@ -13,6 +13,7 @@ public class AppointmentDetailResponse
 
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public string Status { get; set; } = "Booked";
     public decimal PriceAtBooking { get; set; }
@@ -22,4 +23,7 @@ public class AppointmentDetailResponse
     public DateTime? PendingRescheduleEndTime { get; set; }
     public string? RescheduleReason { get; set; }
     public Guid? RescheduleRequestedByUserId { get; set; }
+    public int ProviderRescheduleCount { get; set; }
+    public int CustomerRescheduleCount { get; set; }
+    public DateTime? PreviousStartTime { get; set; }
 }

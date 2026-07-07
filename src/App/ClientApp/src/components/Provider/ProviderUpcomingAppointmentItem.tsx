@@ -8,6 +8,7 @@ import {
 import { getErrorMessage } from "../../api/errors";
 import { PhoneIcon } from "../Account/AccountIcons";
 import { CancelAppointmentDialog } from "../Appointments/CancelAppointmentDialog";
+import { AppointmentRescheduleMeta } from "../Appointments/AppointmentRescheduleMeta";
 import type { AppointmentDetail } from "../../types/appointment";
 import {
   canAcceptReschedule,
@@ -18,6 +19,7 @@ import { useAppSelector } from "../../store/hooks";
 import {
   toDatetimeLocalValue,
   toDatetimeLocalValueFromIso,
+  formatAppointmentDateTime,
 } from "../../utils/formatAppointment";
 import {
   formatAppointmentDate,
@@ -294,6 +296,14 @@ export function ProviderUpcomingAppointmentItem({
               </dt>
               <dd>{formatPrice(appointment.priceAtBooking)}</dd>
             </div>
+            <div className="provider-appointment-meta-item">
+              <dt>
+                <ProviderStatBookedIcon />
+                Created
+              </dt>
+              <dd>{formatAppointmentDateTime(appointment.createdAt)}</dd>
+            </div>
+            <AppointmentRescheduleMeta appointment={appointment} />
           </dl>
 
           {pendingReschedule && (
