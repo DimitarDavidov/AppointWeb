@@ -4,7 +4,7 @@ import {
   rescheduleAppointment,
 } from "../../api/appointments";
 import { getErrorMessage } from "../../api/errors";
-import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
+import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 import { UserRoles } from "../../constants/roles";
 import type { AppointmentDetail } from "../../types/appointment";
 import {
@@ -69,6 +69,7 @@ export function AppointmentCard({
   const isProviderView = viewerRole === UserRoles.Provider;
   const isAdminView = viewerRole === UserRoles.Admin;
   const canModify = appointment.status === "Booked";
+  const showProviderCancelReason = isProviderView || isAdminView;
 
   const [isEditing, setIsEditing] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -108,12 +109,15 @@ export function AppointmentCard({
     setShowCancelDialog(false);
   }
 
-  async function handleConfirmCancel() {
+  async function handleConfirmCancel(reason?: string) {
     setActionError("");
     setIsSubmitting(true);
 
     try {
-      await cancelAppointment(appointment.id);
+      await cancelAppointment(
+        appointment.id,
+        showProviderCancelReason && reason ? { reason } : undefined
+      );
       setShowCancelDialog(false);
       onUpdated();
     } catch (err) {
@@ -154,18 +158,17 @@ export function AppointmentCard({
 
   return (
     <li className="appointments-card">
-      <ConfirmDialog
+      <CancelAppointmentDialog
         open={showCancelDialog}
-        title="Cancel appointment?"
-        confirmLabel="Yes, cancel appointment"
-        cancelLabel="Keep appointment"
+        showReasonField={showProviderCancelReason}
         isConfirming={isSubmitting}
         onConfirm={handleConfirmCancel}
         onClose={handleCloseCancelDialog}
       >
         <p>
-          This will cancel your booking. You can always schedule a new appointment
-          later if you change your mind.
+          {showProviderCancelReason
+            ? "This will cancel the customer's booking. They will be notified by email."
+            : "This will cancel your booking. You can always schedule a new appointment later if you change your mind."}
         </p>
         <ul className="confirm-dialog-summary">
           <li>
@@ -185,7 +188,7 @@ export function AppointmentCard({
             <span>{formatPrice(appointment.priceAtBooking)}</span>
           </li>
         </ul>
-      </ConfirmDialog>
+      </CancelAppointmentDialog>
 
       <div className="appointments-card-header">
         <div className="appointments-card-heading">
@@ -202,6 +205,13 @@ export function AppointmentCard({
         {counterpartLabel} {counterpartName} · {formatDuration(durationMinutes)} ·{" "}
         {formatPrice(appointment.priceAtBooking)}
       </p>
+
+      {appointment.status === "Cancelled" && appointment.cancellationReason && (
+        <p className="appointments-card-cancellation-reason">
+          <span>Cancellation reason</span>
+          {appointment.cancellationReason}
+        </p>
+      )}
 
       <dl className="appointments-card-meta">
         {!isProviderView && (

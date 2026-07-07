@@ -16,4 +16,5 @@ public class AppointmentDetailResponse
 
     public string Status { get; set; } = "Booked";
     public decimal PriceAtBooking { get; set; }
+    public string? CancellationReason { get; set; }
 }

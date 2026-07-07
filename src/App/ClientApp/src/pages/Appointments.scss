@@ -148,6 +148,29 @@
       color: var(--color-text-muted);
     }
 
+    &-cancellation-reason {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin: 0 0 1.25rem;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      background-color: rgba(239, 68, 68, 0.06);
+      border: 1px solid rgba(239, 68, 68, 0.14);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--color-text);
+      white-space: pre-wrap;
+
+      span {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #b91c1c;
+      }
+    }
+
     &-meta {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -14,6 +14,11 @@ export interface AppointmentDetail extends Appointment {
   customerPhoneNumber: string | null;
   providerUsername: string;
   serviceName: string;
+  cancellationReason: string | null;
+}
+
+export interface CancelAppointmentRequest {
+  reason?: string;
 }
 
 export interface CreateAppointmentRequest {

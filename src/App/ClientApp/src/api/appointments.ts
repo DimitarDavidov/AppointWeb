@@ -2,6 +2,7 @@ import api from "./api";
 import type {
   Appointment,
   AppointmentDetail,
+  CancelAppointmentRequest,
   CreateAppointmentRequest,
 } from "../types/appointment";
 
@@ -17,8 +18,14 @@ export async function createAppointment(
   return response.data;
 }
 
-export async function cancelAppointment(id: string): Promise<Appointment> {
-  const response = await api.patch<Appointment>(`/api/appointments/${id}/cancel`);
+export async function cancelAppointment(
+  id: string,
+  data?: CancelAppointmentRequest
+): Promise<Appointment> {
+  const response = await api.patch<Appointment>(
+    `/api/appointments/${id}/cancel`,
+    data ?? {}
+  );
   return response.data;
 }
 

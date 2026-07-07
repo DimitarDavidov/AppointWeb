@@ -15,5 +15,6 @@ public static class AppointmentMapper
             EndTime = appointment.EndTime,
             Status = appointment.Status.ToString(),
             PriceAtBooking = appointment.PriceAtBooking,
+            CancellationReason = appointment.CancellationReason,
         };
 }

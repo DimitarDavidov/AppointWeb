@@ -5,7 +5,7 @@ import {
 } from "../../api/appointments";
 import { getErrorMessage } from "../../api/errors";
 import { PhoneIcon } from "../Account/AccountIcons";
-import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
+import { CancelAppointmentDialog } from "../Appointments/CancelAppointmentDialog";
 import type { AppointmentDetail } from "../../types/appointment";
 import {
   toDatetimeLocalValue,
@@ -85,12 +85,12 @@ export function ProviderUpcomingAppointmentItem({
     setShowCancelDialog(false);
   }
 
-  async function handleConfirmCancel() {
+  async function handleConfirmCancel(reason?: string) {
     setActionError("");
     setIsSubmitting(true);
 
     try {
-      await cancelAppointment(appointment.id);
+      await cancelAppointment(appointment.id, reason ? { reason } : undefined);
       setShowCancelDialog(false);
       onUpdated();
     } catch (err) {
@@ -135,20 +135,18 @@ export function ProviderUpcomingAppointmentItem({
       className={`provider-appointment-item${showRescheduleForm ? " provider-appointment-item--expanded" : ""}`}
       style={{ animationDelay: `${0.08 + index * 0.07}s` }}
     >
-      <ConfirmDialog
+      <CancelAppointmentDialog
         open={showCancelDialog}
-        title="Cancel appointment?"
-        confirmLabel="Yes, cancel appointment"
-        cancelLabel="Keep appointment"
+        showReasonField
         isConfirming={isSubmitting}
         onConfirm={handleConfirmCancel}
         onClose={handleCloseCancelDialog}
       >
         <p>
           This will cancel the booking with {customerName} for{" "}
-          {appointment.serviceName}.
+          {appointment.serviceName}. The customer will be notified by email.
         </p>
-      </ConfirmDialog>
+      </CancelAppointmentDialog>
 
       <div className="provider-appointment-row">
         <div className="provider-appointment-main">

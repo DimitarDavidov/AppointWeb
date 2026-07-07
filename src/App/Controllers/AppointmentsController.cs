@@ -2,10 +2,12 @@ using AppointWeb.Api.Data;
 using AppointWeb.Api.Dtos.Appointments;
 using AppointWeb.Api.Extensions;
 using AppointWeb.Api.Models;
+using AppointWeb.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace AppointWeb.Api.Controllers;
@@ -16,10 +18,17 @@ namespace AppointWeb.Api.Controllers;
 public class AppointmentsController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<AppointmentsController> _logger;
 
-    public AppointmentsController(AppDbContext db)
+    public AppointmentsController(
+        AppDbContext db,
+        IEmailService emailService,
+        ILogger<AppointmentsController> logger)
     {
         _db = db;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -50,6 +59,7 @@ public class AppointmentsController : ControllerBase
                     : a.Status == AppointmentStatus.Completed ? "Completed"
                     : "NoShow",
                 PriceAtBooking = a.PriceAtBooking,
+                CancellationReason = a.CancellationReason,
             })
             .ToListAsync(ct);
 
@@ -83,6 +93,7 @@ public class AppointmentsController : ControllerBase
                     : a.Status == AppointmentStatus.Completed ? "Completed"
                     : "NoShow",
                 PriceAtBooking = a.PriceAtBooking,
+                CancellationReason = a.CancellationReason,
             })
             .SingleOrDefaultAsync(ct);
 
@@ -174,7 +185,10 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/cancel")]
-    public async Task<ActionResult<AppointmentResponse>> Cancel(Guid id, CancellationToken ct)
+    public async Task<ActionResult<AppointmentResponse>> Cancel(
+        Guid id,
+        [FromBody] CancelAppointmentRequest? request,
+        CancellationToken ct)
     {
         if (!User.TryGetUserId(out var userId))
             return Unauthorized("Invalid token: missing user id.");
@@ -182,6 +196,9 @@ public class AppointmentsController : ControllerBase
         var role = User.FindFirstValue(ClaimTypes.Role);
 
         var appointment = await _db.Appointments
+            .Include(a => a.Customer)
+            .Include(a => a.Provider)
+            .Include(a => a.Service)
             .SingleOrDefaultAsync(a => a.Id == id, ct);
 
         if (appointment is null)
@@ -193,8 +210,48 @@ public class AppointmentsController : ControllerBase
         if (appointment.Status != AppointmentStatus.Booked)
             return BadRequest("Only booked appointments can be cancelled.");
 
+        var notifyCustomer = appointment.CustomerId != userId;
+        var canProvideReason =
+            notifyCustomer &&
+            (role == UserRoles.Provider || role == UserRoles.Admin);
+
+        string? reason = null;
+        if (canProvideReason)
+        {
+            reason = string.IsNullOrWhiteSpace(request?.Reason)
+                ? null
+                : request!.Reason.Trim();
+            appointment.CancellationReason = reason;
+        }
+
         appointment.Status = AppointmentStatus.Cancelled;
         await _db.SaveChangesAsync(ct);
+
+        if (notifyCustomer)
+        {
+            try
+            {
+                var appointmentWhen = appointment.StartTime.ToString(
+                    "dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'",
+                    CultureInfo.InvariantCulture);
+
+                await _emailService.SendAppointmentCancelledEmailAsync(
+                    appointment.Customer.Email,
+                    appointment.Customer.Username,
+                    appointment.Provider.Username,
+                    appointment.Service.Name,
+                    appointmentWhen,
+                    reason,
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to send cancellation email for appointment {AppointmentId}",
+                    appointment.Id);
+            }
+        }
 
         return Ok(AppointmentMapper.MapResponse(appointment));
     }

@@ -23,4 +23,32 @@ public class LoggingEmailService : IEmailService
 
         return Task.CompletedTask;
     }
+
+    public Task SendAppointmentCancelledEmailAsync(
+        string toEmail,
+        string customerName,
+        string providerName,
+        string serviceName,
+        string appointmentWhen,
+        string? reason,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogWarning(
+            """
+            Email:Host is not configured. Appointment cancellation email for {Email}:
+            Customer: {CustomerName}
+            Provider: {ProviderName}
+            Service: {ServiceName}
+            When: {AppointmentWhen}
+            Reason: {Reason}
+            """,
+            toEmail,
+            customerName,
+            providerName,
+            serviceName,
+            appointmentWhen,
+            reason ?? "(none)");
+
+        return Task.CompletedTask;
+    }
 }

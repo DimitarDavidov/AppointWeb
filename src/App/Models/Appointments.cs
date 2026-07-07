@@ -29,6 +29,9 @@ public class Appointment
 
     public decimal PriceAtBooking { get; set; }
 
+    [MaxLength(1000)]
+    public string? CancellationReason { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public User Customer { get; set; } = null!;
