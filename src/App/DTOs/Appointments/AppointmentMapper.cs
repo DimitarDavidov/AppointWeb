@@ -13,7 +13,7 @@ public static class AppointmentMapper
             ServiceId = appointment.ServiceId,
             StartTime = appointment.StartTime,
             EndTime = appointment.EndTime,
-            Status = appointment.Status.ToString(),
+            Status = AppointmentStatusMapper.ToApiStatus(appointment.Status),
             PriceAtBooking = appointment.PriceAtBooking,
             CancellationReason = appointment.CancellationReason,
         };

@@ -26,11 +26,11 @@ const statCards = [
     modifier: "provider-stat-card--today",
   },
   {
-    key: "booked",
-    label: "Active bookings",
-    hint: "Currently booked",
+    key: "pending",
+    label: "Pending",
+    hint: "Awaiting confirmation",
     icon: ProviderStatBookedIcon,
-    modifier: "provider-stat-card--booked",
+    modifier: "provider-stat-card--pending",
   },
   {
     key: "services",
@@ -45,7 +45,7 @@ export function ProviderStatsGrid({ stats }: ProviderStatsGridProps) {
   const values = {
     upcoming: stats.upcoming,
     today: stats.today,
-    booked: stats.booked,
+    pending: stats.pending,
     services: stats.services,
   };
 

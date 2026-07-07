@@ -29,6 +29,11 @@ export async function cancelAppointment(
   return response.data;
 }
 
+export async function confirmAppointment(id: string): Promise<Appointment> {
+  const response = await api.patch<Appointment>(`/api/appointments/${id}/confirm`);
+  return response.data;
+}
+
 export interface RescheduleAppointmentRequest {
   startTime: string;
 }

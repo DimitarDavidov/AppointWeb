@@ -5,6 +5,7 @@ import {
 } from "../../api/appointments";
 import { getErrorMessage } from "../../api/errors";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
+import { isActiveAppointmentStatus } from "../../utils/providerPanelUtils";
 import { UserRoles } from "../../constants/roles";
 import type { AppointmentDetail } from "../../types/appointment";
 import {
@@ -24,7 +25,9 @@ function getDurationMinutes(startTime: string, endTime: string): number {
 function formatStatusLabel(status: string): string {
   switch (status) {
     case "Booked":
-      return "Booked";
+      return "Confirmed";
+    case "Pending":
+      return "Pending";
     case "Cancelled":
       return "Cancelled";
     case "Completed":
@@ -40,6 +43,8 @@ function statusClassName(status: string): string {
   switch (status) {
     case "Booked":
       return "appointments-card-status--booked";
+    case "Pending":
+      return "appointments-card-status--pending";
     case "Cancelled":
       return "appointments-card-status--cancelled";
     case "Completed":
@@ -68,7 +73,7 @@ export function AppointmentCard({
   );
   const isProviderView = viewerRole === UserRoles.Provider;
   const isAdminView = viewerRole === UserRoles.Admin;
-  const canModify = appointment.status === "Booked";
+  const canModify = isActiveAppointmentStatus(appointment.status);
   const showProviderCancelReason = isProviderView || isAdminView;
 
   const [isEditing, setIsEditing] = useState(false);

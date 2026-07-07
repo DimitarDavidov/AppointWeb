@@ -25,8 +25,8 @@ export function ProviderAppointmentsSection({
     >
       <div className="provider-tab-panel-intro">
         <p>
-          Review upcoming bookings, cancel when needed, or request a new time
-          for your customers.
+          Review booking requests, confirm appointments, cancel when needed, or
+          request a new time for your customers.
         </p>
       </div>
 
@@ -48,8 +48,8 @@ export function ProviderAppointmentsSection({
           <ProviderEmptyAppointmentsIcon className="provider-empty-icon" />
           <p className="provider-empty-title">No upcoming appointments</p>
           <p className="provider-empty-text">
-            When customers book with you, their upcoming visits will appear
-            here.
+            When customers request a booking with you, it will appear here for
+            confirmation.
           </p>
         </div>
       )}

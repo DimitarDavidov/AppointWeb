@@ -3,7 +3,7 @@ import type { AppointmentDetail } from "../types/appointment";
 export interface ProviderStats {
   upcoming: number;
   today: number;
-  booked: number;
+  pending: number;
   services: number;
 }
 
@@ -15,6 +15,10 @@ function isSameLocalDay(a: Date, b: Date): boolean {
   );
 }
 
+export function isActiveAppointmentStatus(status: string): boolean {
+  return status === "Booked" || status === "Pending";
+}
+
 export function getUpcomingAppointments(
   appointments: AppointmentDetail[]
 ): AppointmentDetail[] {
@@ -23,13 +27,17 @@ export function getUpcomingAppointments(
   return appointments
     .filter(
       (appointment) =>
-        appointment.status === "Booked" &&
+        isActiveAppointmentStatus(appointment.status) &&
         new Date(appointment.startTime).getTime() >= now
     )
-    .sort(
-      (a, b) =>
+    .sort((a, b) => {
+      if (a.status === "Pending" && b.status !== "Pending") return -1;
+      if (b.status === "Pending" && a.status !== "Pending") return 1;
+
+      return (
         new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    );
+      );
+    });
 }
 
 export function getAppointmentTimingLabel(iso: string): string | null {
@@ -75,7 +83,7 @@ export function computeProviderStats(
     today: upcoming.filter((appointment) =>
       isSameLocalDay(new Date(appointment.startTime), now)
     ).length,
-    booked: appointments.filter((appointment) => appointment.status === "Booked")
+    pending: appointments.filter((appointment) => appointment.status === "Pending")
       .length,
     services: servicesCount,
   };

@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import "./ConfirmDialog.scss";
 
 export interface ConfirmDialogProps {
@@ -44,7 +45,7 @@ function ConfirmDialog({
     return null;
   }
 
-  return (
+  return createPortal(
     <div className="confirm-dialog-root" role="presentation">
       <button
         type="button"
@@ -88,7 +89,8 @@ function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

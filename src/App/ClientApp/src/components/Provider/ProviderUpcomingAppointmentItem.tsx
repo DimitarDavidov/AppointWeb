@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import {
   cancelAppointment,
+  confirmAppointment,
   rescheduleAppointment,
 } from "../../api/appointments";
 import { getErrorMessage } from "../../api/errors";
@@ -26,6 +27,7 @@ import {
   ProviderDurationIcon,
   ProviderPriceIcon,
   ProviderRescheduleIcon,
+  ProviderStatBookedIcon,
 } from "./ProviderIcons";
 
 function getDurationMinutes(startTime: string, endTime: string): number {
@@ -53,6 +55,7 @@ export function ProviderUpcomingAppointmentItem({
   const customerPhone = appointment.customerPhoneNumber?.trim() || null;
   const timingLabel = getAppointmentTimingLabel(appointment.startTime);
   const serviceInitial = appointment.serviceName.charAt(0).toUpperCase();
+  const isPending = appointment.status === "Pending";
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showRescheduleForm, setShowRescheduleForm] = useState(false);
@@ -83,6 +86,22 @@ export function ProviderUpcomingAppointmentItem({
   function handleCloseCancelDialog() {
     if (isSubmitting) return;
     setShowCancelDialog(false);
+  }
+
+  async function handleConfirmAppointment() {
+    setActionError("");
+    setIsSubmitting(true);
+
+    try {
+      await confirmAppointment(appointment.id);
+      onUpdated();
+    } catch (err) {
+      setActionError(
+        getErrorMessage(err, "Could not confirm this appointment. Please try again.")
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   async function handleConfirmCancel(reason?: string) {
@@ -159,6 +178,15 @@ export function ProviderUpcomingAppointmentItem({
                 <h3 className="provider-appointment-title">
                   {appointment.serviceName}
                 </h3>
+                <span
+                  className={`provider-appointment-status${
+                    isPending
+                      ? " provider-appointment-status--pending"
+                      : " provider-appointment-status--confirmed"
+                  }`}
+                >
+                  {isPending ? "Pending" : "Confirmed"}
+                </span>
                 {timingLabel && (
                   <span className="provider-appointment-timing">
                     {timingLabel}
@@ -166,7 +194,7 @@ export function ProviderUpcomingAppointmentItem({
                 )}
               </div>
               <p className="provider-appointment-subtitle">
-                Booked with {customerName}
+                {isPending ? "Requested by" : "Booked with"} {customerName}
                 {customerPhone
                   ? ` · ${customerPhone}`
                   : " · No phone number provided"}
@@ -221,6 +249,17 @@ export function ProviderUpcomingAppointmentItem({
         </div>
 
         <div className="provider-appointment-actions">
+          {isPending && (
+            <button
+              type="button"
+              className="provider-btn provider-btn--primary"
+              disabled={isSubmitting || showRescheduleForm}
+              onClick={handleConfirmAppointment}
+            >
+              <ProviderStatBookedIcon className="provider-btn-icon" />
+              Confirm appointment
+            </button>
+          )}
           <button
             type="button"
             className="provider-btn provider-btn--danger"

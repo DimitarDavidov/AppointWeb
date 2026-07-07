@@ -54,10 +54,7 @@ public class AppointmentsController : ControllerBase
                 ServiceName = a.Service.Name,
                 StartTime = a.StartTime,
                 EndTime = a.EndTime,
-                Status = a.Status == AppointmentStatus.Booked ? "Booked"
-                    : a.Status == AppointmentStatus.Cancelled ? "Cancelled"
-                    : a.Status == AppointmentStatus.Completed ? "Completed"
-                    : "NoShow",
+                Status = AppointmentStatusMapper.ToApiStatus(a.Status),
                 PriceAtBooking = a.PriceAtBooking,
                 CancellationReason = a.CancellationReason,
             })
@@ -88,10 +85,7 @@ public class AppointmentsController : ControllerBase
                 ServiceName = a.Service.Name,
                 StartTime = a.StartTime,
                 EndTime = a.EndTime,
-                Status = a.Status == AppointmentStatus.Booked ? "Booked"
-                    : a.Status == AppointmentStatus.Cancelled ? "Cancelled"
-                    : a.Status == AppointmentStatus.Completed ? "Completed"
-                    : "NoShow",
+                Status = AppointmentStatusMapper.ToApiStatus(a.Status),
                 PriceAtBooking = a.PriceAtBooking,
                 CancellationReason = a.CancellationReason,
             })
@@ -152,7 +146,7 @@ public class AppointmentsController : ControllerBase
 
         var overlaps = await _db.Appointments.AsNoTracking().AnyAsync(a =>
             a.ProviderId == request.ProviderId &&
-            a.Status == AppointmentStatus.Booked &&
+            (a.Status == AppointmentStatus.Booked || a.Status == AppointmentStatus.Pending) &&
             a.StartTime < endUtc &&
             a.EndTime > startUtc, ct);
 
@@ -166,7 +160,7 @@ public class AppointmentsController : ControllerBase
             ServiceId = request.ServiceId,
             StartTime = startUtc,
             EndTime = endUtc,
-            Status = AppointmentStatus.Booked,
+            Status = AppointmentStatus.Pending,
             PriceAtBooking = service.Price
         };
 
@@ -207,8 +201,8 @@ public class AppointmentsController : ControllerBase
         if (!CanAccessAppointment(appointment, userId, role))
             return Forbid();
 
-        if (appointment.Status != AppointmentStatus.Booked)
-            return BadRequest("Only booked appointments can be cancelled.");
+        if (!AppointmentStatusMapper.CanBeModified(appointment.Status))
+            return BadRequest("Only active appointments can be cancelled.");
 
         var notifyCustomer = appointment.CustomerId != userId;
         var canProvideReason =
@@ -256,6 +250,53 @@ public class AppointmentsController : ControllerBase
         return Ok(AppointmentMapper.MapResponse(appointment));
     }
 
+    [HttpPatch("{id:guid}/confirm")]
+    public async Task<ActionResult<AppointmentResponse>> Confirm(Guid id, CancellationToken ct)
+    {
+        if (!User.TryGetUserId(out var userId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        var role = User.FindFirstValue(ClaimTypes.Role);
+
+        if (role != UserRoles.Provider && role != UserRoles.Admin)
+            return Forbid();
+
+        var appointment = await _db.Appointments
+            .SingleOrDefaultAsync(a => a.Id == id, ct);
+
+        if (appointment is null)
+            return NotFound();
+
+        if (role != UserRoles.Admin && appointment.ProviderId != userId)
+            return Forbid();
+
+        if (appointment.Status != AppointmentStatus.Pending)
+            return BadRequest("Only pending appointments can be confirmed.");
+
+        var overlaps = await _db.Appointments.AsNoTracking().AnyAsync(a =>
+            a.Id != id &&
+            a.ProviderId == appointment.ProviderId &&
+            (a.Status == AppointmentStatus.Booked || a.Status == AppointmentStatus.Pending) &&
+            a.StartTime < appointment.EndTime &&
+            a.EndTime > appointment.StartTime, ct);
+
+        if (overlaps)
+            return Conflict("This time slot is already booked.");
+
+        appointment.Status = AppointmentStatus.Booked;
+
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23P01")
+        {
+            return Conflict("This time slot is already booked.");
+        }
+
+        return Ok(AppointmentMapper.MapResponse(appointment));
+    }
+
     [HttpPatch("{id:guid}/reschedule")]
     public async Task<ActionResult<AppointmentResponse>> Reschedule(
         Guid id,
@@ -277,8 +318,8 @@ public class AppointmentsController : ControllerBase
         if (!CanAccessAppointment(appointment, userId, role))
             return Forbid();
 
-        if (appointment.Status != AppointmentStatus.Booked)
-            return BadRequest("Only booked appointments can be rescheduled.");
+        if (!AppointmentStatusMapper.CanBeModified(appointment.Status))
+            return BadRequest("Only active appointments can be rescheduled.");
 
         var startUtc = request.StartTime.Kind == DateTimeKind.Utc
             ? request.StartTime
@@ -298,7 +339,7 @@ public class AppointmentsController : ControllerBase
         var overlaps = await _db.Appointments.AsNoTracking().AnyAsync(a =>
             a.Id != id &&
             a.ProviderId == appointment.ProviderId &&
-            a.Status == AppointmentStatus.Booked &&
+            (a.Status == AppointmentStatus.Booked || a.Status == AppointmentStatus.Pending) &&
             a.StartTime < endUtc &&
             a.EndTime > startUtc, ct);
 

@@ -117,6 +117,11 @@
         color: var(--color-brand-teal-dark);
       }
 
+      &--pending {
+        background-color: rgba(245, 158, 11, 0.14);
+        color: #b45309;
+      }
+
       &--cancelled {
         background-color: rgba(239, 68, 68, 0.12);
         color: #b91c1c;

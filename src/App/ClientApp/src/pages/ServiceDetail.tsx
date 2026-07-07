@@ -113,14 +113,29 @@ function ServiceDetail() {
   }
 
   if (confirmedAppointment) {
+    const isPending = confirmedAppointment.status === "Pending";
+
     return (
       <div className="service-detail">
         <div className="service-detail-card service-detail-card--message">
-          <p className="service-detail-success-title">Appointment booked</p>
+          <p className="service-detail-success-title">
+            {isPending ? "Appointment request sent" : "Appointment booked"}
+          </p>
           <p className="service-detail-success-text">
-            Your {offering.serviceName} with{" "}
-            {capitalizeFirstLetter(offering.providerUsername)} is confirmed for{" "}
-            {formatAppointmentDateTime(confirmedAppointment.startTime)}.
+            {isPending ? (
+              <>
+                Your request for {offering.serviceName} with{" "}
+                {capitalizeFirstLetter(offering.providerUsername)} on{" "}
+                {formatAppointmentDateTime(confirmedAppointment.startTime)} is
+                pending. The provider will confirm your appointment soon.
+              </>
+            ) : (
+              <>
+                Your {offering.serviceName} with{" "}
+                {capitalizeFirstLetter(offering.providerUsername)} is confirmed for{" "}
+                {formatAppointmentDateTime(confirmedAppointment.startTime)}.
+              </>
+            )}
           </p>
           <p className="service-detail-success-meta">
             {formatDuration(offering.durationMinutes)} ·{" "}

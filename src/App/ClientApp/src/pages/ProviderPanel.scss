@@ -229,14 +229,14 @@
       }
     }
 
-    &--booked {
+    &--pending {
       .provider-stat-card-icon {
-        color: #2563eb;
-        background-color: #eff6ff;
+        color: #b45309;
+        background-color: rgba(245, 158, 11, 0.14);
       }
 
       .provider-stat-card-value {
-        color: #2563eb;
+        color: #b45309;
       }
     }
 
@@ -422,6 +422,25 @@
     text-transform: uppercase;
     color: var(--color-brand-teal-dark);
     background-color: var(--color-primary-light);
+  }
+
+  &-appointment-status {
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+
+    &--pending {
+      color: #b45309;
+      background-color: rgba(245, 158, 11, 0.14);
+    }
+
+    &--confirmed {
+      color: var(--color-brand-teal-dark);
+      background-color: var(--color-primary-light);
+    }
   }
 
   &-appointment-subtitle {
