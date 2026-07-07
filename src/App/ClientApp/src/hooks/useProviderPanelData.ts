@@ -2,7 +2,8 @@ import { getProviderAppointments, getProviderServices } from "../api/provider";
 import { useAsyncData } from "./useAsyncData";
 import {
   computeProviderStats,
-  getAppointmentsNeedingOutcome,
+  getCancelledAppointments,
+  getPastAppointments,
   getUpcomingAppointments,
 } from "../utils/providerPanelUtils";
 
@@ -23,7 +24,9 @@ export function useProviderPanelData() {
     appointmentsQuery.data ?? []
   );
 
-  const outcomeAppointments = getAppointmentsNeedingOutcome(
+  const pastAppointments = getPastAppointments(appointmentsQuery.data ?? []);
+
+  const cancelledAppointments = getCancelledAppointments(
     appointmentsQuery.data ?? []
   );
 
@@ -35,7 +38,8 @@ export function useProviderPanelData() {
   return {
     services,
     upcomingAppointments,
-    outcomeAppointments,
+    pastAppointments,
+    cancelledAppointments,
     stats,
     appointmentsQuery,
     servicesQuery,

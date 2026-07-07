@@ -1,34 +1,35 @@
 import { SpinnerIcon } from "../Account/AccountIcons";
-import { ProviderUpcomingAppointmentItem } from "./ProviderUpcomingAppointmentItem";
 import { ProviderEmptyAppointmentsIcon } from "./ProviderIcons";
+import { ProviderPastAppointmentItem } from "./ProviderPastAppointmentItem";
 import type { AppointmentDetail } from "../../types/appointment";
 
-interface ProviderAppointmentsSectionProps {
-  upcomingAppointments: AppointmentDetail[];
+interface ProviderPastAppointmentsSectionProps {
+  pastAppointments: AppointmentDetail[];
   isLoading: boolean;
   error: string;
   onUpdated: () => void;
 }
 
-export function ProviderAppointmentsSection({
-  upcomingAppointments,
+export function ProviderPastAppointmentsSection({
+  pastAppointments,
   isLoading,
   error,
   onUpdated,
-}: ProviderAppointmentsSectionProps) {
-  const hasUpcoming = upcomingAppointments.length > 0;
+}: ProviderPastAppointmentsSectionProps) {
+  const hasPast = pastAppointments.length > 0;
 
   return (
     <section
-      id="provider-panel-appointments"
+      id="provider-panel-past"
       role="tabpanel"
-      aria-labelledby="provider-tab-appointments"
+      aria-labelledby="provider-tab-past"
       className="provider-tab-panel"
     >
       <div className="provider-tab-panel-intro">
         <p>
-          Review booking requests, confirm appointments, cancel when needed,
-          or request a new time.
+          Finished appointments appear here after their scheduled time. Mark
+          whether the customer attended or was a no-show, and review completed
+          bookings.
         </p>
       </div>
 
@@ -45,21 +46,21 @@ export function ProviderAppointmentsSection({
         </p>
       )}
 
-      {!isLoading && !error && !hasUpcoming && (
+      {!isLoading && !error && !hasPast && (
         <div className="provider-empty">
           <ProviderEmptyAppointmentsIcon className="provider-empty-icon" />
-          <p className="provider-empty-title">No upcoming appointments</p>
+          <p className="provider-empty-title">No past appointments</p>
           <p className="provider-empty-text">
-            When customers request a booking with you, it will appear here for
-            confirmation.
+            Finished appointments will appear here. Mark whether they took place
+            once the scheduled time has passed.
           </p>
         </div>
       )}
 
-      {!isLoading && !error && hasUpcoming && (
+      {!isLoading && !error && hasPast && (
         <ul className="provider-appointment-list">
-          {upcomingAppointments.map((appointment, index) => (
-            <ProviderUpcomingAppointmentItem
+          {pastAppointments.map((appointment, index) => (
+            <ProviderPastAppointmentItem
               key={appointment.id}
               appointment={appointment}
               index={index}

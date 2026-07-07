@@ -1,34 +1,32 @@
 import { SpinnerIcon } from "../Account/AccountIcons";
-import { ProviderUpcomingAppointmentItem } from "./ProviderUpcomingAppointmentItem";
 import { ProviderEmptyAppointmentsIcon } from "./ProviderIcons";
+import { ProviderPastAppointmentItem } from "./ProviderPastAppointmentItem";
 import type { AppointmentDetail } from "../../types/appointment";
 
-interface ProviderAppointmentsSectionProps {
-  upcomingAppointments: AppointmentDetail[];
+interface ProviderCancelledAppointmentsSectionProps {
+  cancelledAppointments: AppointmentDetail[];
   isLoading: boolean;
   error: string;
-  onUpdated: () => void;
 }
 
-export function ProviderAppointmentsSection({
-  upcomingAppointments,
+export function ProviderCancelledAppointmentsSection({
+  cancelledAppointments,
   isLoading,
   error,
-  onUpdated,
-}: ProviderAppointmentsSectionProps) {
-  const hasUpcoming = upcomingAppointments.length > 0;
+}: ProviderCancelledAppointmentsSectionProps) {
+  const hasCancelled = cancelledAppointments.length > 0;
 
   return (
     <section
-      id="provider-panel-appointments"
+      id="provider-panel-cancelled"
       role="tabpanel"
-      aria-labelledby="provider-tab-appointments"
+      aria-labelledby="provider-tab-cancelled"
       className="provider-tab-panel"
     >
       <div className="provider-tab-panel-intro">
         <p>
-          Review booking requests, confirm appointments, cancel when needed,
-          or request a new time.
+          Cancelled bookings appear here for your records. View appointment
+          details and any cancellation reason that was provided.
         </p>
       </div>
 
@@ -45,25 +43,23 @@ export function ProviderAppointmentsSection({
         </p>
       )}
 
-      {!isLoading && !error && !hasUpcoming && (
+      {!isLoading && !error && !hasCancelled && (
         <div className="provider-empty">
           <ProviderEmptyAppointmentsIcon className="provider-empty-icon" />
-          <p className="provider-empty-title">No upcoming appointments</p>
+          <p className="provider-empty-title">No cancelled appointments</p>
           <p className="provider-empty-text">
-            When customers request a booking with you, it will appear here for
-            confirmation.
+            When a booking is cancelled, it will appear here for your records.
           </p>
         </div>
       )}
 
-      {!isLoading && !error && hasUpcoming && (
+      {!isLoading && !error && hasCancelled && (
         <ul className="provider-appointment-list">
-          {upcomingAppointments.map((appointment, index) => (
-            <ProviderUpcomingAppointmentItem
+          {cancelledAppointments.map((appointment, index) => (
+            <ProviderPastAppointmentItem
               key={appointment.id}
               appointment={appointment}
               index={index}
-              onUpdated={onUpdated}
             />
           ))}
         </ul>

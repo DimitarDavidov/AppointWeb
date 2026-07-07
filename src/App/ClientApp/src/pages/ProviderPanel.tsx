@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { SpinnerIcon } from "../components/Account/AccountIcons";
 import { ProviderAppointmentsSection } from "../components/Provider/ProviderAppointmentsSection";
+import { ProviderCancelledAppointmentsSection } from "../components/Provider/ProviderCancelledAppointmentsSection";
+import { ProviderPastAppointmentsSection } from "../components/Provider/ProviderPastAppointmentsSection";
 import {
   ProviderPanelTabs,
   type ProviderPanelTab,
@@ -19,7 +21,8 @@ function ProviderPanel() {
   const {
     services,
     upcomingAppointments,
-    outcomeAppointments,
+    pastAppointments,
+    cancelledAppointments,
     stats,
     appointmentsQuery,
     servicesQuery,
@@ -64,10 +67,22 @@ function ProviderPanel() {
               {activeTab === "appointments" ? (
                 <ProviderAppointmentsSection
                   upcomingAppointments={upcomingAppointments}
-                  outcomeAppointments={outcomeAppointments}
                   isLoading={appointmentsQuery.isLoading}
                   error={appointmentsQuery.error}
                   onUpdated={reloadAppointments}
+                />
+              ) : activeTab === "past" ? (
+                <ProviderPastAppointmentsSection
+                  pastAppointments={pastAppointments}
+                  isLoading={appointmentsQuery.isLoading}
+                  error={appointmentsQuery.error}
+                  onUpdated={reloadAppointments}
+                />
+              ) : activeTab === "cancelled" ? (
+                <ProviderCancelledAppointmentsSection
+                  cancelledAppointments={cancelledAppointments}
+                  isLoading={appointmentsQuery.isLoading}
+                  error={appointmentsQuery.error}
                 />
               ) : (
                 <ProviderServicesSection

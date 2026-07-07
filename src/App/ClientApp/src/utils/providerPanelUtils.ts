@@ -1,4 +1,5 @@
 import type { AppointmentDetail } from "../types/appointment";
+import { needsAppointmentOutcome } from "./appointmentOutcomeUtils";
 
 export interface ProviderStats {
   upcoming: number;
@@ -17,6 +18,40 @@ function isSameLocalDay(a: Date, b: Date): boolean {
 
 export function isActiveAppointmentStatus(status: string): boolean {
   return status === "Booked" || status === "Pending";
+}
+
+export function getPastAppointments(
+  appointments: AppointmentDetail[]
+): AppointmentDetail[] {
+  return appointments
+    .filter(
+      (appointment) =>
+        needsAppointmentOutcome(appointment) ||
+        appointment.status === "Completed" ||
+        appointment.status === "NoShow"
+    )
+    .sort((a, b) => {
+      const aNeedsOutcome = needsAppointmentOutcome(a);
+      const bNeedsOutcome = needsAppointmentOutcome(b);
+
+      if (aNeedsOutcome && !bNeedsOutcome) return -1;
+      if (bNeedsOutcome && !aNeedsOutcome) return 1;
+
+      return (
+        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+      );
+    });
+}
+
+export function getCancelledAppointments(
+  appointments: AppointmentDetail[]
+): AppointmentDetail[] {
+  return appointments
+    .filter((appointment) => appointment.status === "Cancelled")
+    .sort(
+      (a, b) =>
+        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    );
 }
 
 export function getUpcomingAppointments(

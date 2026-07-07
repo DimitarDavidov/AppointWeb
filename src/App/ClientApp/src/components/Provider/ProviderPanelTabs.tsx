@@ -1,9 +1,15 @@
 import {
   ProviderAppointmentsTabIcon,
+  ProviderCancelledTabIcon,
+  ProviderPastTabIcon,
   ProviderServicesTabIcon,
 } from "./ProviderIcons";
 
-export type ProviderPanelTab = "appointments" | "services";
+export type ProviderPanelTab =
+  | "appointments"
+  | "past"
+  | "cancelled"
+  | "services";
 
 interface ProviderPanelTabsProps {
   activeTab: ProviderPanelTab;
@@ -31,6 +37,30 @@ export function ProviderPanelTabs({
       >
         <ProviderAppointmentsTabIcon className="provider-tab-icon" />
         <span>Upcoming appointments</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="provider-tab-past"
+        aria-selected={activeTab === "past"}
+        aria-controls="provider-panel-past"
+        className={`provider-tab${activeTab === "past" ? " provider-tab--active" : ""}`}
+        onClick={() => onTabChange("past")}
+      >
+        <ProviderPastTabIcon className="provider-tab-icon" />
+        <span>Past appointments</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="provider-tab-cancelled"
+        aria-selected={activeTab === "cancelled"}
+        aria-controls="provider-panel-cancelled"
+        className={`provider-tab${activeTab === "cancelled" ? " provider-tab--active" : ""}`}
+        onClick={() => onTabChange("cancelled")}
+      >
+        <ProviderCancelledTabIcon className="provider-tab-icon" />
+        <span>Cancelled appointments</span>
       </button>
       <button
         type="button"
