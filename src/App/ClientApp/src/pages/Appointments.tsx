@@ -1,10 +1,18 @@
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAppointments } from "../api/appointments";
 import { AppointmentCard } from "../components/Appointments/AppointmentCard";
 import { useAsyncData } from "../hooks/useAsyncData";
+import {
+  APPOINTMENT_FILTERS,
+  filterAppointmentsByStatus,
+  getAppointmentFilterEmptyMessage,
+  type AppointmentFilter,
+} from "../utils/appointmentFilters";
 import "./Appointments.scss";
 
 function Appointments() {
+  const [activeFilter, setActiveFilter] = useState<AppointmentFilter>("upcoming");
   const {
     data: appointments = [],
     isLoading,
@@ -14,6 +22,11 @@ function Appointments() {
     initialData: [],
     errorMessage: "Could not load appointments. Please try again.",
   });
+
+  const filteredAppointments = useMemo(
+    () => filterAppointmentsByStatus(appointments, activeFilter),
+    [appointments, activeFilter]
+  );
 
   return (
     <div className="appointments">
@@ -37,25 +50,63 @@ function Appointments() {
           </p>
         )}
 
-        {!isLoading && !loadError && appointments.length === 0 && (
-          <div className="appointments-empty">
-            <p className="appointments-empty-text">No appointments yet.</p>
-            <Link to="/" className="appointments-btn appointments-btn-primary">
-              Browse services
-            </Link>
-          </div>
-        )}
+        {!isLoading && !loadError && (
+          <>
+            <div
+              className="appointments-filters"
+              role="tablist"
+              aria-label="Appointment filters"
+            >
+              {APPOINTMENT_FILTERS.map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeFilter === filter.id}
+                  className={`appointments-filter${
+                    activeFilter === filter.id ? " appointments-filter--active" : ""
+                  }`}
+                  onClick={() => setActiveFilter(filter.id)}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
 
-        {!isLoading && !loadError && appointments.length > 0 && (
-          <ul className="appointments-list">
-            {appointments.map((appointment) => (
-              <AppointmentCard
-                key={appointment.id}
-                appointment={appointment}
-                onUpdated={reload}
-              />
-            ))}
-          </ul>
+            {appointments.length === 0 && (
+              <div className="appointments-empty">
+                <p className="appointments-empty-text">No appointments yet.</p>
+                <Link to="/" className="appointments-btn appointments-btn-primary">
+                  Browse services
+                </Link>
+              </div>
+            )}
+
+            {appointments.length > 0 && filteredAppointments.length === 0 && (
+              <div className="appointments-empty">
+                <p className="appointments-empty-text">
+                  {getAppointmentFilterEmptyMessage(activeFilter)}
+                </p>
+                {activeFilter === "upcoming" && (
+                  <Link to="/" className="appointments-btn appointments-btn-primary">
+                    Browse services
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {filteredAppointments.length > 0 && (
+              <ul className="appointments-list">
+                {filteredAppointments.map((appointment) => (
+                  <AppointmentCard
+                    key={appointment.id}
+                    appointment={appointment}
+                    onUpdated={reload}
+                  />
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </div>
     </div>
