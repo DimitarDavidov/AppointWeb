@@ -27,7 +27,9 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/provider" element={<ProviderPanel />} />
+          <Route element={<ProtectedRoute roles={[UserRoles.Provider, UserRoles.Admin]} />}>
+            <Route path="/provider" element={<ProviderPanel />} />
+          </Route>
           <Route element={<ProtectedRoute />}>
             <Route path="/account" element={<Account />} />
             <Route path="/appointments" element={<Appointments />} />

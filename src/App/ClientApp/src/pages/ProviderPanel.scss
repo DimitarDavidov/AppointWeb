@@ -1,0 +1,424 @@
+@use "../styles/breakpoints" as *;
+
+@keyframes provider-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes provider-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.provider {
+  min-height: calc(100vh - var(--navbar-height));
+  min-height: calc(100dvh - var(--navbar-height));
+  padding: 2rem 1.5rem 3rem;
+  background-color: var(--color-bg-subtle);
+  box-sizing: border-box;
+
+  &-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    animation: provider-fade-in 0.35s ease both;
+  }
+
+  &-header {
+    margin-bottom: 1.5rem;
+  }
+
+  &-title {
+    margin: 0 0 0.35rem;
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    background: linear-gradient(
+      90deg,
+      var(--color-brand-slate-dark) 0%,
+      var(--color-brand-teal) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  &-subtitle {
+    margin: 0;
+    font-size: clamp(0.92rem, 2.5vw, 1rem);
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+
+  &-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 3rem 1rem;
+    color: var(--color-text-muted);
+
+    &-spinner {
+      width: 2rem;
+      height: 2rem;
+      animation: provider-spin 0.8s linear infinite;
+    }
+  }
+
+  &-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+
+    @include md-up {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  &-stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background-color: var(--color-bg);
+
+    &-value {
+      font-size: clamp(1.35rem, 4vw, 1.75rem);
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--color-brand-slate-dark);
+    }
+
+    &-label {
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    &--upcoming &-value {
+      color: var(--color-brand-teal-dark);
+    }
+
+    &--today &-value {
+      color: #047857;
+    }
+
+    &--services &-value {
+      color: #7c3aed;
+    }
+  }
+
+  &-section {
+    margin-bottom: 2rem;
+  }
+
+  &-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background-color: var(--color-bg);
+  }
+
+  &-tab {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease,
+      box-shadow 0.15s ease;
+
+    &:hover {
+      color: var(--color-brand-slate-dark);
+    }
+
+    &--active {
+      color: var(--color-brand-slate-dark);
+      background-color: var(--color-bg-subtle);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+  }
+
+  &-tab-panel {
+    animation: provider-fade-in 0.25s ease both;
+  }
+
+  &-tab-panel-intro {
+    margin: 0 0 1rem;
+    font-size: 0.92rem;
+    color: var(--color-text-muted);
+    line-height: 1.45;
+  }
+
+  &-appointment-item {
+    padding: 1.15rem 1.2rem;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background-color: var(--color-bg);
+    animation: provider-fade-in 0.35s ease both;
+  }
+
+  &-appointment-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    @include md-up {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  &-appointment-description {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--color-text);
+
+    strong {
+      color: var(--color-brand-slate-dark);
+    }
+  }
+
+  &-appointment-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+
+    @include sm-up {
+      flex-direction: row;
+    }
+  }
+
+  &-appointment-reschedule {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  &-appointment-reschedule-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-brand-slate-dark);
+
+    input {
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      font: inherit;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+
+      &:focus {
+        outline: 2px solid var(--color-primary-light);
+        border-color: var(--color-primary);
+      }
+    }
+  }
+
+  &-appointment-reschedule-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &-appointment-error {
+    margin: 0.75rem 0 0;
+    font-size: 0.88rem;
+    color: var(--color-error);
+  }
+
+  &-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 0.95rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &--primary {
+      color: #fff;
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+
+      &:hover:not(:disabled) {
+        background-color: var(--color-primary-dark);
+        border-color: var(--color-primary-dark);
+      }
+    }
+
+    &--secondary {
+      color: var(--color-brand-slate-dark);
+      background-color: var(--color-bg);
+      border-color: var(--color-border);
+
+      &:hover:not(:disabled) {
+        border-color: var(--color-brand-slate);
+      }
+    }
+
+    &--danger {
+      color: #fff;
+      background-color: var(--color-error);
+      border-color: var(--color-error);
+
+      &:hover:not(:disabled) {
+        background-color: #b91c1c;
+        border-color: #b91c1c;
+      }
+    }
+  }
+
+  &-status {
+    margin: 0;
+    padding: 0.75rem 0;
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+
+    &--error {
+      color: var(--color-error);
+    }
+  }
+
+  &-empty {
+    padding: 1.75rem 1.25rem;
+    border: 1px dashed var(--color-border);
+    border-radius: 14px;
+    background-color: var(--color-bg);
+    text-align: center;
+
+    &-text {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--color-text-muted);
+    }
+  }
+
+  &-service-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include md-up {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  &-service-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 1.15rem 1.2rem;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background-color: var(--color-bg);
+    animation: provider-fade-in 0.35s ease both;
+  }
+
+  &-service-category {
+    align-self: flex-start;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-brand-teal-dark);
+    background-color: var(--color-primary-light);
+  }
+
+  &-service-name {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--color-brand-slate-dark);
+  }
+
+  &-service-description {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+
+    &--empty {
+      font-style: italic;
+    }
+  }
+
+  &-service-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.88rem;
+    color: var(--color-text-muted);
+  }
+
+  &-service-price {
+    font-weight: 700;
+    color: var(--color-brand-slate-dark);
+  }
+
+  &-service-link {
+    margin-top: 0.15rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-primary-dark);
+    }
+  }
+
+  &-appointment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
