@@ -32,6 +32,8 @@ public class Appointment
     [MaxLength(1000)]
     public string? CancellationReason { get; set; }
 
+    public Guid? CancelledByUserId { get; set; }
+
     public DateTime? PendingRescheduleStartTime { get; set; }
 
     public DateTime? PendingRescheduleEndTime { get; set; }
@@ -40,6 +42,8 @@ public class Appointment
     public string? RescheduleReason { get; set; }
 
     public Guid? RescheduleRequestedByUserId { get; set; }
+
+    public bool PendingRescheduleFromConfirmedSlot { get; set; }
 
     public int ProviderRescheduleCount { get; set; }
 

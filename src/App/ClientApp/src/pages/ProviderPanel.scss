@@ -637,12 +637,20 @@
     }
   }
 
-  &-appointment-cancellation-reason {
+  &-appointment-cancellation-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
     margin: 0.85rem 0 0;
     padding: 0.85rem 1rem;
     border: 1px solid rgba(239, 68, 68, 0.18);
     border-radius: 12px;
     background-color: rgba(239, 68, 68, 0.05);
+  }
+
+  &-appointment-cancellation-by,
+  &-appointment-cancellation-reason {
+    margin: 0;
     font-size: 0.88rem;
     color: var(--color-text-muted);
     line-height: 1.5;

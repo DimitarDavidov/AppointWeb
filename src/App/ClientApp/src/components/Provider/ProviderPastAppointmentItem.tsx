@@ -14,6 +14,8 @@ import {
 } from "../../utils/providerPanelUtils";
 import { AppointmentOutcomeActions } from "../Appointments/AppointmentOutcomeActions";
 import { AppointmentRescheduleMeta } from "../Appointments/AppointmentRescheduleMeta";
+import { getCancelledByLabel } from "../../utils/appointmentCancellationUtils";
+import { useAppSelector } from "../../store/hooks";
 import {
   ProviderCalendarIcon,
   ProviderClockIcon,
@@ -65,6 +67,7 @@ export function ProviderPastAppointmentItem({
   index,
   onUpdated,
 }: ProviderPastAppointmentItemProps) {
+  const { userId } = useAppSelector((state) => state.auth);
   const durationMinutes = getDurationMinutes(
     appointment.startTime,
     appointment.endTime
@@ -76,6 +79,10 @@ export function ProviderPastAppointmentItem({
     ? "Needs update"
     : getPastStatusLabel(appointment.status);
   const statusClassName = getPastStatusClassName(appointment.status);
+  const cancelledByLabel =
+    appointment.status === "Cancelled"
+      ? getCancelledByLabel(appointment, userId)
+      : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSetStatus(status: "Completed" | "NoShow") {
@@ -166,11 +173,21 @@ export function ProviderPastAppointmentItem({
           </dl>
 
           {appointment.status === "Cancelled" &&
-            appointment.cancellationReason && (
-              <p className="provider-appointment-cancellation-reason">
-                <span>Cancellation reason</span>
-                {appointment.cancellationReason}
-              </p>
+            (cancelledByLabel || appointment.cancellationReason) && (
+              <div className="provider-appointment-cancellation-info">
+                {cancelledByLabel && (
+                  <p className="provider-appointment-cancellation-by">
+                    <span>Cancelled by</span>
+                    {cancelledByLabel}
+                  </p>
+                )}
+                {appointment.cancellationReason && (
+                  <p className="provider-appointment-cancellation-reason">
+                    <span>Cancellation reason</span>
+                    {appointment.cancellationReason}
+                  </p>
+                )}
+              </div>
             )}
         </div>
 

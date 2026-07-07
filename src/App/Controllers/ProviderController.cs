@@ -48,6 +48,7 @@ public class ProviderController : ControllerBase
                 Status = AppointmentStatusMapper.ToApiStatus(a.Status),
                 PriceAtBooking = a.PriceAtBooking,
                 CancellationReason = a.CancellationReason,
+                CancelledByUserId = a.CancelledByUserId,
                 PendingRescheduleStartTime = a.PendingRescheduleStartTime,
                 PendingRescheduleEndTime = a.PendingRescheduleEndTime,
                 RescheduleReason = a.RescheduleReason,

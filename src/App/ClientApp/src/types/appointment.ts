@@ -16,6 +16,7 @@ export interface AppointmentDetail extends Appointment {
   providerUsername: string;
   serviceName: string;
   cancellationReason: string | null;
+  cancelledByUserId: string | null;
   pendingRescheduleStartTime: string | null;
   pendingRescheduleEndTime: string | null;
   rescheduleReason: string | null;

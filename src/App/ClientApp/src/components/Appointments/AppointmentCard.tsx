@@ -15,6 +15,7 @@ import {
   hasPendingReschedule,
   isRescheduleAwaitingResponse,
 } from "../../utils/appointmentRescheduleUtils";
+import { getCancelledByLabel } from "../../utils/appointmentCancellationUtils";
 import {
   getOutcomeStatusLabel,
   needsAppointmentOutcome,
@@ -112,6 +113,10 @@ export function AppointmentCard({
     appointment,
     userId
   );
+  const cancelledByLabel =
+    appointment.status === "Cancelled"
+      ? getCancelledByLabel(appointment, userId)
+      : null;
 
   const [isEditing, setIsEditing] = useState(false);
   const [showCounterProposalForm, setShowCounterProposalForm] = useState(false);
@@ -306,11 +311,22 @@ export function AppointmentCard({
         {formatPrice(appointment.priceAtBooking)}
       </p>
 
-      {appointment.status === "Cancelled" && appointment.cancellationReason && (
-        <p className="appointments-card-cancellation-reason">
-          <span>Cancellation reason</span>
-          {appointment.cancellationReason}
-        </p>
+      {appointment.status === "Cancelled" &&
+        (cancelledByLabel || appointment.cancellationReason) && (
+        <div className="appointments-card-cancellation-info">
+          {cancelledByLabel && (
+            <p className="appointments-card-cancellation-by">
+              <span>Cancelled by</span>
+              {cancelledByLabel}
+            </p>
+          )}
+          {appointment.cancellationReason && (
+            <p className="appointments-card-cancellation-reason">
+              <span>Cancellation reason</span>
+              {appointment.cancellationReason}
+            </p>
+          )}
+        </div>
       )}
 
       <dl className="appointments-card-meta">

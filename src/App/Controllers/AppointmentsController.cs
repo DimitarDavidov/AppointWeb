@@ -63,6 +63,7 @@ public class AppointmentsController : ControllerBase
                 Status = AppointmentStatusMapper.ToApiStatus(a.Status),
                 PriceAtBooking = a.PriceAtBooking,
                 CancellationReason = a.CancellationReason,
+                CancelledByUserId = a.CancelledByUserId,
                 PendingRescheduleStartTime = a.PendingRescheduleStartTime,
                 PendingRescheduleEndTime = a.PendingRescheduleEndTime,
                 RescheduleReason = a.RescheduleReason,
@@ -102,6 +103,7 @@ public class AppointmentsController : ControllerBase
                 Status = AppointmentStatusMapper.ToApiStatus(a.Status),
                 PriceAtBooking = a.PriceAtBooking,
                 CancellationReason = a.CancellationReason,
+                CancelledByUserId = a.CancelledByUserId,
                 PendingRescheduleStartTime = a.PendingRescheduleStartTime,
                 PendingRescheduleEndTime = a.PendingRescheduleEndTime,
                 RescheduleReason = a.RescheduleReason,
@@ -264,6 +266,7 @@ public class AppointmentsController : ControllerBase
             ? null
             : request!.Reason.Trim();
         appointment.CancellationReason = reason;
+        appointment.CancelledByUserId = userId;
         ClearPendingReschedule(appointment);
 
         appointment.Status = AppointmentStatus.Cancelled;
@@ -433,6 +436,8 @@ public class AppointmentsController : ControllerBase
         appointment.PendingRescheduleEndTime = endUtc;
         appointment.RescheduleReason = reason;
         appointment.RescheduleRequestedByUserId = userId;
+        appointment.PendingRescheduleFromConfirmedSlot =
+            appointment.PendingRescheduleFromConfirmedSlot || HadConfirmedTime(appointment);
         appointment.Status = AppointmentStatus.Pending;
 
         await _db.SaveChangesAsync(ct);
@@ -533,14 +538,18 @@ public class AppointmentsController : ControllerBase
             return Conflict("The requested time slot is no longer available.");
         }
 
-        appointment.PreviousStartTime = appointment.StartTime;
+        if (appointment.PendingRescheduleFromConfirmedSlot)
+        {
+            appointment.PreviousStartTime = appointment.StartTime;
+
+            if (appointment.RescheduleRequestedByUserId == appointment.ProviderId)
+                appointment.ProviderRescheduleCount++;
+            else if (appointment.RescheduleRequestedByUserId == appointment.CustomerId)
+                appointment.CustomerRescheduleCount++;
+        }
+
         appointment.StartTime = appointment.PendingRescheduleStartTime.Value;
         appointment.EndTime = appointment.PendingRescheduleEndTime.Value;
-
-        if (appointment.RescheduleRequestedByUserId == appointment.ProviderId)
-            appointment.ProviderRescheduleCount++;
-        else if (appointment.RescheduleRequestedByUserId == appointment.CustomerId)
-            appointment.CustomerRescheduleCount++;
 
         appointment.Status = AppointmentStatus.Booked;
         ClearPendingReschedule(appointment);
@@ -601,7 +610,14 @@ public class AppointmentsController : ControllerBase
         appointment.PendingRescheduleEndTime = null;
         appointment.RescheduleReason = null;
         appointment.RescheduleRequestedByUserId = null;
+        appointment.PendingRescheduleFromConfirmedSlot = false;
     }
+
+    private static bool HadConfirmedTime(Appointment appointment) =>
+        appointment.Status == AppointmentStatus.Booked
+        || appointment.PreviousStartTime != null
+        || appointment.ProviderRescheduleCount > 0
+        || appointment.CustomerRescheduleCount > 0;
 
     private static string FormatAppointmentWhen(DateTime utc) =>
         utc.ToString("dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'", CultureInfo.InvariantCulture);
