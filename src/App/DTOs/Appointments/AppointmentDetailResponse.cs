@@ -22,6 +22,7 @@ public class AppointmentDetailResponse
 
     public DateTime? PendingRescheduleStartTime { get; set; }
     public DateTime? PendingRescheduleEndTime { get; set; }
+    public DateTime? CounteredRescheduleStartTime { get; set; }
     public string? RescheduleReason { get; set; }
     public Guid? RescheduleRequestedByUserId { get; set; }
     public int ProviderRescheduleCount { get; set; }

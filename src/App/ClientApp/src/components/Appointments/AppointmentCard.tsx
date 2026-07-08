@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   acceptReschedule,
   cancelAppointment,
@@ -9,6 +9,7 @@ import { getErrorMessage } from "../../api/errors";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 import { AppointmentOutcomeActions } from "./AppointmentOutcomeActions";
 import { AppointmentRescheduleMeta } from "./AppointmentRescheduleMeta";
+import { AppointmentBookingPicker } from "../Calendar/AppointmentBookingPicker";
 import { isActiveAppointmentStatus } from "../../utils/providerPanelUtils";
 import {
   canAcceptReschedule,
@@ -24,11 +25,7 @@ import { UserRoles } from "../../constants/roles";
 import { useAppSelector } from "../../store/hooks";
 import { isSameId } from "../../utils/isSameId";
 import type { AppointmentDetail } from "../../types/appointment";
-import {
-  formatAppointmentDateTime,
-  toDatetimeLocalValue,
-  toDatetimeLocalValueFromIso,
-} from "../../utils/formatAppointment";
+import { formatAppointmentDateTime } from "../../utils/formatAppointment";
 import { capitalizeFirstLetter } from "../../utils/formatDisplayName";
 import { formatDuration, formatPrice } from "../../utils/formatService";
 
@@ -137,8 +134,6 @@ export function AppointmentCard({
     }
   }
 
-  const minStartTime = useMemo(() => toDatetimeLocalValue(new Date()), []);
-
   const counterpartName = capitalizeFirstLetter(
     isCustomerView || (isAdminView && !isProviderView)
       ? appointment.providerUsername
@@ -148,7 +143,7 @@ export function AppointmentCard({
     isCustomerView || (isAdminView && !isProviderView) ? "Provider" : "Customer";
 
   function handleEditClick() {
-    setEditStartTime(toDatetimeLocalValueFromIso(appointment.startTime));
+    setEditStartTime("");
     setEditReason("");
     setActionError("");
     setIsEditing(true);
@@ -163,11 +158,7 @@ export function AppointmentCard({
   }
 
   function handleOpenCounterProposal() {
-    setEditStartTime(
-      toDatetimeLocalValueFromIso(
-        appointment.pendingRescheduleStartTime ?? appointment.startTime
-      )
-    );
+    setEditStartTime("");
     setEditReason("");
     setActionError("");
     setShowCounterProposalForm(true);
@@ -387,6 +378,16 @@ export function AppointmentCard({
               <dt>Current time</dt>
               <dd>{formatAppointmentDateTime(appointment.startTime)}</dd>
             </div>
+            {appointment.counteredRescheduleStartTime && (
+              <div>
+                <dt>Previously requested time</dt>
+                <dd>
+                  {formatAppointmentDateTime(
+                    appointment.counteredRescheduleStartTime
+                  )}
+                </dd>
+              </div>
+            )}
             <div>
               <dt>Requested time</dt>
               <dd>
@@ -416,21 +417,20 @@ export function AppointmentCard({
 
       {(isEditing || showCounterProposalForm) ? (
         <form className="appointments-card-edit" onSubmit={handleSaveEdit}>
-          <label
-            className="appointments-card-edit-field"
-            htmlFor={`edit-${appointment.id}`}
-          >
-            {showCounterProposalForm ? "Propose another time" : "New date and time"}
-            <input
-              id={`edit-${appointment.id}`}
-              type="datetime-local"
-              value={editStartTime}
-              min={minStartTime}
-              onChange={(e) => setEditStartTime(e.target.value)}
-              required
-              disabled={isSubmitting}
+          <div className="appointments-card-edit-field">
+            <span className="appointments-card-edit-label">
+              {showCounterProposalForm
+                ? "Propose another time"
+                : "New date and time"}
+            </span>
+            <AppointmentBookingPicker
+              providerId={appointment.providerId}
+              serviceId={appointment.serviceId}
+              durationMinutes={durationMinutes}
+              selectedStart={editStartTime || null}
+              onSelect={setEditStartTime}
             />
-          </label>
+          </div>
 
           <label
             className="appointments-card-edit-field"

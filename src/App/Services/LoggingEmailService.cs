@@ -118,6 +118,7 @@ public class LoggingEmailService : IEmailService
         string serviceName,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string? reason,
         string providerPanelUrl,
         CancellationToken cancellationToken = default)
@@ -128,8 +129,9 @@ public class LoggingEmailService : IEmailService
             Provider: {ProviderName}
             Customer: {CustomerName}
             Service: {ServiceName}
-            Previous: {PreviousWhen}
+            Current: {PreviousWhen}
             New: {NewWhen}
+            Countered time: {PreviousRequestedWhen}
             Reason: {Reason}
             Provider panel: {ProviderPanelUrl}
             """,
@@ -139,6 +141,7 @@ public class LoggingEmailService : IEmailService
             serviceName,
             previousWhen,
             newWhen,
+            previousRequestedWhen ?? "(none)",
             reason ?? "(none)",
             providerPanelUrl);
 
@@ -152,6 +155,7 @@ public class LoggingEmailService : IEmailService
         string serviceName,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string reason,
         string appointmentsUrl,
         CancellationToken cancellationToken = default)
@@ -162,8 +166,9 @@ public class LoggingEmailService : IEmailService
             Customer: {CustomerName}
             Provider: {ProviderName}
             Service: {ServiceName}
-            Previous: {PreviousWhen}
+            Current: {PreviousWhen}
             New: {NewWhen}
+            Countered time: {PreviousRequestedWhen}
             Reason: {Reason}
             Appointments: {AppointmentsUrl}
             """,
@@ -173,6 +178,7 @@ public class LoggingEmailService : IEmailService
             serviceName,
             previousWhen,
             newWhen,
+            previousRequestedWhen ?? "(none)",
             reason,
             appointmentsUrl);
 

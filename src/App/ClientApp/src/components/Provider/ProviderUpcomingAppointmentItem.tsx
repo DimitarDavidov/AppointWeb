@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   acceptReschedule,
   cancelAppointment,
@@ -9,6 +9,7 @@ import { getErrorMessage } from "../../api/errors";
 import { PhoneIcon } from "../Account/AccountIcons";
 import { CancelAppointmentDialog } from "../Appointments/CancelAppointmentDialog";
 import { AppointmentRescheduleMeta } from "../Appointments/AppointmentRescheduleMeta";
+import { AppointmentBookingPicker } from "../Calendar/AppointmentBookingPicker";
 import type { AppointmentDetail } from "../../types/appointment";
 import {
   canAcceptReschedule,
@@ -16,11 +17,7 @@ import {
   isRescheduleAwaitingResponse,
 } from "../../utils/appointmentRescheduleUtils";
 import { useAppSelector } from "../../store/hooks";
-import {
-  toDatetimeLocalValue,
-  toDatetimeLocalValueFromIso,
-  formatAppointmentDateTime,
-} from "../../utils/formatAppointment";
+import { formatAppointmentDateTime } from "../../utils/formatAppointment";
 import {
   formatAppointmentDate,
   formatAppointmentTime,
@@ -81,10 +78,8 @@ export function ProviderUpcomingAppointmentItem({
   const [actionError, setActionError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const minStartTime = useMemo(() => toDatetimeLocalValue(new Date()), []);
-
   function handleOpenReschedule() {
-    setRescheduleTime(toDatetimeLocalValueFromIso(appointment.startTime));
+    setRescheduleTime("");
     setRescheduleReason("");
     setActionError("");
     setShowRescheduleForm(true);
@@ -330,6 +325,20 @@ export function ProviderUpcomingAppointmentItem({
                     {formatAppointmentTime(appointment.startTime)}
                   </dd>
                 </div>
+                {appointment.counteredRescheduleStartTime && (
+                  <div>
+                    <dt>Previously requested time</dt>
+                    <dd>
+                      {formatAppointmentDate(
+                        appointment.counteredRescheduleStartTime
+                      )}{" "}
+                      at{" "}
+                      {formatAppointmentTime(
+                        appointment.counteredRescheduleStartTime
+                      )}
+                    </dd>
+                  </div>
+                )}
                 <div>
                   <dt>Requested time</dt>
                   <dd>
@@ -412,21 +421,18 @@ export function ProviderUpcomingAppointmentItem({
             </div>
           </div>
 
-          <label
-            className="provider-appointment-reschedule-field"
-            htmlFor={`reschedule-${appointment.id}`}
-          >
-            New date and time
-            <input
-              id={`reschedule-${appointment.id}`}
-              type="datetime-local"
-              value={rescheduleTime}
-              min={minStartTime}
-              onChange={(e) => setRescheduleTime(e.target.value)}
-              required
-              disabled={isSubmitting}
+          <div className="provider-appointment-reschedule-field">
+            <span className="provider-appointment-reschedule-label">
+              New date and time
+            </span>
+            <AppointmentBookingPicker
+              providerId={appointment.providerId}
+              serviceId={appointment.serviceId}
+              durationMinutes={durationMinutes}
+              selectedStart={rescheduleTime || null}
+              onSelect={setRescheduleTime}
             />
-          </label>
+          </div>
 
           <label
             className="provider-appointment-reschedule-field"

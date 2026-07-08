@@ -51,6 +51,7 @@ public class ProviderController : ControllerBase
                 CancelledByUserId = a.CancelledByUserId,
                 PendingRescheduleStartTime = a.PendingRescheduleStartTime,
                 PendingRescheduleEndTime = a.PendingRescheduleEndTime,
+                CounteredRescheduleStartTime = a.CounteredRescheduleStartTime,
                 RescheduleReason = a.RescheduleReason,
                 RescheduleRequestedByUserId = a.RescheduleRequestedByUserId,
                 ProviderRescheduleCount = a.ProviderRescheduleCount,

@@ -4,6 +4,7 @@ export interface RegisterRequest {
   password: string;
   phoneNumber?: string;
   role?: string;
+  timeZoneId?: string;
 }
 
 export interface LoginRequest {

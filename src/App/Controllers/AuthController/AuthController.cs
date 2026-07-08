@@ -48,7 +48,10 @@ public class AuthController : ControllerBase
             PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber)
                 ? null
                 : request.PhoneNumber.Trim(),
-            Role = UserRoles.ResolveRegistrationRole(request.Role)
+            Role = UserRoles.ResolveRegistrationRole(request.Role),
+            TimeZoneId = TimeZoneResolver.IsValid(request.TimeZoneId)
+                ? request.TimeZoneId!.Trim()
+                : "UTC"
         };
 
         user.PasswordHash = _hasher.HashPassword(user, request.Password);

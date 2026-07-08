@@ -20,6 +20,12 @@ public class User
 
     public string? PhoneNumber { get; set; }
 
+    /// <summary>
+    /// IANA timezone id (e.g. "Europe/Sofia") the user's wall-clock times are
+    /// expressed in. Provider availability windows are interpreted in this zone.
+    /// </summary>
+    public string TimeZoneId { get; set; } = "UTC";
+
     public bool IsSuspended { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

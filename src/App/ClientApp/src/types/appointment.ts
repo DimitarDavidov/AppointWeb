@@ -19,6 +19,7 @@ export interface AppointmentDetail extends Appointment {
   cancelledByUserId: string | null;
   pendingRescheduleStartTime: string | null;
   pendingRescheduleEndTime: string | null;
+  counteredRescheduleStartTime: string | null;
   rescheduleReason: string | null;
   rescheduleRequestedByUserId: string | null;
   providerRescheduleCount: number;

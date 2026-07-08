@@ -4,4 +4,5 @@ export interface UserProfile {
   username: string;
   phoneNumber: string | null;
   role: string;
+  timeZoneId: string;
 }

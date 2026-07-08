@@ -1,6 +1,7 @@
 using AppointWeb.Api.Data;
 using AppointWeb.Api.Dtos.Catalog;
 using AppointWeb.Api.Models;
+using AppointWeb.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,10 +12,12 @@ namespace AppointWeb.Api.Controllers;
 public class CatalogController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly BookingSlotService _bookingSlots;
 
-    public CatalogController(AppDbContext db)
+    public CatalogController(AppDbContext db, BookingSlotService bookingSlots)
     {
         _db = db;
+        _bookingSlots = bookingSlots;
     }
 
     [HttpGet]
@@ -40,6 +43,46 @@ public class CatalogController : ControllerBase
             .SingleOrDefaultAsync(ct);
 
         return offering is null ? NotFound() : Ok(offering);
+    }
+
+    [HttpGet("{providerId:guid}/{serviceId:guid}/slots")]
+    public async Task<ActionResult<BookingSlotsResponse>> GetBookingSlots(
+        Guid providerId,
+        Guid serviceId,
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        CancellationToken ct)
+    {
+        var fromUtc = (from ?? DateTime.UtcNow.Date).Kind switch
+        {
+            DateTimeKind.Utc => from ?? DateTime.UtcNow.Date,
+            _ => DateTime.SpecifyKind((from ?? DateTime.UtcNow.Date), DateTimeKind.Utc),
+        };
+
+        var toUtc = (to ?? fromUtc.AddDays(42)).Kind switch
+        {
+            DateTimeKind.Utc => to ?? fromUtc.AddDays(42),
+            _ => DateTime.SpecifyKind((to ?? fromUtc.AddDays(42)), DateTimeKind.Utc),
+        };
+
+        if (toUtc < fromUtc)
+            return BadRequest("'to' must be on or after 'from'.");
+
+        var result = await _bookingSlots.GetAvailableSlotsAsync(
+            providerId,
+            serviceId,
+            fromUtc,
+            toUtc,
+            ct);
+
+        if (result is null)
+            return NotFound();
+
+        return Ok(new BookingSlotsResponse
+        {
+            DurationMinutes = result.Value.DurationMinutes,
+            Slots = result.Value.Slots.Select(s => s.ToString("O")).ToList(),
+        });
     }
 
     private IQueryable<CatalogOfferingResponse> QueryActiveOfferings()

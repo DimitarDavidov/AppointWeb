@@ -1,0 +1,167 @@
+@import "react-day-picker/style.css";
+
+.booking-picker {
+  margin-top: 1.25rem;
+
+  &-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+
+    @media (min-width: 720px) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  &-calendar {
+    padding: 0.85rem;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: linear-gradient(
+      180deg,
+      rgba(207, 250, 254, 0.35),
+      rgba(255, 255, 255, 0.95)
+    );
+
+    .rdp-root {
+      --rdp-accent-color: var(--color-brand-teal);
+      --rdp-accent-background-color: var(--color-primary-light);
+      --rdp-day-height: 2.35rem;
+      --rdp-day-width: 2.35rem;
+      --rdp-day_button-height: 2.15rem;
+      --rdp-day_button-width: 2.15rem;
+      --rdp-day_button-border-radius: 10px;
+      --rdp-selected-border: 2px solid var(--color-brand-teal);
+      width: 100%;
+    }
+
+    .rdp-months {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .rdp-month {
+      width: 100%;
+    }
+
+    .rdp-caption_label {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--color-brand-slate-dark);
+    }
+
+    .rdp-weekday {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+    }
+
+    .rdp-day_button:hover:not([disabled]) {
+      background-color: rgba(207, 250, 254, 0.65);
+    }
+
+    .rdp-selected .rdp-day_button {
+      background-color: var(--color-primary-light);
+      color: var(--color-brand-teal-dark);
+      font-weight: 700;
+    }
+  }
+
+  &-day--available .rdp-day_button {
+    position: relative;
+    font-weight: 600;
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 0.2rem;
+      left: 50%;
+      width: 0.28rem;
+      height: 0.28rem;
+      border-radius: 50%;
+      background-color: var(--color-brand-teal);
+      transform: translateX(-50%);
+    }
+  }
+
+  &-calendar-hint {
+    margin: 0.75rem 0 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+  }
+
+  &-slots-panel {
+    min-height: 12rem;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background-color: var(--color-bg);
+  }
+
+  &-slots-title {
+    margin: 0 0 0.85rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-brand-slate-dark);
+  }
+
+  &-slots-status {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+
+  &-slots-error {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-error);
+  }
+
+  &-slot-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @media (min-width: 480px) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  &-slot {
+    width: 100%;
+    padding: 0.62rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background-color: var(--color-bg-subtle);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-brand-slate-dark);
+    cursor: pointer;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease,
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+
+    &:hover {
+      border-color: rgba(6, 182, 212, 0.35);
+      background-color: var(--color-bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+    }
+
+    &--selected {
+      border-color: var(--color-brand-teal);
+      background-color: var(--color-primary-light);
+      color: var(--color-brand-teal-dark);
+      box-shadow: 0 8px 18px rgba(6, 182, 212, 0.14);
+    }
+  }
+}

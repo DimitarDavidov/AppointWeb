@@ -42,6 +42,7 @@ public interface IEmailService
         string serviceName,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string? reason,
         string providerPanelUrl,
         CancellationToken cancellationToken = default);
@@ -53,6 +54,7 @@ public interface IEmailService
         string serviceName,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string reason,
         string appointmentsUrl,
         CancellationToken cancellationToken = default);

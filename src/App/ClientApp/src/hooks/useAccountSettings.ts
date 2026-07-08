@@ -6,6 +6,7 @@ import {
   getAccountProfile,
   updateEmail,
   updatePhoneNumber,
+  updateTimeZone,
   updateUsername,
 } from "../api/account";
 import { getErrorMessage } from "../api/errors";
@@ -13,7 +14,12 @@ import { setCredentials, logout } from "../features/auth/authSlice";
 import { useAsyncData } from "./useAsyncData";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 
-export type EditableField = "email" | "username" | "password" | "phoneNumber";
+export type EditableField =
+  | "email"
+  | "username"
+  | "password"
+  | "phoneNumber"
+  | "timezone";
 
 export function useAccountSettings() {
   const dispatch = useAppDispatch();
@@ -21,8 +27,12 @@ export function useAccountSettings() {
   const { email, username, role } = useAppSelector((state) => state.auth);
 
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [timeZone, setTimeZone] = useState("UTC");
   const { isLoading, error: loadError } = useAsyncData(getAccountProfile, [], {
-    onSuccess: (profile) => setPhoneNumber(profile.phoneNumber ?? ""),
+    onSuccess: (profile) => {
+      setPhoneNumber(profile.phoneNumber ?? "");
+      setTimeZone(profile.timeZoneId);
+    },
     errorMessage: "Failed to load account details.",
   });
 
@@ -36,6 +46,7 @@ export function useAccountSettings() {
   const [isSavingUsername, setIsSavingUsername] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [isSavingTimeZone, setIsSavingTimeZone] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -60,6 +71,7 @@ export function useAccountSettings() {
     if (field === "email") setDraftValue(email ?? "");
     else if (field === "username") setDraftValue(username ?? "");
     else if (field === "phoneNumber") setDraftValue(phoneNumber);
+    else if (field === "timezone") setDraftValue(timeZone);
   }
 
   function cancelEditing() {
@@ -173,6 +185,30 @@ export function useAccountSettings() {
     }
   }
 
+  async function handleSaveTimeZone(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = draftValue.trim();
+
+    if (!trimmed) {
+      setError("Select a timezone.");
+      return;
+    }
+
+    setIsSavingTimeZone(true);
+    setError("");
+
+    try {
+      const profile = await updateTimeZone(trimmed);
+      setTimeZone(profile.timeZoneId);
+      setEditingField(null);
+      setMessage("Timezone updated successfully.");
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to update timezone."));
+    } finally {
+      setIsSavingTimeZone(false);
+    }
+  }
+
   function openDeleteDialog() {
     setDeletePassword("");
     setDeleteError("");
@@ -213,6 +249,7 @@ export function useAccountSettings() {
     username,
     role,
     phoneNumber,
+    timeZone,
     isLoading,
     loadError,
     draftValue,
@@ -229,6 +266,7 @@ export function useAccountSettings() {
     isSavingUsername,
     isSavingPassword,
     isSavingPhone,
+    isSavingTimeZone,
     showDeleteDialog,
     deletePassword,
     setDeletePassword,
@@ -241,6 +279,7 @@ export function useAccountSettings() {
     handleSaveUsername,
     handleSavePassword,
     handleSavePhone,
+    handleSaveTimeZone,
     openDeleteDialog,
     closeDeleteDialog,
     confirmDeleteAccount,

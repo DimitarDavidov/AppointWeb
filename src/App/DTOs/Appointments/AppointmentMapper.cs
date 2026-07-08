@@ -18,6 +18,7 @@ public static class AppointmentMapper
             CancellationReason = appointment.CancellationReason,
             PendingRescheduleStartTime = appointment.PendingRescheduleStartTime,
             PendingRescheduleEndTime = appointment.PendingRescheduleEndTime,
+            CounteredRescheduleStartTime = appointment.CounteredRescheduleStartTime,
             RescheduleReason = appointment.RescheduleReason,
             RescheduleRequestedByUserId = appointment.RescheduleRequestedByUserId,
         };

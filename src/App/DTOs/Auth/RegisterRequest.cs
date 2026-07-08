@@ -20,4 +20,10 @@ public class RegisterRequest
     /// Admin cannot be assigned via registration.
     /// </summary>
     public string? Role { get; set; }
+
+    /// <summary>
+    /// Optional IANA timezone id (e.g. "Europe/Sofia"). Defaults to UTC when
+    /// missing or unrecognized. Used to interpret provider availability hours.
+    /// </summary>
+    public string? TimeZoneId { get; set; }
 }

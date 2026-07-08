@@ -1,15 +1,13 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { createAppointment } from "../api/appointments";
 import { getErrorMessage } from "../api/errors";
 import { getCatalogOffering } from "../api/catalog";
+import { AppointmentBookingPicker } from "../components/Calendar/AppointmentBookingPicker";
 import type { Appointment } from "../types/appointment";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { useAppSelector } from "../store/hooks";
-import {
-  formatAppointmentDateTime,
-  toDatetimeLocalValue,
-} from "../utils/formatAppointment";
+import { formatAppointmentDateTime } from "../utils/formatAppointment";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
 import { formatDuration, formatPrice, formatServiceLocation } from "../utils/formatService";
 import { isSameId } from "../utils/isSameId";
@@ -44,13 +42,11 @@ function ServiceDetail() {
   );
   const error = missingParams ? "Service not found." : fetchError;
   const [showBooking, setShowBooking] = useState(false);
-  const [startTime, setStartTime] = useState("");
+  const [startTime, setStartTime] = useState<string | null>(null);
   const [bookingError, setBookingError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedAppointment, setConfirmedAppointment] =
     useState<Appointment | null>(null);
-
-  const minStartTime = useMemo(() => toDatetimeLocalValue(new Date()), []);
 
   function handleBookClick() {
     if (isOwnService) return;
@@ -61,6 +57,7 @@ function ServiceDetail() {
     }
 
     setBookingError("");
+    setStartTime(null);
     setShowBooking(true);
   }
 
@@ -228,21 +225,17 @@ function ServiceDetail() {
           >
             <h2 className="service-detail-booking-title">Choose a time</h2>
             <p className="service-detail-booking-hint">
-              Pick when you would like your {formatDuration(offering.durationMinutes)}{" "}
-              appointment to start.
+              Pick a date, then select an available slot for your{" "}
+              {formatDuration(offering.durationMinutes)} appointment.
             </p>
 
-            <label className="service-detail-booking-field" htmlFor="start-time">
-              Date and time
-              <input
-                id="start-time"
-                type="datetime-local"
-                value={startTime}
-                min={minStartTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                required
-              />
-            </label>
+            <AppointmentBookingPicker
+              providerId={providerId!}
+              serviceId={serviceId!}
+              durationMinutes={offering.durationMinutes}
+              selectedStart={startTime}
+              onSelect={setStartTime}
+            />
 
             {bookingError && (
               <p className="service-detail-booking-error" role="alert">
@@ -250,11 +243,11 @@ function ServiceDetail() {
               </p>
             )}
 
-            <div className="service-detail-actions">
+            <div className="service-detail-actions service-detail-actions--booking">
               <button
                 type="submit"
                 className="service-detail-btn service-detail-btn-primary"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !startTime}
               >
                 {isSubmitting ? "Booking..." : "Confirm booking"}
               </button>
@@ -265,7 +258,7 @@ function ServiceDetail() {
                 onClick={() => {
                   setShowBooking(false);
                   setBookingError("");
-                  setStartTime("");
+                  setStartTime(null);
                 }}
               >
                 Cancel

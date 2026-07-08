@@ -38,6 +38,13 @@ public class Appointment
 
     public DateTime? PendingRescheduleEndTime { get; set; }
 
+    /// <summary>
+    /// When the current pending proposal is a counter-offer, this holds the time
+    /// the other party had proposed and that is now being countered. Null for an
+    /// initial reschedule request.
+    /// </summary>
+    public DateTime? CounteredRescheduleStartTime { get; set; }
+
     [MaxLength(1000)]
     public string? RescheduleReason { get; set; }
 

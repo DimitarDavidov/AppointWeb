@@ -277,6 +277,7 @@ public class SmtpEmailService : IEmailService
         string serviceName,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string? reason,
         string providerPanelUrl,
         CancellationToken cancellationToken = default)
@@ -288,6 +289,7 @@ public class SmtpEmailService : IEmailService
             serviceName,
             previousWhen,
             newWhen,
+            previousRequestedWhen,
             reason,
             providerPanelUrl);
 
@@ -301,6 +303,7 @@ public class SmtpEmailService : IEmailService
         string serviceName,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string reason,
         string appointmentsUrl,
         CancellationToken cancellationToken = default)
@@ -312,6 +315,7 @@ public class SmtpEmailService : IEmailService
             serviceName,
             previousWhen,
             newWhen,
+            previousRequestedWhen,
             reason,
             appointmentsUrl);
 
@@ -346,6 +350,7 @@ public class SmtpEmailService : IEmailService
         string serviceName,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string? reason,
         string providerPanelUrl)
     {
@@ -360,6 +365,7 @@ public class SmtpEmailService : IEmailService
             serviceName,
             previousWhen,
             newWhen,
+            previousRequestedWhen,
             reason,
             providerPanelUrl);
 
@@ -382,6 +388,7 @@ public class SmtpEmailService : IEmailService
         string serviceName,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string reason,
         string appointmentsUrl)
     {
@@ -396,6 +403,7 @@ public class SmtpEmailService : IEmailService
             serviceName,
             previousWhen,
             newWhen,
+            previousRequestedWhen,
             reason,
             appointmentsUrl);
 

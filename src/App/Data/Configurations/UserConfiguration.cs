@@ -15,6 +15,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.PasswordHash).IsRequired();
         builder.Property(u => u.Role).IsRequired();
         builder.Property(u => u.PhoneNumber).HasMaxLength(50);
+        builder.Property(u => u.TimeZoneId)
+            .IsRequired()
+            .HasMaxLength(100)
+            .HasDefaultValue("UTC");
         builder.Property(u => u.IsSuspended).HasDefaultValue(false);
     }
 }

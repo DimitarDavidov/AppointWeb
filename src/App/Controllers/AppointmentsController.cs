@@ -3,6 +3,7 @@ using AppointWeb.Api.Dtos.Appointments;
 using AppointWeb.Api.Extensions;
 using AppointWeb.Api.Models;
 using AppointWeb.Api.Options;
+using AppointWeb.Api.Services;
 using AppointWeb.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -66,6 +67,7 @@ public class AppointmentsController : ControllerBase
                 CancelledByUserId = a.CancelledByUserId,
                 PendingRescheduleStartTime = a.PendingRescheduleStartTime,
                 PendingRescheduleEndTime = a.PendingRescheduleEndTime,
+                CounteredRescheduleStartTime = a.CounteredRescheduleStartTime,
                 RescheduleReason = a.RescheduleReason,
                 RescheduleRequestedByUserId = a.RescheduleRequestedByUserId,
                 ProviderRescheduleCount = a.ProviderRescheduleCount,
@@ -106,6 +108,7 @@ public class AppointmentsController : ControllerBase
                 CancelledByUserId = a.CancelledByUserId,
                 PendingRescheduleStartTime = a.PendingRescheduleStartTime,
                 PendingRescheduleEndTime = a.PendingRescheduleEndTime,
+                CounteredRescheduleStartTime = a.CounteredRescheduleStartTime,
                 RescheduleReason = a.RescheduleReason,
                 RescheduleRequestedByUserId = a.RescheduleRequestedByUserId,
                 ProviderRescheduleCount = a.ProviderRescheduleCount,
@@ -434,6 +437,21 @@ public class AppointmentsController : ControllerBase
         var newWhen = FormatAppointmentWhen(startUtc);
         var frontendBaseUrl = _frontendSettings.BaseUrl.TrimEnd('/');
 
+        // If there's already a pending proposal from the other party, this
+        // request is a counter-offer: remember the time being countered.
+        var isCounterProposal =
+            appointment.PendingRescheduleStartTime is not null &&
+            appointment.RescheduleRequestedByUserId is not null &&
+            appointment.RescheduleRequestedByUserId != userId;
+
+        appointment.CounteredRescheduleStartTime = isCounterProposal
+            ? appointment.PendingRescheduleStartTime
+            : null;
+
+        string? counteredWhen = isCounterProposal
+            ? FormatAppointmentWhen(appointment.CounteredRescheduleStartTime!.Value)
+            : null;
+
         appointment.PendingRescheduleStartTime = startUtc;
         appointment.PendingRescheduleEndTime = endUtc;
         appointment.RescheduleReason = reason;
@@ -455,6 +473,7 @@ public class AppointmentsController : ControllerBase
                     appointment.Service.Name,
                     previousWhen,
                     newWhen,
+                    counteredWhen,
                     reason,
                     $"{frontendBaseUrl}/provider",
                     ct);
@@ -479,6 +498,7 @@ public class AppointmentsController : ControllerBase
                     appointment.Service.Name,
                     previousWhen,
                     newWhen,
+                    counteredWhen,
                     reason!,
                     $"{frontendBaseUrl}/appointments",
                     ct);
@@ -610,6 +630,7 @@ public class AppointmentsController : ControllerBase
     {
         appointment.PendingRescheduleStartTime = null;
         appointment.PendingRescheduleEndTime = null;
+        appointment.CounteredRescheduleStartTime = null;
         appointment.RescheduleReason = null;
         appointment.RescheduleRequestedByUserId = null;
         appointment.PendingRescheduleFromConfirmedSlot = false;
@@ -672,19 +693,29 @@ public class AppointmentsController : ControllerBase
         if (!hasAvailabilityRules)
             return true;
 
-        var startTime = TimeOnly.FromDateTime(startUtc);
-        var endTime = TimeOnly.FromDateTime(endUtc);
+        // Availability windows are wall-clock times in the provider's timezone,
+        // so convert the (UTC) booking start into the provider's local time
+        // before comparing day-of-week and time-of-day.
+        var providerTimeZoneId = await _db.Users
+            .AsNoTracking()
+            .Where(u => u.Id == providerId)
+            .Select(u => u.TimeZoneId)
+            .SingleOrDefaultAsync(ct);
 
-        if (endTime <= startTime)
-            return false;
+        var providerTz = TimeZoneResolver.Resolve(providerTimeZoneId);
+        var localStart = TimeZoneResolver.ToLocal(startUtc, providerTz);
 
-        var dayOfWeek = (int)startUtc.DayOfWeek;
+        // Only the start time needs to fall within an availability window; the
+        // appointment may run past the window end (e.g. a 1h service booked at
+        // 5:30 when the provider works until 6:00 ends at 6:30 and is allowed).
+        var startTime = TimeOnly.FromDateTime(localStart);
+        var dayOfWeek = (int)localStart.DayOfWeek;
 
         return await _db.ProviderAvailabilities.AsNoTracking().AnyAsync(a =>
             a.ProviderId == providerId &&
             a.ServiceId == serviceId &&
             a.DayOfWeek == dayOfWeek &&
             a.StartTime <= startTime &&
-            a.EndTime >= endTime, ct);
+            a.EndTime > startTime, ct);
     }
 }

@@ -1,5 +1,6 @@
 import {
   EmailIcon,
+  GlobeIcon,
   PasswordIcon,
   PhoneIcon,
   UsernameIcon,
@@ -10,6 +11,9 @@ import {
   SaveButton,
 } from "./AccountField";
 import type { useAccountSettings } from "../../hooks/useAccountSettings";
+import { getSupportedTimeZones } from "../../utils/timezone";
+
+const TIME_ZONES = getSupportedTimeZones();
 
 const MASKED_PASSWORD = "••••••••";
 
@@ -24,6 +28,7 @@ export function AccountFieldsSection({ settings }: AccountFieldsSectionProps) {
     email,
     username,
     phoneNumber,
+    timeZone,
     draftValue,
     setDraftValue,
     currentPassword,
@@ -37,6 +42,7 @@ export function AccountFieldsSection({ settings }: AccountFieldsSectionProps) {
     isSavingUsername,
     isSavingPassword,
     isSavingPhone,
+    isSavingTimeZone,
     editingField,
     startEditing,
     cancelEditing,
@@ -44,7 +50,13 @@ export function AccountFieldsSection({ settings }: AccountFieldsSectionProps) {
     handleSaveUsername,
     handleSavePassword,
     handleSavePhone,
+    handleSaveTimeZone,
   } = settings;
+
+  const timeZoneOptions =
+    timeZone && !TIME_ZONES.includes(timeZone)
+      ? [timeZone, ...TIME_ZONES]
+      : TIME_ZONES;
 
   return (
     <div className="account-card">
@@ -189,6 +201,44 @@ export function AccountFieldsSection({ settings }: AccountFieldsSectionProps) {
               <p className="account-error">{error}</p>
             )}
             <SaveButton isSaving={isSavingPhone} />
+          </form>
+        }
+      />
+
+      <AccountField
+        variant="timezone"
+        label="Timezone"
+        value={timeZone || "UTC"}
+        icon={<GlobeIcon />}
+        index={4}
+        isEditing={editingField === "timezone"}
+        onEdit={() => startEditing("timezone")}
+        onCancel={cancelEditing}
+        editForm={
+          <form className="account-field-form" onSubmit={handleSaveTimeZone}>
+            <p className="account-field-hint">
+              Your booking hours are interpreted in this timezone.
+            </p>
+            <div className="account-field-input-wrap">
+              <GlobeIcon />
+              <select
+                id="account-timezone"
+                className="account-field-input"
+                value={draftValue}
+                onChange={(e) => setDraftValue(e.target.value)}
+                disabled={isSavingTimeZone}
+              >
+                {timeZoneOptions.map((zone) => (
+                  <option key={zone} value={zone}>
+                    {zone}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {error && editingField === "timezone" && (
+              <p className="account-error">{error}</p>
+            )}
+            <SaveButton isSaving={isSavingTimeZone} />
           </form>
         }
       />

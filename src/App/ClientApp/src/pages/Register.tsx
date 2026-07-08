@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getErrorMessage } from "../api/errors";
 import { register } from "../api/auth";
+import { getBrowserTimeZone } from "../utils/timezone";
 import { UserRoles, type UserRole } from "../constants/roles";
 import { setCredentials } from "../features/auth/authSlice";
 import { useAppDispatch } from "../store/hooks";
@@ -48,6 +49,7 @@ function Register() {
         password,
         phoneNumber,
         role: accountType,
+        timeZoneId: getBrowserTimeZone(),
       });
       dispatch(setCredentials(response));
       navigate("/");

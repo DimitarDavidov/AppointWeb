@@ -1,7 +1,12 @@
 import type { ReactNode } from "react";
 import { EditIcon, SpinnerIcon } from "./AccountIcons";
 
-export type FieldVariant = "email" | "username" | "password" | "phone";
+export type FieldVariant =
+  | "email"
+  | "username"
+  | "password"
+  | "phone"
+  | "timezone";
 
 interface AccountFieldProps {
   variant: FieldVariant;

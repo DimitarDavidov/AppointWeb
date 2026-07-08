@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  updateAppointmentStatus,
   type AppointmentOutcomeStatus,
 } from "../../api/appointments";
 import { getErrorMessage } from "../../api/errors";

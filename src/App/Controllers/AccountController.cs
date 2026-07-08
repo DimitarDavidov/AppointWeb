@@ -154,6 +154,27 @@ public class AccountController : ControllerBase
         return Ok(MapProfile(user));
     }
 
+    [HttpPatch("timezone")]
+    public async Task<ActionResult<UserProfileResponse>> UpdateTimeZone(
+        UpdateTimeZoneRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetUserId(out var userId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        if (!TimeZoneResolver.IsValid(request.TimeZoneId))
+            return BadRequest("Unknown timezone.");
+
+        var user = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user is null)
+            return NotFound();
+
+        user.TimeZoneId = request.TimeZoneId.Trim();
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(MapProfile(user));
+    }
+
     [HttpDelete]
     public async Task<IActionResult> DeleteAccount(
         DeleteAccountRequest request,
@@ -185,5 +206,6 @@ public class AccountController : ControllerBase
             Username = user.Username,
             PhoneNumber = user.PhoneNumber,
             Role = user.Role,
+            TimeZoneId = user.TimeZoneId,
         };
 }

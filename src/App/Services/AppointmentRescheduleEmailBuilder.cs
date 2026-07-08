@@ -10,6 +10,7 @@ public static class AppointmentRescheduleEmailBuilder
         string serviceName,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string? reason,
         string providerPanelUrl)
     {
@@ -21,6 +22,10 @@ public static class AppointmentRescheduleEmailBuilder
             reason,
             required: false);
 
+        var counteredTextBlock = string.IsNullOrWhiteSpace(previousRequestedWhen)
+            ? string.Empty
+            : $"\n            Previously requested time: {previousRequestedWhen}";
+
         var textBody =
             $"""
             AppointWeb reschedule request
@@ -30,7 +35,7 @@ public static class AppointmentRescheduleEmailBuilder
             {customerName} has requested to reschedule their {serviceName} appointment.
 
             Current time: {previousWhen}
-            Requested new time: {newWhen}
+            Requested new time: {newWhen}{counteredTextBlock}
             {reasonTextBlock}
 
             Review the request in your provider panel:
@@ -47,6 +52,7 @@ public static class AppointmentRescheduleEmailBuilder
                 """,
             previousWhen,
             newWhen,
+            previousRequestedWhen,
             reasonHtmlBlock,
             footerHtml: $"""
                 <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
@@ -72,6 +78,7 @@ public static class AppointmentRescheduleEmailBuilder
         string serviceName,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string reason,
         string appointmentsUrl)
     {
@@ -83,6 +90,10 @@ public static class AppointmentRescheduleEmailBuilder
             reason,
             required: true);
 
+        var counteredTextBlock = string.IsNullOrWhiteSpace(previousRequestedWhen)
+            ? string.Empty
+            : $"\n            Previously requested time: {previousRequestedWhen}";
+
         var textBody =
             $"""
             AppointWeb reschedule request
@@ -92,7 +103,7 @@ public static class AppointmentRescheduleEmailBuilder
             {providerName} has requested to reschedule your {serviceName} appointment.
 
             Current time: {previousWhen}
-            Requested new time: {newWhen}
+            Requested new time: {newWhen}{counteredTextBlock}
             {reasonTextBlock}
 
             View your appointments:
@@ -109,6 +120,7 @@ public static class AppointmentRescheduleEmailBuilder
                 """,
             previousWhen,
             newWhen,
+            previousRequestedWhen,
             reasonHtmlBlock,
             footerHtml: $"""
                 <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
@@ -171,9 +183,18 @@ public static class AppointmentRescheduleEmailBuilder
         string bodyHtml,
         string previousWhen,
         string newWhen,
+        string? previousRequestedWhen,
         string reasonHtmlBlock,
         string footerHtml)
     {
+        var counteredHtmlLine = string.IsNullOrWhiteSpace(previousRequestedWhen)
+            ? string.Empty
+            : $"""
+                            <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#475569;">
+                              <strong style="color:#334155;">Previously requested time:</strong> {HtmlEncode(previousRequestedWhen)}
+                            </p>
+                """;
+
         return $"""
             <!DOCTYPE html>
             <html lang="en">
@@ -207,6 +228,7 @@ public static class AppointmentRescheduleEmailBuilder
                             <p style="margin:0;font-size:14px;line-height:1.6;color:#475569;">
                               <strong style="color:#334155;">Requested new time:</strong> {HtmlEncode(newWhen)}
                             </p>
+                            {counteredHtmlLine}
                           </div>
                           {reasonHtmlBlock}
                           {footerHtml}
