@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./StarRating.scss";
 
-type StarSize = "sm" | "md" | "lg";
+type StarSize = "sm" | "md" | "lg" | "xl";
 
 function fillPercent(display: number, index: number): string {
   if (display >= index) return "100%";

@@ -53,6 +53,8 @@ function Account() {
         onClose={closeDeleteDialog}
       />
 
+      <AccountRatingsSection role={role} />
+
       <div className="account-inner">
         <header className="account-hero">
           <div className="account-hero-avatar" aria-hidden="true">
@@ -60,8 +62,8 @@ function Account() {
           </div>
           <h1 className="account-hero-title">Account Settings</h1>
           <p className="account-hero-subtitle">
-            Hi {displayName} · {formatRoleLabel(role)} — manage your profile
-            and keep your information up to date.
+            Hi {displayName} · {formatRoleLabel(role)} — manage your profile and
+            keep your information up to date.
           </p>
         </header>
 
@@ -73,8 +75,6 @@ function Account() {
         )}
 
         <AccountFieldsSection settings={settings} />
-
-        <AccountRatingsSection role={role} />
 
         <p className="account-delete-wrap">
           <button type="button" onClick={openDeleteDialog}>

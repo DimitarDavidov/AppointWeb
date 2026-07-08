@@ -17,6 +17,10 @@ $star-empty: #d4d9e0;
   &--lg {
     --star-size: 1.5rem;
   }
+
+  &--xl {
+    --star-size: 2.1rem;
+  }
 }
 
 .star-rating-track {
