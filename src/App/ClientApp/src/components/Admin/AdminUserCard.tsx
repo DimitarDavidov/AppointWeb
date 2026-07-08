@@ -1,12 +1,18 @@
-import type { AdminUser } from "../../types/admin";
+import type { AdminServiceStats, AdminUser } from "../../types/admin";
 import { formatRoleLabel, UserRoles, type UserRole } from "../../constants/roles";
 import {
+  ChevronActionIcon,
   DeleteActionIcon,
   EditActionIcon,
   SuspendActionIcon,
   UnsuspendActionIcon,
 } from "./AdminActionIcons";
 import { capitalizeFirstLetter } from "../../utils/formatDisplayName";
+import { AdminUserStats } from "./AdminUserStats";
+import {
+  AdminUserServicesBreakdown,
+  type AdminServicesState,
+} from "./AdminUserServicesBreakdown";
 
 function roleBadgeClass(role: UserRole): string {
   switch (role) {
@@ -109,22 +115,76 @@ export function UserActionButtons({
   );
 }
 
+interface UserInsightControlsProps {
+  user: AdminUser;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+}
+
+export function UserInsightControls({
+  user,
+  isExpanded,
+  onToggleExpand,
+}: UserInsightControlsProps) {
+  const canExpand = user.role === UserRoles.Provider && user.serviceCount > 0;
+
+  if (!canExpand) return null;
+
+  const serviceLabel = user.serviceCount === 1 ? "service" : "services";
+
+  return (
+    <div className="admin-insights">
+      <button
+        type="button"
+        className="admin-insight-btn"
+        aria-expanded={isExpanded}
+        onClick={onToggleExpand}
+      >
+        <span className="admin-btn-icon">
+          <ChevronActionIcon
+            className={`admin-chevron${isExpanded ? " admin-chevron--open" : ""}`}
+          />
+        </span>
+        <span>
+          {isExpanded
+            ? "Hide services"
+            : `View ${user.serviceCount} ${serviceLabel}`}
+        </span>
+      </button>
+    </div>
+  );
+}
+
 interface AdminUserCardProps {
   user: AdminUser;
   isSelf: boolean;
+  isExpanded: boolean;
+  servicesState: AdminServicesState | undefined;
+  isDownloadingCsv: boolean;
+  downloadingServiceId: string | null;
   onEdit: () => void;
   onSuspend: () => void;
   onUnsuspend: () => void;
   onDelete: () => void;
+  onToggleExpand: () => void;
+  onDownloadCsv: () => void;
+  onDownloadServiceCsv: (service: AdminServiceStats) => void;
 }
 
 export function AdminUserCard({
   user,
   isSelf,
+  isExpanded,
+  servicesState,
+  isDownloadingCsv,
+  downloadingServiceId,
   onEdit,
   onSuspend,
   onUnsuspend,
   onDelete,
+  onToggleExpand,
+  onDownloadCsv,
+  onDownloadServiceCsv,
 }: AdminUserCardProps) {
   const displayName = capitalizeFirstLetter(user.username);
   const initial = displayName.charAt(0).toUpperCase();
@@ -171,6 +231,27 @@ export function AdminUserCard({
           <dd>{formatJoinedDate(user.createdAt)}</dd>
         </div>
       </dl>
+
+      <AdminUserStats
+        user={user}
+        layout="card"
+        isDownloadingCsv={isDownloadingCsv}
+        onDownloadCsv={onDownloadCsv}
+      />
+
+      <UserInsightControls
+        user={user}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+      />
+
+      {isExpanded && (
+        <AdminUserServicesBreakdown
+          state={servicesState}
+          downloadingServiceId={downloadingServiceId}
+          onDownloadServiceCsv={onDownloadServiceCsv}
+        />
+      )}
 
       <UserActionButtons
         user={user}

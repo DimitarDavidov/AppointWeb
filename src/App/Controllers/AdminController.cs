@@ -27,23 +27,107 @@ public class AdminController : ControllerBase
     public async Task<ActionResult<IEnumerable<AdminUserResponse>>> GetUsers(
         CancellationToken cancellationToken)
     {
-        var users = await _db.Users
-            .AsNoTracking()
-            .OrderBy(u => u.Username)
-            .Select(u => new AdminUserResponse
-            {
-                Id = u.Id,
-                Username = u.Username,
-                Email = u.Email,
-                PhoneNumber = u.PhoneNumber,
-                Role = u.Role,
-                IsSuspended = u.IsSuspended,
-                CreatedAt = u.CreatedAt,
-            })
+        var users = await ProjectUsers(_db.Users.AsNoTracking().OrderBy(u => u.Username))
             .ToListAsync(cancellationToken);
 
         return Ok(users);
     }
+
+    [HttpGet("users/{id:guid}/services")]
+    public async Task<ActionResult<IEnumerable<AdminServiceStatsResponse>>> GetUserServices(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (!await _db.Users.AnyAsync(u => u.Id == id, cancellationToken))
+            return NotFound();
+
+        var services = await _db.ProviderServices
+            .AsNoTracking()
+            .Where(ps => ps.ProviderId == id)
+            .OrderByDescending(ps => ps.IsActive && ps.Service.IsActive)
+            .ThenBy(ps => ps.Service.Name)
+            .Select(ps => new AdminServiceStatsResponse
+            {
+                ServiceId = ps.ServiceId,
+                ServiceName = ps.Service.Name,
+                Category = ps.Service.Category,
+                Price = ps.Service.Price,
+                IsActive = ps.IsActive && ps.Service.IsActive,
+                TotalAppointments = _db.Appointments.Count(a =>
+                    a.ServiceId == ps.ServiceId && a.ProviderId == id),
+                CompletedCount = _db.Appointments.Count(a =>
+                    a.ServiceId == ps.ServiceId &&
+                    a.ProviderId == id &&
+                    a.Status == AppointmentStatus.Completed),
+                CancelledCount = _db.Appointments.Count(a =>
+                    a.ServiceId == ps.ServiceId &&
+                    a.ProviderId == id &&
+                    a.Status == AppointmentStatus.Cancelled),
+                Revenue = _db.Appointments
+                    .Where(a =>
+                        a.ServiceId == ps.ServiceId &&
+                        a.ProviderId == id &&
+                        a.Status == AppointmentStatus.Completed)
+                    .Sum(a => (decimal?)a.PriceAtBooking) ?? 0m,
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(services);
+    }
+
+    [HttpGet("users/{id:guid}/cancelled-appointments")]
+    public async Task<ActionResult<IEnumerable<AdminCancelledAppointmentResponse>>> GetUserCancelledAppointments(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (!await _db.Users.AnyAsync(u => u.Id == id, cancellationToken))
+            return NotFound();
+
+        var appointments = await ProjectCancelledAppointments(
+                _db.Appointments.Where(a =>
+                    a.CancelledByUserId == id &&
+                    a.Status == AppointmentStatus.Cancelled))
+            .ToListAsync(cancellationToken);
+
+        return Ok(appointments);
+    }
+
+    [HttpGet("users/{id:guid}/services/{serviceId:guid}/cancelled-appointments")]
+    public async Task<ActionResult<IEnumerable<AdminCancelledAppointmentResponse>>> GetServiceCancelledAppointments(
+        Guid id,
+        Guid serviceId,
+        CancellationToken cancellationToken)
+    {
+        if (!await _db.Users.AnyAsync(u => u.Id == id, cancellationToken))
+            return NotFound();
+
+        var appointments = await ProjectCancelledAppointments(
+                _db.Appointments.Where(a =>
+                    a.ProviderId == id &&
+                    a.ServiceId == serviceId &&
+                    a.Status == AppointmentStatus.Cancelled))
+            .ToListAsync(cancellationToken);
+
+        return Ok(appointments);
+    }
+
+    private static IQueryable<AdminCancelledAppointmentResponse> ProjectCancelledAppointments(
+        IQueryable<Appointment> query) =>
+        query
+            .AsNoTracking()
+            .OrderByDescending(a => a.StartTime)
+            .Select(a => new AdminCancelledAppointmentResponse
+            {
+                Id = a.Id,
+                ServiceName = a.Service.Name,
+                CustomerUsername = a.Customer.Username,
+                ProviderUsername = a.Provider.Username,
+                StartTime = a.StartTime,
+                EndTime = a.EndTime,
+                PriceAtBooking = a.PriceAtBooking,
+                CancellationReason = a.CancellationReason,
+                CreatedAt = a.CreatedAt,
+            });
 
     [HttpPatch("users/{id:guid}")]
     public async Task<ActionResult<AdminUserResponse>> UpdateUser(
@@ -86,7 +170,7 @@ public class AdminController : ControllerBase
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        return Ok(MapUser(user));
+        return Ok(await BuildUserResponseAsync(id, cancellationToken));
     }
 
     [HttpPatch("users/{id:guid}/suspend")]
@@ -107,7 +191,7 @@ public class AdminController : ControllerBase
         user.IsSuspended = true;
         await _db.SaveChangesAsync(cancellationToken);
 
-        return Ok(MapUser(user));
+        return Ok(await BuildUserResponseAsync(id, cancellationToken));
     }
 
     [HttpPatch("users/{id:guid}/unsuspend")]
@@ -125,7 +209,7 @@ public class AdminController : ControllerBase
         user.IsSuspended = false;
         await _db.SaveChangesAsync(cancellationToken);
 
-        return Ok(MapUser(user));
+        return Ok(await BuildUserResponseAsync(id, cancellationToken));
     }
 
     [HttpDelete("users/{id:guid}")]
@@ -146,15 +230,29 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
-    private static AdminUserResponse MapUser(User user) =>
-        new()
+    private Task<AdminUserResponse> BuildUserResponseAsync(
+        Guid id,
+        CancellationToken cancellationToken) =>
+        ProjectUsers(_db.Users.AsNoTracking().Where(u => u.Id == id))
+            .FirstAsync(cancellationToken);
+
+    private IQueryable<AdminUserResponse> ProjectUsers(IQueryable<User> users) =>
+        users.Select(u => new AdminUserResponse
         {
-            Id = user.Id,
-            Username = user.Username,
-            Email = user.Email,
-            PhoneNumber = user.PhoneNumber,
-            Role = user.Role,
-            IsSuspended = user.IsSuspended,
-            CreatedAt = user.CreatedAt,
-        };
+            Id = u.Id,
+            Username = u.Username,
+            Email = u.Email,
+            PhoneNumber = u.PhoneNumber,
+            Role = u.Role,
+            IsSuspended = u.IsSuspended,
+            CreatedAt = u.CreatedAt,
+            ServiceCount = u.ProviderServices.Count(ps => ps.IsActive && ps.Service.IsActive),
+            CompletedCount = u.Role == UserRoles.Provider
+                ? u.ProviderAppointments.Count(a => a.Status == AppointmentStatus.Completed)
+                : u.CustomerAppointments.Count(a => a.Status == AppointmentStatus.Completed),
+            CancelledCount = _db.Appointments.Count(a => a.CancelledByUserId == u.Id),
+            TotalRevenue = u.ProviderAppointments
+                .Where(a => a.Status == AppointmentStatus.Completed)
+                .Sum(a => (decimal?)a.PriceAtBooking) ?? 0m,
+        });
 }

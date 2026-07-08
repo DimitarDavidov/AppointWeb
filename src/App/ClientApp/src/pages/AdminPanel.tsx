@@ -1,12 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   deleteAdminUser,
+  getAdminServiceCancelledAppointments,
+  getAdminUserCancelledAppointments,
   getAdminUsers,
+  getAdminUserServices,
   suspendAdminUser,
   unsuspendAdminUser,
   updateAdminUser,
 } from "../api/admin";
 import { getErrorMessage } from "../api/errors";
+import type { AdminServicesState } from "../components/Admin/AdminUserServicesBreakdown";
+import {
+  buildCancelledAppointmentsCsv,
+  downloadCsv,
+  sanitizeFilename,
+} from "../utils/csvExport";
 import { AdminSearchToolbar } from "../components/Admin/AdminSearchToolbar";
 import type {
   RoleFilter,
@@ -25,7 +34,11 @@ import {
 import { SpinnerIcon } from "../components/Account/AccountIcons";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { useAppSelector } from "../store/hooks";
-import type { AdminUser, UpdateAdminUserRequest } from "../types/admin";
+import type {
+  AdminServiceStats,
+  AdminUser,
+  UpdateAdminUserRequest,
+} from "../types/admin";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
 import "./AdminPanel.scss";
 
@@ -56,6 +69,17 @@ function AdminPanel() {
   const [dialogError, setDialogError] = useState("");
   const [isDialogSubmitting, setIsDialogSubmitting] = useState(false);
 
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [servicesByUser, setServicesByUser] = useState<
+    Record<string, AdminServicesState>
+  >({});
+  const [downloadingUserId, setDownloadingUserId] = useState<string | null>(
+    null
+  );
+  const [downloadingServiceId, setDownloadingServiceId] = useState<
+    string | null
+  >(null);
+
   useEffect(() => {
     if (!message) return;
 
@@ -82,11 +106,125 @@ function AdminPanel() {
     };
   }, [users]);
 
+  const loadUserServices = useCallback(async (id: string) => {
+    setServicesByUser((current) => ({
+      ...current,
+      [id]: { loading: true, error: "", data: current[id]?.data ?? [] },
+    }));
+
+    try {
+      const data = await getAdminUserServices(id);
+      setServicesByUser((current) => ({
+        ...current,
+        [id]: { loading: false, error: "", data },
+      }));
+    } catch (err) {
+      setServicesByUser((current) => ({
+        ...current,
+        [id]: {
+          loading: false,
+          error: getErrorMessage(err, "Could not load services."),
+          data: [],
+        },
+      }));
+    }
+  }, []);
+
+  const handleToggleExpand = useCallback(
+    (user: AdminUser) => {
+      setExpandedUserId((current) => {
+        if (current === user.id) return null;
+
+        const cached = servicesByUser[user.id];
+        if (!cached || (cached.error && !cached.loading)) {
+          void loadUserServices(user.id);
+        }
+
+        return user.id;
+      });
+    },
+    [servicesByUser, loadUserServices]
+  );
+
+  const handleDownloadCsv = useCallback(async (user: AdminUser) => {
+    setDownloadingUserId(user.id);
+
+    try {
+      const appointments = await getAdminUserCancelledAppointments(user.id);
+
+      if (appointments.length === 0) {
+        setMessage(
+          `${capitalizeFirstLetter(user.username)} has no cancelled appointments.`
+        );
+        return;
+      }
+
+      const csv = buildCancelledAppointmentsCsv(appointments);
+      downloadCsv(
+        `cancelled-appointments-${sanitizeFilename(user.username)}.csv`,
+        csv
+      );
+      setMessage(
+        `Exported ${appointments.length} cancelled appointment${
+          appointments.length === 1 ? "" : "s"
+        } for ${capitalizeFirstLetter(user.username)}.`
+      );
+    } catch (err) {
+      setMessage(getErrorMessage(err, "Could not export cancelled appointments."));
+    } finally {
+      setDownloadingUserId(null);
+    }
+  }, []);
+
+  const handleDownloadServiceCsv = useCallback(
+    async (user: AdminUser, service: AdminServiceStats) => {
+      setDownloadingServiceId(service.serviceId);
+
+      try {
+        const appointments = await getAdminServiceCancelledAppointments(
+          user.id,
+          service.serviceId
+        );
+
+        if (appointments.length === 0) {
+          setMessage(
+            `${service.serviceName} has no cancelled appointments.`
+          );
+          return;
+        }
+
+        const csv = buildCancelledAppointmentsCsv(appointments);
+        downloadCsv(
+          `cancelled-${sanitizeFilename(service.serviceName)}-${sanitizeFilename(
+            user.username
+          )}.csv`,
+          csv
+        );
+        setMessage(
+          `Exported ${appointments.length} cancelled appointment${
+            appointments.length === 1 ? "" : "s"
+          } for ${service.serviceName}.`
+        );
+      } catch (err) {
+        setMessage(
+          getErrorMessage(err, "Could not export cancelled appointments.")
+        );
+      } finally {
+        setDownloadingServiceId(null);
+      }
+    },
+    []
+  );
+
   function getUserHandlers(user: AdminUser): AdminUserHandlers {
     const isSelf = userId === user.id;
 
     return {
       isSelf,
+      isExpanded: expandedUserId === user.id,
+      servicesState: servicesByUser[user.id],
+      isDownloadingCsv: downloadingUserId === user.id,
+      downloadingServiceId,
       onEdit: () => {
         setEditError("");
         setEditingUser(user);
@@ -106,6 +244,10 @@ function AdminPanel() {
         setDialogTarget(user);
         setDialogError("");
       },
+      onToggleExpand: () => handleToggleExpand(user),
+      onDownloadCsv: () => void handleDownloadCsv(user),
+      onDownloadServiceCsv: (service: AdminServiceStats) =>
+        void handleDownloadServiceCsv(user, service),
     };
   }
 
