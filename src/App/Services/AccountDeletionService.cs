@@ -60,6 +60,10 @@ public class AccountDeletionService : IAccountDeletionService
                 .Where(a => a.ProviderId == userId)
                 .ExecuteDeleteAsync(cancellationToken);
 
+            await _db.Notifications
+                .Where(n => n.UserId == userId)
+                .ExecuteDeleteAsync(cancellationToken);
+
             var user = await _db.Users.SingleAsync(u => u.Id == userId, cancellationToken);
             _db.Users.Remove(user);
             await _db.SaveChangesAsync(cancellationToken);

@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<ProviderAvailability> ProviderAvailabilities => Set<ProviderAvailability>();
     public DbSet<ProviderService> ProviderServices => Set<ProviderService>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

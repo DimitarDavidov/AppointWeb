@@ -36,4 +36,6 @@ public class User
         new List<ProviderAvailability>();
     public ICollection<ProviderService> ProviderServices { get; set; } =
         new List<ProviderService>();
+    public ICollection<Notification> Notifications { get; set; } =
+        new List<Notification>();
 }

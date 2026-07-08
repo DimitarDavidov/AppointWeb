@@ -22,17 +22,20 @@ public class AppointmentsController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notificationService;
     private readonly FrontendSettings _frontendSettings;
     private readonly ILogger<AppointmentsController> _logger;
 
     public AppointmentsController(
         AppDbContext db,
         IEmailService emailService,
+        INotificationService notificationService,
         IOptions<FrontendSettings> frontendSettings,
         ILogger<AppointmentsController> logger)
     {
         _db = db;
         _emailService = emailService;
+        _notificationService = notificationService;
         _frontendSettings = frontendSettings.Value;
         _logger = logger;
     }
@@ -300,6 +303,22 @@ public class AppointmentsController : ControllerBase
                     "Failed to send cancellation email for appointment {AppointmentId}",
                     appointment.Id);
             }
+
+            try
+            {
+                await _notificationService.NotifyAppointmentCancelledAsync(
+                    appointment,
+                    appointment.CustomerId,
+                    appointment.Provider.Username,
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to create cancellation notification for appointment {AppointmentId}",
+                    appointment.Id);
+            }
         }
 
         if (notifyProvider)
@@ -320,6 +339,22 @@ public class AppointmentsController : ControllerBase
                 _logger.LogError(
                     ex,
                     "Failed to send customer cancellation email for appointment {AppointmentId}",
+                    appointment.Id);
+            }
+
+            try
+            {
+                await _notificationService.NotifyAppointmentCancelledAsync(
+                    appointment,
+                    appointment.ProviderId,
+                    appointment.Customer.Username,
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to create cancellation notification for appointment {AppointmentId}",
                     appointment.Id);
             }
         }
@@ -393,6 +428,18 @@ public class AppointmentsController : ControllerBase
             _logger.LogError(
                 ex,
                 "Failed to send appointment confirmed email for appointment {AppointmentId}",
+                appointment.Id);
+        }
+
+        try
+        {
+            await _notificationService.NotifyAppointmentConfirmedAsync(appointment, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to create appointment confirmed notification for appointment {AppointmentId}",
                 appointment.Id);
         }
 
@@ -510,6 +557,23 @@ public class AppointmentsController : ControllerBase
                     "Failed to send customer reschedule email for appointment {AppointmentId}",
                     appointment.Id);
             }
+
+            try
+            {
+                await _notificationService.NotifyRescheduleReceivedAsync(
+                    appointment,
+                    appointment.ProviderId,
+                    appointment.Customer.Username,
+                    startUtc,
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to create reschedule notification for appointment {AppointmentId}",
+                    appointment.Id);
+            }
         }
 
         if (notifyCustomer)
@@ -533,6 +597,23 @@ public class AppointmentsController : ControllerBase
                 _logger.LogError(
                     ex,
                     "Failed to send provider reschedule email for appointment {AppointmentId}",
+                    appointment.Id);
+            }
+
+            try
+            {
+                await _notificationService.NotifyRescheduleReceivedAsync(
+                    appointment,
+                    appointment.CustomerId,
+                    appointment.Provider.Username,
+                    startUtc,
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to create reschedule notification for appointment {AppointmentId}",
                     appointment.Id);
             }
         }
@@ -587,8 +668,10 @@ public class AppointmentsController : ControllerBase
             return Conflict("The requested time slot is no longer available.");
         }
 
-        var previousWhen = FormatAppointmentWhen(appointment.StartTime);
-        var newWhen = FormatAppointmentWhen(appointment.PendingRescheduleStartTime.Value);
+        var previousStartUtc = appointment.StartTime;
+        var newStartUtc = appointment.PendingRescheduleStartTime.Value;
+        var previousWhen = FormatAppointmentWhen(previousStartUtc);
+        var newWhen = FormatAppointmentWhen(newStartUtc);
         var requesterId = appointment.RescheduleRequestedByUserId.Value;
         var isCustomerRequester = requesterId == appointment.CustomerId;
 
@@ -648,6 +731,28 @@ public class AppointmentsController : ControllerBase
             _logger.LogError(
                 ex,
                 "Failed to send reschedule accepted email for appointment {AppointmentId}",
+                appointment.Id);
+        }
+
+        try
+        {
+            var accepterName = isCustomerRequester
+                ? appointment.Provider.Username
+                : appointment.Customer.Username;
+
+            await _notificationService.NotifyRescheduleAcceptedAsync(
+                appointment,
+                requesterId,
+                accepterName,
+                previousStartUtc,
+                newStartUtc,
+                ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to create reschedule accepted notification for appointment {AppointmentId}",
                 appointment.Id);
         }
 

@@ -14,6 +14,7 @@ import {
   RegisterIcon,
 } from "./NavIcons";
 import { UserRoles } from "../../constants/roles";
+import NotificationBell from "../Notifications/NotificationBell";
 import "./Navbar.scss";
 
 function MobileNavLink({
@@ -114,11 +115,16 @@ function Navbar() {
         <img src={logo} alt="AppointWeb" className="navbar-logo" />
       </Link>
 
-      <div className="navbar-actions navbar-actions--desktop">
-        {isLoggedIn ? (
-          <div
-            className={`navbar-user-menu${userMenuOpen ? " is-open" : ""}`}
-          >
+      {isLoggedIn ? (
+        <div className="navbar-end">
+          <div className="navbar-notifications">
+            <NotificationBell isLoggedIn={isLoggedIn} role={role} />
+          </div>
+
+          <div className="navbar-actions navbar-actions--desktop">
+            <div
+              className={`navbar-user-menu${userMenuOpen ? " is-open" : ""}`}
+            >
             <button
               type="button"
               className="navbar-user-trigger"
@@ -171,9 +177,25 @@ function Navbar() {
                 </button>
               </div>
             </div>
+            </div>
           </div>
-        ) : (
-          <>
+
+          <button
+            type="button"
+            className={`navbar-toggle${mobileMenuOpen ? " is-active" : ""}`}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="navbar-mobile-menu"
+            onClick={toggleMobileMenu}
+          >
+            <span className="navbar-toggle-bar" aria-hidden="true" />
+            <span className="navbar-toggle-bar" aria-hidden="true" />
+            <span className="navbar-toggle-bar" aria-hidden="true" />
+          </button>
+        </div>
+      ) : (
+        <div className="navbar-end">
+          <div className="navbar-actions navbar-actions--desktop">
             <Link to="/login" className="navbar-link navbar-link--ghost">
               <LoginIcon />
               <span>Login</span>
@@ -182,22 +204,22 @@ function Navbar() {
               <RegisterIcon />
               <span>Register</span>
             </Link>
-          </>
-        )}
-      </div>
+          </div>
 
-      <button
-        type="button"
-        className={`navbar-toggle${mobileMenuOpen ? " is-active" : ""}`}
-        aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-        aria-expanded={mobileMenuOpen}
-        aria-controls="navbar-mobile-menu"
-        onClick={toggleMobileMenu}
-      >
-        <span className="navbar-toggle-bar" aria-hidden="true" />
-        <span className="navbar-toggle-bar" aria-hidden="true" />
-        <span className="navbar-toggle-bar" aria-hidden="true" />
-      </button>
+          <button
+            type="button"
+            className={`navbar-toggle${mobileMenuOpen ? " is-active" : ""}`}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="navbar-mobile-menu"
+            onClick={toggleMobileMenu}
+          >
+            <span className="navbar-toggle-bar" aria-hidden="true" />
+            <span className="navbar-toggle-bar" aria-hidden="true" />
+            <span className="navbar-toggle-bar" aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       <div
         id="navbar-mobile-menu"
