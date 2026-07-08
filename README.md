@@ -192,7 +192,7 @@ The frontend runs on **http://localhost:5173** and talks to the API at `http://l
 | `/account` | Authenticated | Account settings |
 | `/appointments` | Authenticated | View and manage appointments |
 | `/provider` | Provider, Admin | Provider dashboard |
-| `/admin` | Admin | User management |
+| `/admin` | Admin | User management with per-user stats, service breakdown, and cancelled-appointment CSV export |
 
 After login or registration, a JWT is stored in Redux and `localStorage`. See [Authentication](docs/authentication.md) for details.
 
@@ -229,7 +229,10 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 | `GET` | `/api/provider/services` | Provider | List the provider's services |
 | `GET` | `/api/provider/services/{serviceId}/availability` | Provider | Get booking hours for a service |
 | `PUT` | `/api/provider/services/{serviceId}/availability` | Provider | Set booking hours for a service |
-| `GET` | `/api/admin/users` | Admin | List all users |
+| `GET` | `/api/admin/users` | Admin | List all users with per-user stats (services, completed, cancelled, revenue) |
+| `GET` | `/api/admin/users/{id}/services` | Admin | Per-service breakdown (revenue, completed, cancelled) for a provider |
+| `GET` | `/api/admin/users/{id}/cancelled-appointments` | Admin | Appointments the user cancelled (CSV export) |
+| `GET` | `/api/admin/users/{id}/services/{serviceId}/cancelled-appointments` | Admin | A service's cancelled appointments (CSV export) |
 
 ## Troubleshooting
 

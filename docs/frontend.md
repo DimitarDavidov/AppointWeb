@@ -74,6 +74,7 @@ ClientApp/src/
 │   ├── appointmentRescheduleUtils.ts
 │   ├── appointmentOutcomeUtils.ts
 │   ├── catalogFilters.ts           # Client-side catalog search and location filters
+│   ├── csvExport.ts                # CSV builder + browser download helper (admin exports)
 │   ├── formatService.ts            # Price, duration, and location display helpers
 │   ├── providerPanelUtils.ts       # Provider stats and appointment grouping
 │   └── getTimeGreeting.ts          # Time-of-day greeting from browser timezone
@@ -209,6 +210,14 @@ Glass-style dashboard for providers with animated stat cards, tabbed appointment
 
 - Search and filter users by role and suspension status
 - Edit user details, suspend/unsuspend, delete users
+- **Per-user stats** shown inline on every card and table row (`AdminUserStats`): completed and cancelled counts for everyone; services offered and total revenue for providers
+- **Service breakdown** — provider rows expand (chevron on the services count) to reveal `AdminUserServicesBreakdown`, a per-service table of price, bookings, completed, cancelled, and revenue with a total-revenue footer; loaded lazily from `GET /api/admin/users/{id}/services` and cached per user
+- **CSV export via pressable numbers** — a cancelled count greater than zero is a button:
+  - A **user's** cancelled count downloads that user's cancelled appointments (`GET /api/admin/users/{id}/cancelled-appointments`)
+  - A **service's** cancelled count (in the breakdown) downloads that service's cancelled appointments (`GET /api/admin/users/{id}/services/{serviceId}/cancelled-appointments`)
+  - The CSV is built in the browser (`utils/csvExport.ts`) so the JWT is sent via the axios interceptor; a toast reports the result
+- The desktop table pins the **Actions** column to the right and scrolls the middle columns horizontally
+- Data: `GET /api/admin/users` (enriched with the stats above)
 
 ### Account (`/account`)
 

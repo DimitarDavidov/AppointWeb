@@ -27,6 +27,8 @@ Detailed documentation for the AppointWeb project. For a quick start guide, see 
 | My ratings | The account page shows a user's own received ratings: customers see their rating as a customer; providers also see their rating as a provider; "Not rated yet" when empty |
 | Provider panel | Dashboard with stats, appointment tabs, per-service booking hours, and service catalog management |
 | Admin | User search, edit, suspend, delete |
+| Admin insights | Each user row shows services offered, completed and cancelled counts, and (for providers) total revenue; provider rows expand into a per-service breakdown (price, bookings, completed, cancelled, revenue) |
+| Admin CSV export | Any cancelled count is a pressable number that downloads a CSV — the user's cancelled appointments (user rows) or a single service's cancelled appointments (service breakdown rows) |
 
 ## Quick links
 

@@ -987,10 +987,118 @@ Authorization: Bearer <accessToken>
     "phoneNumber": "+1234567890",
     "role": "Customer",
     "isSuspended": false,
-    "createdAt": "2026-01-15T10:00:00Z"
+    "createdAt": "2026-01-15T10:00:00Z",
+    "serviceCount": 3,
+    "completedCount": 12,
+    "cancelledCount": 2,
+    "totalRevenue": 360.00
   }
 ]
 ```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `serviceCount` | integer | Active services the user offers (providers only; `0` otherwise) |
+| `completedCount` | integer | Completed appointments, scoped by role: provider-side for providers, customer-side otherwise |
+| `cancelledCount` | integer | Appointments this user cancelled (`cancelledByUserId == user.id`) |
+| `totalRevenue` | number | Revenue from **Completed** appointments where the user is the provider; `0` for non-providers |
+
+The same enriched shape is returned by the update, suspend, and unsuspend endpoints so the client can refresh a row in place.
+
+---
+
+### Get a user's service breakdown
+
+Per-service performance for a provider, shown when an admin expands a user row. Returns an empty array for users who have no services.
+
+```
+GET /api/admin/users/{id}/services
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`**
+
+```json
+[
+  {
+    "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "serviceName": "Dental Checkup",
+    "category": "Healthcare & Dental",
+    "price": 25.00,
+    "isActive": true,
+    "totalAppointments": 18,
+    "completedCount": 12,
+    "cancelledCount": 3,
+    "revenue": 300.00
+  }
+]
+```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `isActive` | boolean | `false` when the provider has removed the service (historical rows still counted) |
+| `completedCount` / `cancelledCount` | integer | Appointments for this service (as provider) in `Completed` / `Cancelled` status |
+| `revenue` | number | Sum of `priceAtBooking` for this service's **Completed** appointments |
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `404 Not Found` | User not found |
+
+---
+
+### Export a user's cancelled appointments
+
+Returns the appointments the user cancelled (`cancelledByUserId == id`), newest first. The client turns this into a CSV download.
+
+```
+GET /api/admin/users/{id}/cancelled-appointments
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`**
+
+```json
+[
+  {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "serviceName": "Dental Checkup",
+    "customerUsername": "john",
+    "providerUsername": "jane-provider",
+    "startTime": "2026-06-15T10:00:00Z",
+    "endTime": "2026-06-15T10:30:00Z",
+    "priceAtBooking": 25.00,
+    "cancellationReason": "Schedule conflict",
+    "createdAt": "2026-06-01T08:00:00Z"
+  }
+]
+```
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `404 Not Found` | User not found |
+
+---
+
+### Export a service's cancelled appointments
+
+Returns the `Cancelled` appointments for a specific service where the user is the provider (regardless of who cancelled), newest first. Backs the click-to-download on a service's cancelled count.
+
+```
+GET /api/admin/users/{id}/services/{serviceId}/cancelled-appointments
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`** — Same shape as [Export a user's cancelled appointments](#export-a-users-cancelled-appointments).
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `404 Not Found` | User not found |
 
 ---
 

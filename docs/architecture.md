@@ -140,6 +140,15 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 7. The account page shows each user their own received ratings via `GET /api/ratings/me` — customers see their rating as a customer; providers also see their rating as a provider
 8. Ratings are editable and removable at any time (`PUT` again or `DELETE`)
 
+## Request flow (example: admin insights and CSV export)
+
+1. An admin opens `/admin`
+2. Frontend loads `GET /api/admin/users`, which now includes per-user stats computed server-side: `serviceCount`, `completedCount` (role-aware), `cancelledCount` (appointments the user cancelled), and `totalRevenue` (Completed appointments where the user is the provider)
+3. These stats render inline on each user card and table row
+4. Expanding a provider row calls `GET /api/admin/users/{id}/services` for a per-service breakdown (price, bookings, completed, cancelled, revenue), loaded lazily and cached per user
+5. Clicking a cancelled count fetches the matching cancelled appointments — the user's (`/cancelled-appointments`) or a single service's (`/services/{serviceId}/cancelled-appointments`) — and the browser builds and downloads a CSV
+6. Revenue is defined as the sum of `priceAtBooking` for **Completed** appointments only
+
 ## Appointment lifecycle
 
 ```
@@ -211,3 +220,4 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 - Ratings are optional and only allowed on terminal appointments (Completed, No-show, Cancelled) by the two participants; stars (0.5–5) and comment are each optional but at least one is required; per-service public averages count only Completed and No-show customer→provider ratings
 - Email notifications are sent for booking requests, appointment confirmations, cancellations, reschedule proposals, and accepted reschedules (SMTP in production, console logging when `Email:Host` is empty)
 - In-app notifications are stored in the database for appointment confirmations, cancellations, reschedule proposals, and accepted reschedules; the navbar bell polls for unread items
+- Admin insights are derived on read (no new tables): per-user counts, per-service breakdowns, and revenue are computed by querying appointments; **revenue counts Completed appointments only** (sum of `priceAtBooking`)
