@@ -7,7 +7,7 @@ import {
 } from "../../utils/appointmentOutcomeUtils";
 import { capitalizeFirstLetter } from "../../utils/formatDisplayName";
 import { formatDuration, formatPrice } from "../../utils/formatService";
-import { formatAppointmentDateTime } from "../../utils/formatAppointment";
+import { formatAppointmentDateTime, getDurationMinutes } from "../../utils/formatAppointment";
 import {
   formatAppointmentDate,
   formatAppointmentTime,
@@ -24,12 +24,6 @@ import {
   ProviderPriceIcon,
   ProviderStatBookedIcon,
 } from "./ProviderIcons";
-
-function getDurationMinutes(startTime: string, endTime: string): number {
-  return Math.round(
-    (new Date(endTime).getTime() - new Date(startTime).getTime()) / 60_000
-  );
-}
 
 function getPastStatusLabel(status: string): string {
   if (status === "Completed" || status === "NoShow") {

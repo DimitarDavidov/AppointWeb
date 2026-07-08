@@ -183,7 +183,6 @@ The frontend polls `GET /api/notifications/unread-count` every 30 seconds while 
 |----------------|---------------|------|
 | `POST /api/auth/*` | No | — |
 | `GET /api/catalog` | No | — |
-| `GET /api/services` | No | — |
 | `GET /api/account` | Yes | Any |
 | `PATCH /api/account/*` | Yes | Any |
 | `DELETE /api/account` | Yes | Any |
@@ -191,7 +190,6 @@ The frontend polls `GET /api/notifications/unread-count` every 30 seconds while 
 | `POST /api/appointments` | Yes | Any |
 | `GET /api/notifications` | Yes | Any |
 | `PATCH /api/notifications/*` | Yes | Any |
-| `GET /api/user/providers` | Yes | Any |
 | `GET /api/provider/*` | Yes | Provider |
 | `GET /api/admin/*` | Yes | Admin |
 

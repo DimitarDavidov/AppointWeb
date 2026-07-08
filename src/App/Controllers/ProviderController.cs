@@ -28,36 +28,11 @@ public class ProviderController : ControllerBase
         if (!User.TryGetUserId(out var providerId))
             return Unauthorized("Invalid token: missing user id.");
 
-        var appointments = await _db.Appointments
-            .AsNoTracking()
-            .Where(a => a.ProviderId == providerId)
+        var appointments = await AppointmentMapper.ProjectToDetail(
+                _db.Appointments
+                    .AsNoTracking()
+                    .Where(a => a.ProviderId == providerId))
             .OrderBy(a => a.StartTime)
-            .Select(a => new AppointmentDetailResponse
-            {
-                Id = a.Id,
-                CustomerId = a.CustomerId,
-                CustomerUsername = a.Customer.Username,
-                CustomerPhoneNumber = a.Customer.PhoneNumber,
-                ProviderId = a.ProviderId,
-                ProviderUsername = a.Provider.Username,
-                ServiceId = a.ServiceId,
-                ServiceName = a.Service.Name,
-                StartTime = a.StartTime,
-                EndTime = a.EndTime,
-                CreatedAt = a.CreatedAt,
-                Status = AppointmentStatusMapper.ToApiStatus(a.Status),
-                PriceAtBooking = a.PriceAtBooking,
-                CancellationReason = a.CancellationReason,
-                CancelledByUserId = a.CancelledByUserId,
-                PendingRescheduleStartTime = a.PendingRescheduleStartTime,
-                PendingRescheduleEndTime = a.PendingRescheduleEndTime,
-                CounteredRescheduleStartTime = a.CounteredRescheduleStartTime,
-                RescheduleReason = a.RescheduleReason,
-                RescheduleRequestedByUserId = a.RescheduleRequestedByUserId,
-                ProviderRescheduleCount = a.ProviderRescheduleCount,
-                CustomerRescheduleCount = a.CustomerRescheduleCount,
-                PreviousStartTime = a.PreviousStartTime,
-            })
             .ToListAsync(cancellationToken);
 
         return Ok(appointments);

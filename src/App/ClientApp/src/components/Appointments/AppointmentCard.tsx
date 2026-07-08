@@ -25,15 +25,9 @@ import { UserRoles } from "../../constants/roles";
 import { useAppSelector } from "../../store/hooks";
 import { isSameId } from "../../utils/isSameId";
 import type { AppointmentDetail } from "../../types/appointment";
-import { formatAppointmentDateTime } from "../../utils/formatAppointment";
+import { formatAppointmentDateTime, getDurationMinutes } from "../../utils/formatAppointment";
 import { capitalizeFirstLetter } from "../../utils/formatDisplayName";
 import { formatDuration, formatPrice } from "../../utils/formatService";
-
-function getDurationMinutes(startTime: string, endTime: string): number {
-  return Math.round(
-    (new Date(endTime).getTime() - new Date(startTime).getTime()) / 60_000
-  );
-}
 
 function formatStatusLabel(
   status: string,

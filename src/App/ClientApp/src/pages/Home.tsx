@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import welcomeBg from "../assets/images/welcome-bg.png";
 import { getCatalogOfferings } from "../api/catalog";
 import { useAsyncData } from "../hooks/useAsyncData";
+import type { CatalogOffering } from "../types/catalog";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
 import { formatDuration, formatPrice, formatServiceLocation } from "../utils/formatService";
 import { isSameId } from "../utils/isSameId";
@@ -27,11 +28,28 @@ function SearchIcon() {
   );
 }
 
+function matchesCatalogSearch(offering: CatalogOffering, query: string): boolean {
+  const haystack = [
+    offering.serviceName,
+    offering.providerUsername,
+    offering.category,
+    offering.description,
+    offering.city,
+    offering.country,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(query);
+}
+
 function Home() {
   const { accessToken, userId } = useAppSelector((state) => state.auth);
   const isLoggedIn = !!accessToken;
   const catalogRef = useRef<HTMLElement>(null);
   const [catalogVisible, setCatalogVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const {
     data: offerings = [],
     isLoading: isLoadingCatalog,
@@ -46,6 +64,16 @@ function Home() {
         (offering) => !isSameId(userId, offering.providerId)
       ),
     [offerings, userId]
+  );
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredOfferings = useMemo(
+    () =>
+      normalizedSearch
+        ? bookableOfferings.filter((offering) =>
+            matchesCatalogSearch(offering, normalizedSearch)
+          )
+        : bookableOfferings,
+    [bookableOfferings, normalizedSearch]
   );
 
   useEffect(() => {
@@ -125,6 +153,8 @@ function Home() {
                 type="search"
                 placeholder="Search services..."
                 autoComplete="off"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
               />
             </label>
           </div>
@@ -145,9 +175,18 @@ function Home() {
             <p className="catalog-status">No services available yet.</p>
           )}
 
-          {!isLoadingCatalog && !catalogError && bookableOfferings.length > 0 && (
+          {!isLoadingCatalog &&
+            !catalogError &&
+            bookableOfferings.length > 0 &&
+            filteredOfferings.length === 0 && (
+              <p className="catalog-status">
+                No services match &ldquo;{searchQuery.trim()}&rdquo;.
+              </p>
+            )}
+
+          {!isLoadingCatalog && !catalogError && filteredOfferings.length > 0 && (
             <ul className="catalog-grid">
-              {bookableOfferings.map((offering, index) => (
+              {filteredOfferings.map((offering, index) => (
                 <li
                   key={`${offering.providerId}-${offering.serviceId}`}
                   className="catalog-card"

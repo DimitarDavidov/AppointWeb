@@ -17,7 +17,7 @@ import {
   isRescheduleAwaitingResponse,
 } from "../../utils/appointmentRescheduleUtils";
 import { useAppSelector } from "../../store/hooks";
-import { formatAppointmentDateTime } from "../../utils/formatAppointment";
+import { formatAppointmentDateTime, getDurationMinutes } from "../../utils/formatAppointment";
 import {
   formatAppointmentDate,
   formatAppointmentTime,
@@ -35,12 +35,6 @@ import {
   ProviderRescheduleIcon,
   ProviderStatBookedIcon,
 } from "./ProviderIcons";
-
-function getDurationMinutes(startTime: string, endTime: string): number {
-  return Math.round(
-    (new Date(endTime).getTime() - new Date(startTime).getTime()) / 60_000
-  );
-}
 
 interface ProviderUpcomingAppointmentItemProps {
   appointment: AppointmentDetail;

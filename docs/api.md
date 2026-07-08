@@ -219,48 +219,6 @@ GET /api/catalog/{providerId}/{serviceId}
 
 ---
 
-## Service endpoints
-
-### List services
-
-Returns all active services. No authentication required.
-
-```
-GET /api/services
-```
-
-### Get service by ID
-
-```
-GET /api/services/{id}
-```
-
----
-
-## User endpoints
-
-### List providers
-
-Returns users with the `Provider` role. Only `id` and `username` are returned.
-
-```
-GET /api/user/providers
-Authorization: Bearer <accessToken>
-```
-
-**Success response — `200 OK`**
-
-```json
-[
-  {
-    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "username": "jane-provider"
-  }
-]
-```
-
----
-
 ## Appointment endpoints
 
 All appointment endpoints require authentication.
@@ -322,17 +280,6 @@ Authorization: Bearer <accessToken>
   }
 ]
 ```
-
----
-
-### Get appointment by ID
-
-```
-GET /api/appointments/{id}
-Authorization: Bearer <accessToken>
-```
-
-Returns a single appointment if the user has access. `404` if not found or not accessible.
 
 ---
 

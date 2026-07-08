@@ -1,6 +1,18 @@
-@AppointWeb.Api_HostAddress = http://localhost:5117
+@AppointWeb.Api_HostAddress = http://localhost:8080
 
-GET {{AppointWeb.Api_HostAddress}}/weatherforecast/
+### Catalog
+GET {{AppointWeb.Api_HostAddress}}/api/catalog
 Accept: application/json
 
 ###
+GET {{AppointWeb.Api_HostAddress}}/api/catalog/{{providerId}}/{{serviceId}}/slots?from=2026-07-08T00:00:00Z&to=2026-07-15T00:00:00Z
+Accept: application/json
+
+### Auth
+POST {{AppointWeb.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@example.com",
+  "password": "your-password"
+}

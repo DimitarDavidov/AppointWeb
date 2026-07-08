@@ -20,3 +20,9 @@ export function formatAppointmentDateTime(iso: string): string {
     minute: "2-digit",
   }).format(new Date(iso));
 }
+
+export function getDurationMinutes(startTime: string, endTime: string): number {
+  return Math.round(
+    (new Date(endTime).getTime() - new Date(startTime).getTime()) / 60_000
+  );
+}
