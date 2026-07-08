@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
-import { SpinnerIcon } from "../components/Account/AccountIcons";
 import { ProviderAppointmentsSection } from "../components/Provider/ProviderAppointmentsSection";
 import { ProviderCancelledAppointmentsSection } from "../components/Provider/ProviderCancelledAppointmentsSection";
 import { ProviderPastAppointmentsSection } from "../components/Provider/ProviderPastAppointmentsSection";
 import { ProviderPendingAppointmentsSection } from "../components/Provider/ProviderPendingAppointmentsSection";
+import { ProviderPanelSkeleton } from "../components/Provider/ProviderPanelSkeleton";
+import { ProviderPanelTabs } from "../components/Provider/ProviderPanelTabs";
 import {
-  ProviderPanelTabs,
+  PROVIDER_TAB_ORDER,
   type ProviderAppointmentTab,
-} from "../components/Provider/ProviderPanelTabs";
+} from "../components/Provider/ProviderPanelTabs.types";
 import { ProviderServicesSection } from "../components/Provider/ProviderServicesSection";
 import { ProviderStatsGrid, type ProviderStatCardKey } from "../components/Provider/ProviderStatsGrid";
 import { ProviderServicesTabIcon } from "../components/Provider/ProviderIcons";
@@ -15,6 +16,7 @@ import { useProviderPanelData } from "../hooks/useProviderPanelData";
 import { filterUpcomingAppointmentsForToday } from "../utils/providerPanelUtils";
 import { useAppSelector } from "../store/hooks";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
+import { getTimeGreeting } from "../utils/getTimeGreeting";
 import "./ProviderPanel.scss";
 
 function ProviderPanel() {
@@ -23,6 +25,9 @@ function ProviderPanel() {
     useState<ProviderAppointmentTab>("appointments");
   const [showServices, setShowServices] = useState(false);
   const [todayOnly, setTodayOnly] = useState(false);
+  const [panelDirection, setPanelDirection] = useState<"forward" | "back">(
+    "forward"
+  );
 
   const {
     services,
@@ -74,6 +79,9 @@ function ProviderPanel() {
   }
 
   function handleTabChange(tab: ProviderAppointmentTab) {
+    const currentIndex = PROVIDER_TAB_ORDER.indexOf(appointmentTab);
+    const nextIndex = PROVIDER_TAB_ORDER.indexOf(tab);
+    setPanelDirection(nextIndex >= currentIndex ? "forward" : "back");
     setTodayOnly(false);
     setAppointmentTab(tab);
   }
@@ -96,45 +104,53 @@ function ProviderPanel() {
           ? "upcoming"
           : null;
 
+  const greeting = getTimeGreeting();
+
   return (
     <div className="provider">
+      <div className="provider-bg-decor" aria-hidden="true">
+        <span className="provider-bg-orb provider-bg-orb--teal" />
+        <span className="provider-bg-orb provider-bg-orb--violet" />
+      </div>
+
       <div className="provider-inner">
         <header className="provider-header">
-          <div className="provider-header-row">
-            <div className="provider-header-content">
-              <span className="provider-header-avatar" aria-hidden="true">
-                {userInitial}
-              </span>
-              <div>
-                <h1 className="provider-title">Provider Panel</h1>
-                <p className="provider-subtitle">
-                  Hi {displayName} — manage your bookings and service listings.
-                </p>
+          <div className="provider-header-card">
+            <div className="provider-header-row">
+              <div className="provider-header-content">
+                <span className="provider-header-avatar" aria-hidden="true">
+                  {userInitial}
+                </span>
+                <div>
+                  <p className="provider-greeting">{greeting}</p>
+                  <h1 className="provider-title">{displayName}</h1>
+                  <p className="provider-subtitle">
+                    Manage your bookings, confirm requests, and keep your
+                    services up to date.
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <button
-              type="button"
-              className={`provider-header-services-btn${
-                showServices ? " provider-header-services-btn--active" : ""
-              }`}
-              aria-pressed={showServices}
-              onClick={openServices}
-            >
-              <ProviderServicesTabIcon className="provider-header-services-icon" />
-              <span className="provider-header-services-label">My services</span>
-              <span className="provider-header-services-count">{stats.services}</span>
-            </button>
+              <button
+                type="button"
+                className={`provider-header-services-btn${
+                  showServices ? " provider-header-services-btn--active" : ""
+                }`}
+                aria-pressed={showServices}
+                onClick={openServices}
+              >
+                <ProviderServicesTabIcon className="provider-header-services-icon" />
+                <span className="provider-header-services-label">My services</span>
+                <span className="provider-header-services-count">{stats.services}</span>
+              </button>
+            </div>
           </div>
         </header>
 
         {isInitialLoading ? (
-          <div className="provider-loading" aria-live="polite">
-            <SpinnerIcon className="provider-loading-spinner" />
-            <p>Loading your provider dashboard...</p>
-          </div>
+          <ProviderPanelSkeleton />
         ) : (
-          <>
+          <div className="provider-dashboard">
             <ProviderStatsGrid
               stats={stats}
               activeStat={activeStat}
@@ -142,13 +158,16 @@ function ProviderPanel() {
             />
 
             {showServices ? (
-              <div className="provider-tab-panel-wrap">
+              <div className="provider-tab-panel-wrap provider-tab-panel-wrap--services">
                 <button
                   type="button"
                   className="provider-back-to-appointments"
                   onClick={() => openAppointments()}
                 >
-                  ← Back to appointments
+                  <span className="provider-back-to-appointments-icon" aria-hidden="true">
+                    ←
+                  </span>
+                  Back to appointments
                 </button>
                 <ProviderServicesSection
                   providerId={userId}
@@ -166,7 +185,10 @@ function ProviderPanel() {
                   onTabChange={handleTabChange}
                 />
 
-                <div key={`${appointmentTab}-${todayOnly}`} className="provider-tab-panel-wrap">
+                <div
+                  key={`${appointmentTab}-${todayOnly}`}
+                  className={`provider-tab-panel-wrap provider-tab-panel-wrap--${panelDirection}`}
+                >
                   {appointmentTab === "appointments" ? (
                     <ProviderAppointmentsSection
                       upcomingAppointments={displayedUpcomingAppointments}
@@ -199,7 +221,7 @@ function ProviderPanel() {
                 </div>
               </>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

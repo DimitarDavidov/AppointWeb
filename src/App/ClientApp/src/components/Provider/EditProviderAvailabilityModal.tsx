@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { getProviderAvailability } from "../../api/provider";
+import {
+  getProviderServiceAvailability,
+} from "../../api/provider";
 import { getErrorMessage } from "../../api/errors";
 import type { ProviderAvailabilitySlotInput } from "../../types/provider";
 import {
@@ -9,6 +11,8 @@ import {
 
 export interface EditProviderAvailabilityModalProps {
   open: boolean;
+  serviceId: string | null;
+  serviceName: string;
   isSaving: boolean;
   error: string;
   onSave: (slots: ProviderAvailabilitySlotInput[]) => void;
@@ -35,6 +39,8 @@ function createDraftSlot(
 
 function EditProviderAvailabilityModal({
   open,
+  serviceId,
+  serviceName,
   isSaving,
   error,
   onSave,
@@ -46,7 +52,7 @@ function EditProviderAvailabilityModal({
   const [validationError, setValidationError] = useState("");
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !serviceId) return;
 
     let cancelled = false;
 
@@ -56,7 +62,7 @@ function EditProviderAvailabilityModal({
       setValidationError("");
 
       try {
-        const data = await getProviderAvailability();
+        const data = await getProviderServiceAvailability(serviceId);
         if (cancelled) return;
 
         setSlots(
@@ -89,7 +95,7 @@ function EditProviderAvailabilityModal({
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, serviceId]);
 
   useEffect(() => {
     if (!open) return;
@@ -109,7 +115,7 @@ function EditProviderAvailabilityModal({
     };
   }, [open, isSaving, onClose]);
 
-  if (!open) {
+  if (!open || !serviceId) {
     return null;
   }
 
@@ -183,10 +189,11 @@ function EditProviderAvailabilityModal({
             id="edit-provider-availability-title"
             className="provider-modal-title"
           >
-            Manage availability
+            Booking hours
           </h2>
           <p className="provider-modal-subtitle">
-            Set the days and hours when customers can book any of your services.
+            Set when customers can book <strong>{serviceName}</strong>. Other
+            services keep their own schedule.
           </p>
         </header>
 
@@ -292,7 +299,7 @@ function EditProviderAvailabilityModal({
                 className="provider-modal-btn provider-modal-btn-primary"
                 disabled={isSaving}
               >
-                {isSaving ? "Saving..." : "Save availability"}
+                {isSaving ? "Saving..." : "Save hours"}
               </button>
             </div>
           </form>

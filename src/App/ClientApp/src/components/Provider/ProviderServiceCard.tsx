@@ -1,7 +1,11 @@
 import { Link } from "react-router-dom";
 import { EditActionIcon } from "../Admin/AdminActionIcons";
-import type { ProviderServiceDetail, ProviderServiceEditFocus } from "../../types/provider";
-import { formatDuration, formatPriceAmount, formatServiceLocation } from "../../utils/formatService";
+import type { ProviderServiceDetail } from "../../types/provider";
+import {
+  formatDuration,
+  formatPriceAmount,
+  formatServiceLocation,
+} from "../../utils/formatService";
 import {
   ProviderClockIcon,
   ProviderExternalLinkIcon,
@@ -14,8 +18,8 @@ interface ProviderServiceCardProps {
   service: ProviderServiceDetail;
   providerId: string;
   index: number;
-  onEdit: (service: ProviderServiceDetail, focus: ProviderServiceEditFocus) => void;
-  onManageAvailability: () => void;
+  onEdit: (service: ProviderServiceDetail) => void;
+  onManageAvailability: (service: ProviderServiceDetail) => void;
 }
 
 export function ProviderServiceCard({
@@ -46,7 +50,7 @@ export function ProviderServiceCard({
         <p className="provider-service-description">{service.description}</p>
       ) : (
         <p className="provider-service-description provider-service-description--empty">
-          No description provided.
+          No description yet — add one so customers know what to expect.
         </p>
       )}
 
@@ -64,56 +68,31 @@ export function ProviderServiceCard({
         </span>
       </div>
 
-      <div className="provider-service-actions">
+      <div className="provider-service-card-footer">
         <button
           type="button"
-          className="provider-service-action"
-          onClick={() => onEdit(service, "title")}
+          className="provider-btn provider-btn--secondary provider-service-card-action-btn"
+          onClick={() => onEdit(service)}
         >
-          <EditActionIcon />
-          Edit title
+          <EditActionIcon className="provider-btn-icon" />
+          Edit
         </button>
         <button
           type="button"
-          className="provider-service-action"
-          onClick={() => onEdit(service, "description")}
+          className="provider-btn provider-btn--secondary provider-service-card-action-btn provider-service-card-action-btn--accent"
+          onClick={() => onManageAvailability(service)}
         >
-          <EditActionIcon />
-          Edit description
+          <ProviderRescheduleIcon className="provider-btn-icon" />
+          Hours
         </button>
-        <button
-          type="button"
-          className="provider-service-action"
-          onClick={() => onEdit(service, "price")}
+        <Link
+          to={`/book/${providerId}/${service.serviceId}`}
+          className="provider-btn provider-btn--secondary provider-service-card-action-btn provider-service-card-preview-btn"
         >
-          <ProviderPriceIcon />
-          Edit price
-        </button>
-        <button
-          type="button"
-          className="provider-service-action"
-          onClick={() => onEdit(service, "duration")}
-        >
-          <ProviderClockIcon />
-          Edit duration
-        </button>
-        <button
-          type="button"
-          className="provider-service-action provider-service-action--accent"
-          onClick={onManageAvailability}
-        >
-          <ProviderRescheduleIcon />
-          Availability
-        </button>
+          Preview
+          <ProviderExternalLinkIcon className="provider-btn-icon" />
+        </Link>
       </div>
-
-      <Link
-        to={`/book/${providerId}/${service.serviceId}`}
-        className="provider-service-link"
-      >
-        Preview listing
-        <ProviderExternalLinkIcon className="provider-service-link-icon" />
-      </Link>
     </li>
   );
 }

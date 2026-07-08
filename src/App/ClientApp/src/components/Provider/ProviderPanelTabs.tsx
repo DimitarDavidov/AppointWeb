@@ -1,15 +1,13 @@
+import type { CSSProperties } from "react";
 import {
   ProviderAppointmentsTabIcon,
   ProviderCancelledTabIcon,
   ProviderPastTabIcon,
   ProviderPendingTabIcon,
 } from "./ProviderIcons";
+import type { ProviderAppointmentTab } from "./ProviderPanelTabs.types";
 
-export type ProviderAppointmentTab =
-  | "appointments"
-  | "pending"
-  | "past"
-  | "cancelled";
+export type { ProviderAppointmentTab };
 
 interface ProviderPanelTabsProps {
   activeTab: ProviderAppointmentTab;
@@ -17,74 +15,79 @@ interface ProviderPanelTabsProps {
   onTabChange: (tab: ProviderAppointmentTab) => void;
 }
 
+const tabs = [
+  {
+    id: "appointments" as const,
+    label: "Upcoming",
+    icon: ProviderAppointmentsTabIcon,
+    badge: false,
+  },
+  {
+    id: "pending" as const,
+    label: "Pending",
+    icon: ProviderPendingTabIcon,
+    badge: true,
+  },
+  {
+    id: "past" as const,
+    label: "Past",
+    icon: ProviderPastTabIcon,
+    badge: false,
+  },
+  {
+    id: "cancelled" as const,
+    label: "Cancelled",
+    icon: ProviderCancelledTabIcon,
+    badge: false,
+  },
+];
+
 export function ProviderPanelTabs({
   activeTab,
   pendingCount,
   onTabChange,
 }: ProviderPanelTabsProps) {
+  const activeIndex = tabs.findIndex((tab) => tab.id === activeTab);
+
   return (
     <div
       className="provider-tabs"
       role="tablist"
       aria-label="Provider panel sections"
+      style={
+        {
+          "--tab-index": activeIndex,
+        } as CSSProperties
+      }
     >
-      <button
-        type="button"
-        role="tab"
-        id="provider-tab-appointments"
-        aria-selected={activeTab === "appointments"}
-        aria-controls="provider-panel-appointments"
-        aria-label="Upcoming appointments"
-        className={`provider-tab${activeTab === "appointments" ? " provider-tab--active" : ""}`}
-        onClick={() => onTabChange("appointments")}
-      >
-        <ProviderAppointmentsTabIcon className="provider-tab-icon" />
-        <span>Upcoming</span>
-      </button>
-      <button
-        type="button"
-        role="tab"
-        id="provider-tab-pending"
-        aria-selected={activeTab === "pending"}
-        aria-controls="provider-panel-pending"
-        aria-label="Pending appointments"
-        className={`provider-tab${activeTab === "pending" ? " provider-tab--active" : ""}`}
-        onClick={() => onTabChange("pending")}
-      >
-        <ProviderPendingTabIcon className="provider-tab-icon" />
-        <span>Pending</span>
-        {pendingCount > 0 && (
-          <span className="provider-tab-badge" aria-hidden="true">
-            {pendingCount}
-          </span>
-        )}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        id="provider-tab-past"
-        aria-selected={activeTab === "past"}
-        aria-controls="provider-panel-past"
-        aria-label="Past appointments"
-        className={`provider-tab${activeTab === "past" ? " provider-tab--active" : ""}`}
-        onClick={() => onTabChange("past")}
-      >
-        <ProviderPastTabIcon className="provider-tab-icon" />
-        <span>Past</span>
-      </button>
-      <button
-        type="button"
-        role="tab"
-        id="provider-tab-cancelled"
-        aria-selected={activeTab === "cancelled"}
-        aria-controls="provider-panel-cancelled"
-        aria-label="Cancelled appointments"
-        className={`provider-tab${activeTab === "cancelled" ? " provider-tab--active" : ""}`}
-        onClick={() => onTabChange("cancelled")}
-      >
-        <ProviderCancelledTabIcon className="provider-tab-icon" />
-        <span>Cancelled</span>
-      </button>
+      <span className="provider-tab-indicator" aria-hidden="true" />
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = activeTab === tab.id;
+        const showBadge = tab.badge && pendingCount > 0;
+
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={`provider-tab-${tab.id}`}
+            aria-selected={isActive}
+            aria-controls={`provider-panel-${tab.id}`}
+            aria-label={`${tab.label} appointments`}
+            className={`provider-tab${isActive ? " provider-tab--active" : ""}`}
+            onClick={() => onTabChange(tab.id)}
+          >
+            <Icon className="provider-tab-icon" />
+            <span>{tab.label}</span>
+            {showBadge && (
+              <span className="provider-tab-badge" aria-hidden="true">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

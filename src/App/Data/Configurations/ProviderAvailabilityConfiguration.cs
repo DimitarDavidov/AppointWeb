@@ -10,7 +10,9 @@ public class ProviderAvailabilityConfiguration : IEntityTypeConfiguration<Provid
     {
         builder.HasIndex(a => a.ProviderId);
 
-        builder.HasIndex(a => new { a.ProviderId, a.DayOfWeek });
+        builder.HasIndex(a => new { a.ServiceId, a.DayOfWeek });
+
+        builder.HasIndex(a => new { a.ProviderId, a.ServiceId });
 
         builder.Property(a => a.DayOfWeek).IsRequired();
 
@@ -29,6 +31,12 @@ public class ProviderAvailabilityConfiguration : IEntityTypeConfiguration<Provid
             .HasOne(a => a.Provider)
             .WithMany(u => u.ProviderAvailabilities)
             .HasForeignKey(a => a.ProviderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .HasOne(a => a.Service)
+            .WithMany(s => s.Availabilities)
+            .HasForeignKey(a => a.ServiceId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -169,9 +169,10 @@ public class AppointmentsController : ControllerBase
 
         var endUtc = startUtc.AddMinutes(service.DurationMinutes);
 
-        if (!await FitsProviderAvailabilityAsync(request.ProviderId, startUtc, endUtc, ct))
+        if (!await FitsProviderAvailabilityAsync(
+                request.ProviderId, request.ServiceId, startUtc, endUtc, ct))
         {
-            return BadRequest("The selected time is outside the provider's availability.");
+            return BadRequest("The selected time is outside this service's availability.");
         }
 
         var overlaps = await _db.Appointments.AsNoTracking().AnyAsync(a =>
@@ -422,8 +423,9 @@ public class AppointmentsController : ControllerBase
 
         var endUtc = startUtc.AddMinutes(appointment.Service.DurationMinutes);
 
-        if (!await FitsProviderAvailabilityAsync(appointment.ProviderId, startUtc, endUtc, ct))
-            return BadRequest("The selected time is outside the provider's availability.");
+        if (!await FitsProviderAvailabilityAsync(
+                appointment.ProviderId, appointment.ServiceId, startUtc, endUtc, ct))
+            return BadRequest("The selected time is outside this service's availability.");
 
         if (!await IsProposedSlotAvailableAsync(appointment, startUtc, endUtc, ct))
             return Conflict("This time slot is already booked.");
@@ -656,13 +658,16 @@ public class AppointmentsController : ControllerBase
 
     private async Task<bool> FitsProviderAvailabilityAsync(
         Guid providerId,
+        Guid serviceId,
         DateTime startUtc,
         DateTime endUtc,
         CancellationToken ct)
     {
         var hasAvailabilityRules = await _db.ProviderAvailabilities
             .AsNoTracking()
-            .AnyAsync(a => a.ProviderId == providerId, ct);
+            .AnyAsync(
+                a => a.ProviderId == providerId && a.ServiceId == serviceId,
+                ct);
 
         if (!hasAvailabilityRules)
             return true;
@@ -677,6 +682,7 @@ public class AppointmentsController : ControllerBase
 
         return await _db.ProviderAvailabilities.AsNoTracking().AnyAsync(a =>
             a.ProviderId == providerId &&
+            a.ServiceId == serviceId &&
             a.DayOfWeek == dayOfWeek &&
             a.StartTime <= startTime &&
             a.EndTime >= endTime, ct);

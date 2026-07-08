@@ -37,4 +37,6 @@ public class Service
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public ICollection<ProviderService> ProviderServices { get; set; } =
         new List<ProviderService>();
+    public ICollection<ProviderAvailability> Availabilities { get; set; } =
+        new List<ProviderAvailability>();
 }

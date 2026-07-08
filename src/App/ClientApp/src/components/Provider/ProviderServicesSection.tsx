@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
 import {
   createProviderService,
-  updateProviderAvailability,
   updateProviderService,
+  updateProviderServiceAvailability,
 } from "../../api/provider";
 import { getErrorMessage } from "../../api/errors";
 import { SpinnerIcon } from "../Account/AccountIcons";
 import EditProviderAvailabilityModal from "./EditProviderAvailabilityModal";
 import EditProviderServiceModal from "./EditProviderServiceModal";
+import { ProviderAddServiceCard } from "./ProviderAddServiceCard";
 import { ProviderEmptyServicesIcon } from "./ProviderIcons";
 import { ProviderServiceCard } from "./ProviderServiceCard";
-import type {
-  ProviderServiceDetail,
-  ProviderServiceEditFocus,
-} from "../../types/provider";
+import type { ProviderServiceDetail } from "../../types/provider";
 
 interface ProviderServicesSectionProps {
   providerId: string | null;
@@ -34,10 +32,10 @@ export function ProviderServicesSection({
   const [createServiceOpen, setCreateServiceOpen] = useState(false);
   const [editingService, setEditingService] =
     useState<ProviderServiceDetail | null>(null);
-  const [editFocus, setEditFocus] = useState<ProviderServiceEditFocus>("title");
   const [editError, setEditError] = useState("");
   const [isSavingService, setIsSavingService] = useState(false);
-  const [availabilityOpen, setAvailabilityOpen] = useState(false);
+  const [availabilityService, setAvailabilityService] =
+    useState<ProviderServiceDetail | null>(null);
   const [availabilityError, setAvailabilityError] = useState("");
   const [isSavingAvailability, setIsSavingAvailability] = useState(false);
 
@@ -60,13 +58,9 @@ export function ProviderServicesSection({
     setEditError("");
   }
 
-  function openServiceEditor(
-    service: ProviderServiceDetail,
-    focus: ProviderServiceEditFocus
-  ) {
+  function openServiceEditor(service: ProviderServiceDetail) {
     setCreateServiceOpen(false);
     setEditError("");
-    setEditFocus(focus);
     setEditingService(service);
   }
 
@@ -113,27 +107,32 @@ export function ProviderServicesSection({
     }
   }
 
-  function openAvailabilityEditor() {
+  function openAvailabilityEditor(service: ProviderServiceDetail) {
     setAvailabilityError("");
-    setAvailabilityOpen(true);
+    setAvailabilityService(service);
   }
 
   function closeAvailabilityEditor() {
     if (isSavingAvailability) return;
-    setAvailabilityOpen(false);
+    setAvailabilityService(null);
     setAvailabilityError("");
   }
 
   async function handleSaveAvailability(
-    slots: Parameters<typeof updateProviderAvailability>[0]
+    slots: Parameters<typeof updateProviderServiceAvailability>[1]
   ) {
+    if (!availabilityService) return;
+
     setIsSavingAvailability(true);
     setAvailabilityError("");
 
     try {
-      await updateProviderAvailability(slots);
-      setAvailabilityOpen(false);
-      setMessage("Availability updated successfully.");
+      await updateProviderServiceAvailability(
+        availabilityService.serviceId,
+        slots
+      );
+      setAvailabilityService(null);
+      setMessage(`Booking hours updated for ${availabilityService.serviceName}.`);
     } catch (err) {
       setAvailabilityError(
         getErrorMessage(err, "Could not save availability.")
@@ -142,6 +141,9 @@ export function ProviderServicesSection({
       setIsSavingAvailability(false);
     }
   }
+
+  const serviceCountLabel =
+    services.length === 1 ? "1 listing" : `${services.length} listings`;
 
   return (
     <section
@@ -154,7 +156,6 @@ export function ProviderServicesSection({
         open={createServiceOpen || editingService !== null}
         mode={createServiceOpen ? "create" : "edit"}
         service={editingService}
-        focusField={editFocus}
         isSaving={isSavingService}
         error={editError}
         onCreate={handleCreateService}
@@ -163,28 +164,34 @@ export function ProviderServicesSection({
       />
 
       <EditProviderAvailabilityModal
-        open={availabilityOpen}
+        open={availabilityService !== null}
+        serviceId={availabilityService?.serviceId ?? null}
+        serviceName={availabilityService?.serviceName ?? "this service"}
         isSaving={isSavingAvailability}
         error={availabilityError}
         onSave={handleSaveAvailability}
         onClose={closeAvailabilityEditor}
       />
 
-      <div className="provider-services-toolbar">
-        <div className="provider-tab-panel-intro provider-services-intro">
-          <p>
-            Update how each service appears in your catalog, adjust pricing and
-            duration, and manage the hours customers can book you.
+      <header className="provider-services-header">
+        <div className="provider-services-header-text">
+          <h2 className="provider-services-title">Your services</h2>
+          <p className="provider-services-subtitle">
+            {services.length > 0
+              ? `${serviceCountLabel} in your catalog. Each service can have its own booking hours.`
+              : "Add services so customers can find and book you."}
           </p>
         </div>
-        <button
-          type="button"
-          className="provider-btn provider-btn--primary provider-services-add-btn"
-          onClick={openCreateService}
-        >
-          Add service
-        </button>
-      </div>
+        <div className="provider-services-header-actions">
+          <button
+            type="button"
+            className="provider-btn provider-btn--primary provider-services-add-btn"
+            onClick={openCreateService}
+          >
+            + Add service
+          </button>
+        </div>
+      </header>
 
       {message && (
         <p className="provider-toast" role="status">
@@ -217,7 +224,7 @@ export function ProviderServicesSection({
             className="provider-btn provider-btn--primary"
             onClick={openCreateService}
           >
-            Add service
+            Add your first service
           </button>
         </div>
       )}
@@ -234,6 +241,10 @@ export function ProviderServicesSection({
               onManageAvailability={openAvailabilityEditor}
             />
           ))}
+          <ProviderAddServiceCard
+            onAdd={openCreateService}
+            index={services.length}
+          />
         </ul>
       )}
     </section>

@@ -36,18 +36,21 @@ export async function updateProviderService(
   return response.data;
 }
 
-export async function getProviderAvailability(): Promise<ProviderAvailabilitySlot[]> {
+export async function getProviderServiceAvailability(
+  serviceId: string
+): Promise<ProviderAvailabilitySlot[]> {
   const response = await api.get<ProviderAvailabilitySlot[]>(
-    "/api/provider/availability"
+    `/api/provider/services/${serviceId}/availability`
   );
   return response.data;
 }
 
-export async function updateProviderAvailability(
+export async function updateProviderServiceAvailability(
+  serviceId: string,
   slots: ProviderAvailabilitySlotInput[]
 ): Promise<ProviderAvailabilitySlot[]> {
   const response = await api.put<ProviderAvailabilitySlot[]>(
-    "/api/provider/availability",
+    `/api/provider/services/${serviceId}/availability`,
     { slots }
   );
   return response.data;

@@ -33,10 +33,3 @@ export interface ProviderAvailabilitySlotInput {
   startTime: string;
   endTime: string;
 }
-
-export type ProviderServiceEditFocus =
-  | "title"
-  | "description"
-  | "price"
-  | "duration"
-  | "category";

@@ -1,4 +1,5 @@
 import type { ProviderStats } from "../../utils/providerPanelUtils";
+import { AnimatedStatValue } from "./AnimatedStatValue";
 import {
   ProviderStatBookedIcon,
   ProviderStatServicesIcon,
@@ -87,7 +88,7 @@ export function ProviderStatsGrid({
               </span>
               <div className="provider-stat-card-body">
                 <span className="provider-stat-card-value">
-                  {values[card.key]}
+                  <AnimatedStatValue value={values[card.key]} />
                 </span>
                 <span className="provider-stat-card-label">{card.label}</span>
                 <span className="provider-stat-card-hint">{card.hint}</span>
@@ -107,7 +108,7 @@ export function ProviderStatsGrid({
             </span>
             <div className="provider-stat-card-body">
               <span className="provider-stat-card-value">
-                {values[card.key]}
+                <AnimatedStatValue value={values[card.key]} />
               </span>
               <span className="provider-stat-card-label">{card.label}</span>
               <span className="provider-stat-card-hint">{card.hint}</span>

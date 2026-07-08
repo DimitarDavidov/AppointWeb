@@ -195,16 +195,20 @@ public class ProviderController : ControllerBase
         });
     }
 
-    [HttpGet("availability")]
-    public async Task<ActionResult<IEnumerable<ProviderAvailabilityResponse>>> GetAvailability(
+    [HttpGet("services/{serviceId:guid}/availability")]
+    public async Task<ActionResult<IEnumerable<ProviderAvailabilityResponse>>> GetServiceAvailability(
+        Guid serviceId,
         CancellationToken cancellationToken)
     {
         if (!User.TryGetUserId(out var providerId))
             return Unauthorized("Invalid token: missing user id.");
 
+        if (!await OwnsActiveServiceAsync(providerId, serviceId, cancellationToken))
+            return NotFound("Service not found.");
+
         var slots = await _db.ProviderAvailabilities
             .AsNoTracking()
-            .Where(a => a.ProviderId == providerId)
+            .Where(a => a.ProviderId == providerId && a.ServiceId == serviceId)
             .OrderBy(a => a.DayOfWeek)
             .ThenBy(a => a.StartTime)
             .Select(a => new ProviderAvailabilityResponse
@@ -219,13 +223,17 @@ public class ProviderController : ControllerBase
         return Ok(slots);
     }
 
-    [HttpPut("availability")]
-    public async Task<ActionResult<IEnumerable<ProviderAvailabilityResponse>>> UpdateAvailability(
+    [HttpPut("services/{serviceId:guid}/availability")]
+    public async Task<ActionResult<IEnumerable<ProviderAvailabilityResponse>>> UpdateServiceAvailability(
+        Guid serviceId,
         UpdateProviderAvailabilityRequest request,
         CancellationToken cancellationToken)
     {
         if (!User.TryGetUserId(out var providerId))
             return Unauthorized("Invalid token: missing user id.");
+
+        if (!await OwnsActiveServiceAsync(providerId, serviceId, cancellationToken))
+            return NotFound("Service not found.");
 
         var parsedSlots = new List<(int DayOfWeek, TimeOnly Start, TimeOnly End)>();
 
@@ -244,7 +252,7 @@ public class ProviderController : ControllerBase
         }
 
         var existing = await _db.ProviderAvailabilities
-            .Where(a => a.ProviderId == providerId)
+            .Where(a => a.ProviderId == providerId && a.ServiceId == serviceId)
             .ToListAsync(cancellationToken);
 
         _db.ProviderAvailabilities.RemoveRange(existing);
@@ -254,6 +262,7 @@ public class ProviderController : ControllerBase
             _db.ProviderAvailabilities.Add(new ProviderAvailability
             {
                 ProviderId = providerId,
+                ServiceId = serviceId,
                 DayOfWeek = slot.DayOfWeek,
                 StartTime = slot.Start,
                 EndTime = slot.End,
@@ -264,7 +273,7 @@ public class ProviderController : ControllerBase
 
         var updated = await _db.ProviderAvailabilities
             .AsNoTracking()
-            .Where(a => a.ProviderId == providerId)
+            .Where(a => a.ProviderId == providerId && a.ServiceId == serviceId)
             .OrderBy(a => a.DayOfWeek)
             .ThenBy(a => a.StartTime)
             .Select(a => new ProviderAvailabilityResponse
@@ -278,4 +287,16 @@ public class ProviderController : ControllerBase
 
         return Ok(updated);
     }
+
+    private Task<bool> OwnsActiveServiceAsync(
+        Guid providerId,
+        Guid serviceId,
+        CancellationToken cancellationToken) =>
+        _db.ProviderServices.AsNoTracking().AnyAsync(
+            ps =>
+                ps.ProviderId == providerId &&
+                ps.ServiceId == serviceId &&
+                ps.IsActive &&
+                ps.Service.IsActive,
+            cancellationToken);
 }

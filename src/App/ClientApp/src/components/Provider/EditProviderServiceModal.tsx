@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { SERVICE_CATEGORIES, isServiceCategory } from "../../constants/serviceCategories";
 import type {
   ProviderServiceDetail,
-  ProviderServiceEditFocus,
   UpdateProviderServiceRequest,
 } from "../../types/provider";
 
@@ -10,7 +9,6 @@ export interface EditProviderServiceModalProps {
   open: boolean;
   mode: "create" | "edit";
   service: ProviderServiceDetail | null;
-  focusField?: ProviderServiceEditFocus;
   isSaving: boolean;
   error: string;
   onSave: (serviceId: string, data: UpdateProviderServiceRequest) => void;
@@ -18,19 +16,10 @@ export interface EditProviderServiceModalProps {
   onClose: () => void;
 }
 
-const focusLabels: Record<ProviderServiceEditFocus, string> = {
-  title: "Edit service title",
-  description: "Edit description",
-  price: "Edit price",
-  duration: "Edit duration",
-  category: "Edit category",
-};
-
 function EditProviderServiceModal({
   open,
   mode,
   service,
-  focusField = "title",
   isSaving,
   error,
   onSave,
@@ -47,12 +36,6 @@ function EditProviderServiceModal({
   const [validationError, setValidationError] = useState("");
 
   const nameRef = useRef<HTMLInputElement>(null);
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
-  const categoryRef = useRef<HTMLSelectElement>(null);
-  const countryRef = useRef<HTMLInputElement>(null);
-  const cityRef = useRef<HTMLInputElement>(null);
-  const durationRef = useRef<HTMLInputElement>(null);
-  const priceRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -84,31 +67,11 @@ function EditProviderServiceModal({
   }, [open, mode, service]);
 
   useEffect(() => {
-    if (!open || mode !== "create") return;
+    if (!open) return;
 
-    nameRef.current?.focus();
-  }, [open, mode]);
-
-  useEffect(() => {
-    if (!open || mode === "create") return;
-    if (!service) return;
-
-    const focusMap = {
-      title: nameRef,
-      description: descriptionRef,
-      category: categoryRef,
-      duration: durationRef,
-      price: priceRef,
-    } as const;
-
-    const target = focusMap[focusField]?.current;
-    if (!target) return;
-
-    target.focus();
-    if ("select" in target && typeof target.select === "function") {
-      target.select();
-    }
-  }, [open, mode, service, focusField]);
+    const timer = window.setTimeout(() => nameRef.current?.focus(), 0);
+    return () => window.clearTimeout(timer);
+  }, [open, mode, service]);
 
   useEffect(() => {
     if (!open) return;
@@ -214,15 +177,15 @@ function EditProviderServiceModal({
       >
         <header className="provider-modal-header">
           <h2 id="edit-provider-service-title" className="provider-modal-title">
-            {isCreate ? "Add new service" : focusLabels[focusField]}
+            {isCreate ? "Add new service" : "Edit service"}
           </h2>
           <p className="provider-modal-subtitle">
             {isCreate ? (
               "Create a service listing that customers can browse and book."
             ) : (
               <>
-                Update how <strong>{service?.serviceName}</strong> appears in your
-                catalog.
+                Update all details for <strong>{service?.serviceName}</strong> in
+                one place.
               </>
             )}
           </p>
@@ -247,7 +210,6 @@ function EditProviderServiceModal({
           <div className="provider-modal-field">
             <label htmlFor="provider-service-category">Category</label>
             <select
-              ref={categoryRef}
               id="provider-service-category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -269,7 +231,6 @@ function EditProviderServiceModal({
             <div className="provider-modal-field">
               <label htmlFor="provider-service-country">Country</label>
               <input
-                ref={countryRef}
                 id="provider-service-country"
                 type="text"
                 value={country}
@@ -283,7 +244,6 @@ function EditProviderServiceModal({
             <div className="provider-modal-field">
               <label htmlFor="provider-service-city">City</label>
               <input
-                ref={cityRef}
                 id="provider-service-city"
                 type="text"
                 value={city}
@@ -298,7 +258,6 @@ function EditProviderServiceModal({
           <div className="provider-modal-field">
             <label htmlFor="provider-service-description">Description</label>
             <textarea
-              ref={descriptionRef}
               id="provider-service-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -313,7 +272,6 @@ function EditProviderServiceModal({
             <div className="provider-modal-field">
               <label htmlFor="provider-service-duration">Duration (minutes)</label>
               <input
-                ref={durationRef}
                 id="provider-service-duration"
                 type="number"
                 min={1}
@@ -328,7 +286,6 @@ function EditProviderServiceModal({
             <div className="provider-modal-field">
               <label htmlFor="provider-service-price">Price</label>
               <input
-                ref={priceRef}
                 id="provider-service-price"
                 type="number"
                 min={0}

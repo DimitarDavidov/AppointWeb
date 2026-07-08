@@ -198,7 +198,11 @@ export function ProviderUpcomingAppointmentItem({
 
   return (
     <li
-      className={`provider-appointment-item${showRescheduleForm ? " provider-appointment-item--expanded" : ""}`}
+      className={`provider-appointment-item${
+        isPending
+          ? " provider-appointment-item--status-pending"
+          : " provider-appointment-item--status-confirmed"
+      }${showRescheduleForm ? " provider-appointment-item--expanded" : ""}`}
       style={{ animationDelay: `${0.08 + index * 0.07}s` }}
     >
       <CancelAppointmentDialog
