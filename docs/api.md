@@ -408,6 +408,11 @@ Authorization: Bearer <accessToken>
 
 **Success response — `200 OK`** — Returns the updated appointment with status `Booked`.
 
+**Business rules**
+
+- Only appointments in **`Pending`** status can be confirmed
+- The **customer** receives a confirmation email with the service name, provider name, and appointment time
+
 **Error responses**
 
 | Status | Condition |
@@ -500,6 +505,12 @@ Authorization: Bearer <accessToken>
 ```
 
 **Success response — `200 OK`** — Returns the updated appointment with status `Booked` and the new time applied.
+
+**Business rules**
+
+- Clears pending reschedule fields and sets status to **`Booked`**
+- If the appointment had a confirmed time before the request, updates `previousStartTime` and the appropriate reschedule count
+- The **requester** (the user who proposed the reschedule) receives an acceptance email with the previous and new times
 
 **Error responses**
 

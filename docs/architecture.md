@@ -79,7 +79,7 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 5. Frontend sends `POST /api/appointments` with provider, service, and start time
 6. Backend validates **service-specific** availability, prevents double-booking, and rejects self-booking
 7. Appointment is created with status **Pending**; the provider receives a request email
-8. Provider confirms via `PATCH /api/appointments/{id}/confirm` → status becomes **Booked**
+8. Provider confirms via `PATCH /api/appointments/{id}/confirm` → status becomes **Booked**; the customer receives a confirmation email
 9. Customer can view and manage the appointment at `/appointments`
 
 ## Request flow (example: reschedule)
@@ -88,8 +88,9 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 2. Backend stores the proposed time in `pendingRescheduleStartTime` / `pendingRescheduleEndTime` and sets status to **Pending**
 3. The other party receives an email notification
 4. The other party accepts via `PATCH /api/appointments/{id}/reschedule/accept`
-5. If the appointment had a **confirmed** time before the request, reschedule counts and `previousStartTime` are updated; otherwise the change is treated as an initial time adjustment (not counted as a reschedule)
-6. Status returns to **Booked** with the new time
+5. The party who requested the reschedule receives an acceptance email
+6. If the appointment had a **confirmed** time before the request, reschedule counts and `previousStartTime` are updated; otherwise the change is treated as an initial time adjustment (not counted as a reschedule)
+7. Status returns to **Booked** with the new time
 
 ## Request flow (example: provider panel)
 
@@ -125,6 +126,7 @@ Customer books → Pending
 Reschedule request (from Pending or Booked):
   → status Pending with proposed new time
   → other party accepts → Booked (with new time)
+  → requester receives acceptance email
   → reschedule counts updated only if there was a confirmed time before
 ```
 
@@ -174,4 +176,4 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 - New bookings start as **Pending** until the provider confirms them
 - **Availability is per service** — each listing can have its own weekly hours; if none are set, any time is allowed
 - Reschedule requests require acceptance by the other party; only changes from a previously confirmed slot count toward reschedule history
-- Email notifications are sent for booking requests, cancellations, and reschedule proposals (SMTP in production, console logging when `Email:Host` is empty)
+- Email notifications are sent for booking requests, appointment confirmations, cancellations, reschedule proposals, and accepted reschedules (SMTP in production, console logging when `Email:Host` is empty)

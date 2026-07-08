@@ -148,10 +148,21 @@ Forgot password form → POST /api/auth/forgot-password
 
 | Mode | When | Behaviour |
 |------|------|-----------|
-| `LoggingEmailService` | `Email:Host` is empty | Reset link logged to console |
+| `LoggingEmailService` | `Email:Host` is empty | Email content logged to the console |
 | `SmtpEmailService` | SMTP configured | HTML + plain-text email via MailKit |
 
-Reset emails include a branded HTML template and link to `{Frontend:BaseUrl}/reset-password?token=...`.
+All emails use branded HTML templates. Links use `{Frontend:BaseUrl}` (for example `http://localhost:5173`).
+
+| Trigger | Recipient | Purpose |
+|---------|-----------|---------|
+| `POST /api/auth/forgot-password` | User | Password reset link |
+| `POST /api/appointments` | Provider | New booking request to review |
+| `PATCH /api/appointments/{id}/confirm` | Customer | Appointment confirmed |
+| `PATCH /api/appointments/{id}/cancel` | Other party | Appointment cancelled |
+| `PATCH /api/appointments/{id}/reschedule` | Other party | Reschedule proposal to review |
+| `PATCH /api/appointments/{id}/reschedule/accept` | Requester | Reschedule accepted |
+
+Email send failures on appointment actions are logged but do not roll back the API operation (except password reset, where a failed send removes the token).
 
 ## Protected vs public endpoints
 
@@ -193,7 +204,7 @@ JWT settings in `appsettings.Development.json`:
 | `Audience` | Who the token is intended for |
 | `ExpiresMinutes` | Token lifetime |
 
-Email and frontend settings for password reset:
+Email and frontend settings for transactional emails (password reset, appointment notifications):
 
 ```json
 {

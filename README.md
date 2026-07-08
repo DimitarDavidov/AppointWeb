@@ -130,17 +130,17 @@ Create `src/App/appsettings.Development.json`:
 
 You can copy from `src/App/appsettings.Development.example.json`. The `Jwt:Key` must be long enough for HMAC-SHA256 signing (32+ characters recommended).
 
-**Email (password reset)**
+**Email (password reset and appointment notifications)**
 
 | Setting | Purpose |
 |---------|---------|
-| `Email:Host` | SMTP server (leave empty to log reset links instead of sending email) |
+| `Email:Host` | SMTP server (leave empty to log email content to the console instead of sending) |
 | `Email:Port` | SMTP port (587 for Gmail) |
 | `Email:Username` / `Password` | SMTP credentials |
-| `Email:FromAddress` / `FromName` | Sender shown in reset emails |
-| `Frontend:BaseUrl` | Frontend URL used in reset links (e.g. `http://localhost:5173`) |
+| `Email:FromAddress` / `FromName` | Sender shown in emails |
+| `Frontend:BaseUrl` | Frontend URL used in email links (e.g. `http://localhost:5173`) |
 
-Without `Email:Host`, the API uses `LoggingEmailService` and prints reset links to the console — useful for local development.
+Without `Email:Host`, the API uses `LoggingEmailService` and prints email details to the console — useful for local development. See [Authentication → Email delivery](docs/authentication.md#email-delivery) for the full list of notification triggers.
 
 Migrations run automatically when the API starts.
 
