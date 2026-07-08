@@ -21,6 +21,26 @@ export function formatDuration(minutes: number): string {
   return remainder > 0 ? `${hours}h ${remainder}m` : `${hours}h`;
 }
 
-export function formatServiceLocation(city: string, country: string): string {
-  return `${city}, ${country}`;
+export function formatServiceLocation(
+  city: string,
+  country: string,
+  isRemote = false
+): string {
+  if (isRemote) {
+    return "Remote";
+  }
+
+  if (city && country) {
+    return `${city}, ${country}`;
+  }
+
+  if (city) {
+    return city;
+  }
+
+  if (country) {
+    return country;
+  }
+
+  return "Location not set";
 }

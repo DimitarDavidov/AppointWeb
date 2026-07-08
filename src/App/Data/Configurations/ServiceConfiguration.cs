@@ -28,6 +28,10 @@ public class ServiceConfiguration : IEntityTypeConfiguration<Service>
                .IsRequired()
                .HasMaxLength(100);
 
+        builder.Property(s => s.IsRemote)
+               .IsRequired()
+               .HasDefaultValue(false);
+
         builder.Property(s => s.DurationMinutes)
                .IsRequired();
     }

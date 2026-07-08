@@ -16,13 +16,13 @@ public class Service
     [MaxLength(100)]
     public string? Category { get; set; }
 
-    [Required]
     [MaxLength(100)]
     public string Country { get; set; } = string.Empty;
 
-    [Required]
     [MaxLength(100)]
     public string City { get; set; } = string.Empty;
+
+    public bool IsRemote { get; set; }
 
     [Range(1, 1440)]
     public int DurationMinutes { get; set; }

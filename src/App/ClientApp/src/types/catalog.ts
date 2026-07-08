@@ -7,6 +7,7 @@ export interface CatalogOffering {
   category: string | null;
   country: string;
   city: string;
+  isRemote: boolean;
   durationMinutes: number;
   price: number;
 }

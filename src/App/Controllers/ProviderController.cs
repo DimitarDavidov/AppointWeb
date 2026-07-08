@@ -3,6 +3,7 @@ using AppointWeb.Api.Dtos.Appointments;
 using AppointWeb.Api.Dtos.Provider;
 using AppointWeb.Api.Extensions;
 using AppointWeb.Api.Models;
+using AppointWeb.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -60,6 +61,7 @@ public class ProviderController : ControllerBase
                 Category = ps.Service.Category,
                 Country = ps.Service.Country,
                 City = ps.Service.City,
+                IsRemote = ps.Service.IsRemote,
                 DurationMinutes = ps.Service.DurationMinutes,
                 Price = ps.Service.Price,
             })
@@ -83,6 +85,10 @@ public class ProviderController : ControllerBase
         }
 
         var normalizedCategory = request.Category.Trim();
+        var (city, country, locationError) = ServiceLocationNormalizer.Normalize(request);
+
+        if (locationError is not null)
+            return BadRequest(locationError);
 
         var service = new Service
         {
@@ -91,8 +97,9 @@ public class ProviderController : ControllerBase
                 ? null
                 : request.Description.Trim(),
             Category = normalizedCategory,
-            Country = request.Country.Trim(),
-            City = request.City.Trim(),
+            Country = country,
+            City = city,
+            IsRemote = request.IsRemote,
             DurationMinutes = request.DurationMinutes,
             Price = request.Price,
         };
@@ -116,6 +123,7 @@ public class ProviderController : ControllerBase
             Category = service.Category,
             Country = service.Country,
             City = service.City,
+            IsRemote = service.IsRemote,
             DurationMinutes = service.DurationMinutes,
             Price = service.Price,
         });
@@ -146,13 +154,19 @@ public class ProviderController : ControllerBase
         }
 
         var service = link.Service;
+        var (city, country, locationError) = ServiceLocationNormalizer.Normalize(request);
+
+        if (locationError is not null)
+            return BadRequest(locationError);
+
         service.Name = request.Name.Trim();
         service.Description = string.IsNullOrWhiteSpace(request.Description)
             ? null
             : request.Description.Trim();
         service.Category = request.Category.Trim();
-        service.Country = request.Country.Trim();
-        service.City = request.City.Trim();
+        service.Country = country;
+        service.City = city;
+        service.IsRemote = request.IsRemote;
         service.DurationMinutes = request.DurationMinutes;
         service.Price = request.Price;
 
@@ -166,6 +180,7 @@ public class ProviderController : ControllerBase
             Category = service.Category,
             Country = service.Country,
             City = service.City,
+            IsRemote = service.IsRemote,
             DurationMinutes = service.DurationMinutes,
             Price = service.Price,
         });

@@ -29,6 +29,7 @@ function EditProviderServiceModal({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [isRemote, setIsRemote] = useState(false);
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("");
@@ -44,6 +45,7 @@ function EditProviderServiceModal({
       setName("");
       setDescription("");
       setCategory("");
+      setIsRemote(false);
       setCountry("");
       setCity("");
       setDurationMinutes("30");
@@ -59,6 +61,7 @@ function EditProviderServiceModal({
     setCategory(
       service.category && isServiceCategory(service.category) ? service.category : ""
     );
+    setIsRemote(service.isRemote);
     setCountry(service.country);
     setCity(service.city);
     setDurationMinutes(String(service.durationMinutes));
@@ -98,6 +101,15 @@ function EditProviderServiceModal({
   const isCreate = mode === "create";
   const serviceId = service?.serviceId ?? "";
 
+  function handleRemoteChange(checked: boolean) {
+    setIsRemote(checked);
+
+    if (checked) {
+      setCountry("");
+      setCity("");
+    }
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
@@ -118,14 +130,16 @@ function EditProviderServiceModal({
     const trimmedCountry = country.trim();
     const trimmedCity = city.trim();
 
-    if (!trimmedCountry) {
-      setValidationError("Country is required.");
-      return;
-    }
+    if (!isRemote) {
+      if (!trimmedCountry) {
+        setValidationError("Country is required for in-person services.");
+        return;
+      }
 
-    if (!trimmedCity) {
-      setValidationError("City is required.");
-      return;
+      if (!trimmedCity) {
+        setValidationError("City is required for in-person services.");
+        return;
+      }
     }
 
     if (!Number.isFinite(parsedDuration) || parsedDuration < 1) {
@@ -143,8 +157,9 @@ function EditProviderServiceModal({
       name: trimmedName,
       description: description.trim() || null,
       category,
-      country: trimmedCountry,
-      city: trimmedCity,
+      isRemote,
+      country: isRemote ? "" : trimmedCountry,
+      city: isRemote ? "" : trimmedCity,
       durationMinutes: parsedDuration,
       price: parsedPrice,
     };
@@ -227,33 +242,53 @@ function EditProviderServiceModal({
             </select>
           </div>
 
-          <div className="provider-modal-field-row">
-            <div className="provider-modal-field">
-              <label htmlFor="provider-service-country">Country</label>
+          <div className="provider-modal-field">
+            <label className="provider-modal-checkbox" htmlFor="provider-service-remote">
               <input
-                id="provider-service-country"
-                type="text"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                id="provider-service-remote"
+                type="checkbox"
+                checked={isRemote}
+                onChange={(e) => handleRemoteChange(e.target.checked)}
                 disabled={isSaving}
-                required
-                maxLength={100}
               />
-            </div>
-
-            <div className="provider-modal-field">
-              <label htmlFor="provider-service-city">City</label>
-              <input
-                id="provider-service-city"
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                disabled={isSaving}
-                required
-                maxLength={100}
-              />
-            </div>
+              <span>This service is offered remotely</span>
+            </label>
+            <p className="provider-modal-field-hint">
+              {isRemote
+                ? "Customers will see this service as remote. City and country are not required."
+                : "Uncheck to require a city and country for in-person services."}
+            </p>
           </div>
+
+          {!isRemote && (
+            <div className="provider-modal-field-row">
+              <div className="provider-modal-field">
+                <label htmlFor="provider-service-country">Country</label>
+                <input
+                  id="provider-service-country"
+                  type="text"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  disabled={isSaving}
+                  required
+                  maxLength={100}
+                />
+              </div>
+
+              <div className="provider-modal-field">
+                <label htmlFor="provider-service-city">City</label>
+                <input
+                  id="provider-service-city"
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  disabled={isSaving}
+                  required
+                  maxLength={100}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="provider-modal-field">
             <label htmlFor="provider-service-description">Description</label>

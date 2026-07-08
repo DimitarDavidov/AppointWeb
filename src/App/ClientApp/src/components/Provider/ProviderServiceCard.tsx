@@ -56,7 +56,7 @@ export function ProviderServiceCard({
 
       <div className="provider-service-meta">
         <span className="provider-service-meta-item">
-          {formatServiceLocation(service.city, service.country)}
+          {formatServiceLocation(service.city, service.country, service.isRemote)}
         </span>
         <span className="provider-service-meta-item">
           <ProviderClockIcon />

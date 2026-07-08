@@ -172,7 +172,7 @@ function Home() {
                 <input
                   id="catalog-location-search"
                   type="search"
-                  placeholder="City or country..."
+                  placeholder="City, country, or remote..."
                   autoComplete="off"
                   value={locationSearchQuery}
                   onChange={(event) => setLocationSearchQuery(event.target.value)}
@@ -233,7 +233,11 @@ function Home() {
                       {capitalizeFirstLetter(offering.providerUsername)}
                     </p>
                     <p className="catalog-card-location">
-                      {formatServiceLocation(offering.city, offering.country)}
+                      {formatServiceLocation(
+                        offering.city,
+                        offering.country,
+                        offering.isRemote
+                      )}
                     </p>
                     <h3 className="catalog-card-name">{offering.serviceName}</h3>
                     {offering.description && (

@@ -103,6 +103,7 @@ public class CatalogController : ControllerBase
                 Category = ps.Service.Category,
                 Country = ps.Service.Country,
                 City = ps.Service.City,
+                IsRemote = ps.Service.IsRemote,
                 DurationMinutes = ps.Service.DurationMinutes,
                 Price = ps.Service.Price
             });

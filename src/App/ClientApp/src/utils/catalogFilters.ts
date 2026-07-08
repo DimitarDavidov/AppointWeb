@@ -24,7 +24,13 @@ export function matchesLocationSearch(
   offering: CatalogOffering,
   query: string
 ): boolean {
-  const haystack = [offering.city, offering.country].filter(Boolean).join(" ");
+  const haystack = [
+    offering.isRemote ? "remote online virtual" : "",
+    offering.city,
+    offering.country,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return includesQuery(haystack, query);
 }

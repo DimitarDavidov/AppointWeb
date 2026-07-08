@@ -173,7 +173,7 @@ function ServiceDetail() {
         </p>
 
         <p className="service-detail-location">
-          {formatServiceLocation(offering.city, offering.country)}
+          {formatServiceLocation(offering.city, offering.country, offering.isRemote)}
         </p>
 
         {offering.description ? (
@@ -191,7 +191,7 @@ function ServiceDetail() {
           </div>
           <div className="service-detail-meta-item">
             <dt>Location</dt>
-            <dd>{formatServiceLocation(offering.city, offering.country)}</dd>
+            <dd>{formatServiceLocation(offering.city, offering.country, offering.isRemote)}</dd>
           </div>
           <div className="service-detail-meta-item">
             <dt>Duration</dt>
