@@ -1,4 +1,5 @@
 using AppointWeb.Api.Data;
+using AppointWeb.Api.Data.Seeding;
 using AppointWeb.Api.Options;
 using AppointWeb.Api.Services;
 using AppointWeb.Api.Services.Interfaces;
@@ -119,6 +120,14 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.ApplyMigrations();
+
+if (args.Contains("seed"))
+{
+    using var seedScope = app.Services.CreateScope();
+    var seedDb = seedScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DatabaseSeeder.SeedAsync(seedDb);
+    return;
+}
 
 app.UseRouting();
 app.UseCors("AllowFrontend");
