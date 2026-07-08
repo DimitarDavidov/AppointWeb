@@ -217,6 +217,8 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 | `GET` | `/api/provider/appointments` | Provider, Admin | List provider-scoped appointments |
 | `GET` | `/api/account` | Yes | Get current user profile |
 | `GET` | `/api/provider/services` | Provider | List the provider's services |
+| `GET` | `/api/provider/services/{serviceId}/availability` | Provider | Get booking hours for a service |
+| `PUT` | `/api/provider/services/{serviceId}/availability` | Provider | Set booking hours for a service |
 | `GET` | `/api/admin/users` | Admin | List all users |
 
 ## Troubleshooting

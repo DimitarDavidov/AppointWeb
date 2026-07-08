@@ -392,7 +392,7 @@ Authorization: Bearer <accessToken>
 - The provider receives an email notification when a booking is requested
 - `endTime` is calculated automatically from the service duration
 - Only active services (`IsActive = true`) linked via `ProviderServices` can be booked
-- Booking must fall within the provider's availability windows (if configured)
+- Booking must fall within the **service's** availability windows (if configured for that service)
 - Overlapping `Booked` or `Pending` appointments for the same provider are blocked by application logic and a PostgreSQL exclusion constraint
 
 ---
@@ -485,7 +485,7 @@ Authorization: Bearer <accessToken>
 |--------|-----------|
 | `404 Not Found` | Appointment not found |
 | `403 Forbidden` | User does not have access |
-| `400 Bad Request` | Invalid time, inactive service, outside availability, or missing reason (provider) |
+| `400 Bad Request` | Invalid time, inactive service, outside **service** availability, or missing reason (provider) |
 | `409 Conflict` | New time slot already booked |
 
 ---
@@ -663,10 +663,12 @@ Authorization: Bearer <accessToken>
 
 ---
 
-### Get availability
+### Get service availability
+
+Returns weekly booking windows for a specific service owned by the authenticated provider.
 
 ```
-GET /api/provider/availability
+GET /api/provider/services/{serviceId}/availability
 Authorization: Bearer <accessToken>
 ```
 
@@ -683,14 +685,26 @@ Authorization: Bearer <accessToken>
 ]
 ```
 
+| Field | Type | Notes |
+|-------|------|-------|
+| `dayOfWeek` | integer | 0 = Sunday through 6 = Saturday |
+| `startTime` | string | Local time (`HH:mm`) |
+| `endTime` | string | Local time (`HH:mm`), must be after `startTime` |
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `404 Not Found` | Service not found or not owned by the provider |
+
 ---
 
-### Update availability
+### Update service availability
 
-Replaces all availability slots for the provider.
+Replaces all availability slots for the given service. Other services keep their own schedules.
 
 ```
-PUT /api/provider/availability
+PUT /api/provider/services/{serviceId}/availability
 Authorization: Bearer <accessToken>
 ```
 
@@ -707,6 +721,14 @@ Authorization: Bearer <accessToken>
   ]
 }
 ```
+
+**Success response — `200 OK`** — Returns the updated slot list (same shape as GET).
+
+**Business rules**
+
+- Availability is **per service**, not shared across a provider's catalog
+- If a service has **no** availability rows, customers can book any time (subject to double-booking checks)
+- Deleting a service cascades and removes its availability rows
 
 ---
 

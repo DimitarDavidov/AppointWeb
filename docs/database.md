@@ -30,14 +30,14 @@ AppointWeb uses **PostgreSQL 16** with **Entity Framework Core** for data access
        │         └──────────────────┘
        │
        │         ┌──────────────────────┐
-       └────────►│ ProviderAvailabilities│
+       └────────►│ ProviderAvailabilities│◄── Services
                  ├──────────────────────┤
                  │ Id (PK)              │
                  │ ProviderId (FK)      │
+                 │ ServiceId (FK)       │
                  │ DayOfWeek            │
                  │ StartTime            │
                  │ EndTime              │
-                 │ CreatedAt            │
                  └──────────────────────┘
 ```
 
@@ -91,16 +91,20 @@ Unique index on `(ProviderId, ServiceId)`.
 
 ### ProviderAvailabilities
 
-Weekly availability windows for a provider.
+Weekly booking windows for a **specific service** offered by a provider. Each service can have its own schedule.
 
 | Column | Type | Notes |
 |--------|------|-------|
 | `Id` | uuid | Primary key |
-| `ProviderId` | uuid | FK → Users |
+| `ProviderId` | uuid | FK → Users (cascade delete) |
+| `ServiceId` | uuid | FK → Services (cascade delete) |
 | `DayOfWeek` | integer | 0 = Sunday through 6 = Saturday |
 | `StartTime` | time | Local start time |
 | `EndTime` | time | Local end time |
-| `CreatedAt` | timestamptz | UTC |
+
+Indexes on `(ProviderId, ServiceId)` and `(ServiceId, DayOfWeek)`.
+
+If a service has no availability rows, booking is allowed at any time (still subject to overlap checks).
 
 ### Appointments
 
@@ -181,6 +185,7 @@ Migrations live in `src/App/Migrations/` and are applied on API startup via `App
 | `SplitAppointmentRescheduleCounts` | Splits count into provider/customer columns |
 | `AddPendingRescheduleFromConfirmedSlot` | Tracks whether reschedule started from a confirmed slot |
 | `AddCancelledByUserIdToAppointment` | Records who cancelled an appointment |
+| `AddServiceIdToProviderAvailability` | Scopes availability to individual services; migrates existing provider-wide slots to each active service |
 
 ### Manual migration commands
 
@@ -239,6 +244,14 @@ FROM "ProviderServices" ps
 JOIN "Users" u ON u."Id" = ps."ProviderId"
 JOIN "Services" s ON s."Id" = ps."ServiceId"
 WHERE ps."IsActive" = true;
+
+-- List provider availability by service
+SELECT ps."ProviderId", u."Username", s."Name", pa."DayOfWeek", pa."StartTime", pa."EndTime"
+FROM "ProviderAvailabilities" pa
+JOIN "Services" s ON s."Id" = pa."ServiceId"
+JOIN "ProviderServices" ps ON ps."ServiceId" = s."Id" AND ps."ProviderId" = pa."ProviderId"
+JOIN "Users" u ON u."Id" = pa."ProviderId"
+ORDER BY s."Name", pa."DayOfWeek", pa."StartTime";
 
 -- List appointments
 SELECT * FROM "Appointments";

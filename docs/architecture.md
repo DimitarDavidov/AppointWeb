@@ -55,7 +55,7 @@ On startup the API:
 | Role | Purpose |
 |------|---------|
 | `Customer` | Browse services and book appointments |
-| `Provider` | Manage service listings, availability, and incoming bookings |
+| `Provider` | Manage service listings, **per-service** availability, and incoming bookings |
 | `Admin` | Manage users (edit, suspend, delete) via the admin panel |
 
 Users register as **Customer** or **Provider**. The **Admin** role is assigned manually (for example via the database).
@@ -77,7 +77,7 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 3. If not logged in, they are redirected to `/login`
 4. User picks a date/time and submits the booking form
 5. Frontend sends `POST /api/appointments` with provider, service, and start time
-6. Backend validates availability, prevents double-booking, and rejects self-booking
+6. Backend validates **service-specific** availability, prevents double-booking, and rejects self-booking
 7. Appointment is created with status **Pending**; the provider receives a request email
 8. Provider confirms via `PATCH /api/appointments/{id}/confirm` → status becomes **Booked**
 9. Customer can view and manage the appointment at `/appointments`
@@ -94,9 +94,11 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 ## Request flow (example: provider panel)
 
 1. A provider opens `/provider`
-2. Frontend loads the provider's services from `GET /api/provider/services`
-3. Frontend loads appointments from `GET /api/provider/appointments` (scoped to the authenticated provider)
-4. Provider can confirm pending bookings, request/accept reschedules, cancel, mark outcomes, edit services, and manage availability
+2. Frontend loads services from `GET /api/provider/services` and appointments from `GET /api/provider/appointments`
+3. The dashboard shows a personalized greeting (based on the browser's local timezone), stat cards, and appointment tabs (Upcoming, Pending, Past, Cancelled)
+4. From **My services**, the provider can add listings, edit service details, set **per-service booking hours**, and preview the public catalog page
+5. Booking hours are loaded and saved via `GET/PUT /api/provider/services/{serviceId}/availability` — each service has its own schedule
+6. Provider can confirm pending bookings, request/accept reschedules, cancel, and mark outcomes from the appointment tabs
 
 ## Request flow (example: password reset)
 
@@ -170,5 +172,6 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 - Double-booking is prevented by application checks and a PostgreSQL exclusion constraint
 - Suspended users cannot use authenticated endpoints
 - New bookings start as **Pending** until the provider confirms them
+- **Availability is per service** — each listing can have its own weekly hours; if none are set, any time is allowed
 - Reschedule requests require acceptance by the other party; only changes from a previously confirmed slot count toward reschedule history
 - Email notifications are sent for booking requests, cancellations, and reschedule proposals (SMTP in production, console logging when `Email:Host` is empty)

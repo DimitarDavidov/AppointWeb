@@ -35,7 +35,7 @@ ClientApp/src/
 │   ├── Admin/              # Admin panel tables, cards, modals
 │   ├── Appointments/       # Appointment cards, cancel dialog, reschedule meta
 │   ├── ConfirmDialog/      # Reusable confirmation dialog
-│   └── Provider/           # Provider panel sections, stats grid, tabs, icons
+│   └── Provider/           # Provider panel: stats, tabs, service cards, modals, skeleton
 ├── constants/
 │   └── roles.ts            # Role constants and labels
 ├── features/
@@ -66,7 +66,8 @@ ClientApp/src/
 │   ├── appointmentCancellationUtils.ts
 │   ├── appointmentRescheduleUtils.ts
 │   ├── appointmentOutcomeUtils.ts
-│   └── providerPanelUtils.ts       # Provider stats and appointment grouping
+│   ├── providerPanelUtils.ts       # Provider stats and appointment grouping
+│   └── getTimeGreeting.ts          # Time-of-day greeting from browser timezone
 ├── App.tsx                 # Router setup
 ├── main.tsx                # Entry point (Provider wrapper)
 └── index.scss              # Global styles
@@ -134,15 +135,40 @@ The navbar adapts based on auth state and role:
 
 ### Provider panel (`/provider`)
 
-- Stats grid: upcoming, today, pending, listed services (clickable to jump to the relevant section)
-- Appointment tabs:
-  - **Upcoming** — confirmed future bookings
-  - **Pending** — new booking requests and open reschedule proposals (badge when count > 0)
-  - **Past** — completed, no-show, and appointments needing an outcome
-  - **Cancelled** — cancelled bookings with cancellation details
-- **Services** tab — edit service details, manage weekly availability, preview public listing
-- Provider actions: confirm bookings, cancel, request/accept reschedules, mark outcomes
-- Data loaded via `GET /api/provider/appointments` and `GET /api/provider/services`
+Glass-style dashboard for providers with animated stat cards, tabbed appointment views, and a dedicated services area.
+
+**Header**
+
+- Time-based greeting (morning / afternoon / evening) using the browser's IANA timezone via `Intl` (see `utils/getTimeGreeting.ts`)
+- Provider name and quick access to **My services**
+
+**Stats grid** (clickable)
+
+- **Upcoming**, **Today**, **Pending**, **Listed services** — jump to the matching appointment tab or services view
+- Stat values animate on load; skeleton placeholders while data loads
+
+**Appointment tabs**
+
+- **Upcoming** — confirmed future bookings
+- **Pending** — new booking requests and open reschedule proposals (badge when count > 0)
+- **Past** — completed, no-show, and appointments needing an outcome
+- **Cancelled** — cancelled bookings with cancellation details
+- Sliding tab indicator on desktop; directional slide transitions when switching tabs
+
+**My services**
+
+- Section header with **+ Add service**
+- Service cards show catalog info with **Edit**, **Hours**, and **Preview** actions
+- **Edit** opens a single modal for all service fields (title, description, category, location, duration, price)
+- **Hours** opens a per-service availability editor (`EditProviderAvailabilityModal`) — each listing has its own weekly schedule
+- **Preview** links to the public booking page
+- Dashed **Add service** card at the end of the grid for quick creation
+- Data: `GET /api/provider/services`, `GET/PUT /api/provider/services/{serviceId}/availability`
+
+**Provider actions on appointments**
+
+- Confirm bookings, cancel, request/accept reschedules, mark outcomes
+- Data: `GET /api/provider/appointments`
 
 ### Admin panel (`/admin`)
 
@@ -193,7 +219,10 @@ The axios instance in `src/api/api.ts` is configured with:
 - **Base URL:** `http://localhost:8080`
 - **JWT interceptor:** automatically attaches `Authorization: Bearer <token>` from `localStorage`
 
-Domain-specific API calls are split across `src/api/*.ts` modules.
+Domain-specific API calls are split across `src/api/*.ts` modules. Provider availability uses per-service endpoints:
+
+- `getProviderServiceAvailability(serviceId)` → `GET /api/provider/services/{serviceId}/availability`
+- `updateProviderServiceAvailability(serviceId, slots)` → `PUT /api/provider/services/{serviceId}/availability`
 
 ## Styling
 
