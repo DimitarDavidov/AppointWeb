@@ -411,7 +411,7 @@ Authorization: Bearer <accessToken>
 **Business rules**
 
 - Only appointments in **`Pending`** status can be confirmed
-- The **customer** receives a confirmation email with the service name, provider name, and appointment time
+- The **customer** receives a confirmation email and in-app notification with the service name, provider name, and appointment time
 
 **Error responses**
 
@@ -440,7 +440,7 @@ Cancels a `Pending` or `Booked` appointment. Accessible by the customer, provide
 }
 ```
 
-The API records `cancelledByUserId` from the authenticated user. The other party is notified by email.
+The API records `cancelledByUserId` from the authenticated user. The other party is notified by email and in-app notification.
 
 **Success response — `200 OK`** — Returns the updated appointment with status `Cancelled`.
 
@@ -481,7 +481,7 @@ Authorization: Bearer <accessToken>
 
 - Sets `pendingRescheduleStartTime`, `pendingRescheduleEndTime`, `rescheduleReason`, and `rescheduleRequestedByUserId`
 - Sets status to **`Pending`** while the request is open
-- Sends an email to the other party
+- Sends an email and in-app notification to the other party
 - If the appointment had never been confirmed, accepting the request updates the time but does **not** increment reschedule counts
 
 **Error responses**
@@ -510,7 +510,7 @@ Authorization: Bearer <accessToken>
 
 - Clears pending reschedule fields and sets status to **`Booked`**
 - If the appointment had a confirmed time before the request, updates `previousStartTime` and the appropriate reschedule count
-- The **requester** (the user who proposed the reschedule) receives an acceptance email with the previous and new times
+- The **requester** (the user who proposed the reschedule) receives an acceptance email and in-app notification with the previous and new times
 
 **Error responses**
 
@@ -539,6 +539,85 @@ Authorization: Bearer <accessToken>
 ```
 
 Allowed values: `Completed`, `NoShow`. Only **confirmed** (`Booked`) appointments whose end time is in the past can be updated.
+
+---
+
+## Notification endpoints
+
+All require authentication. Notifications are scoped to the authenticated user.
+
+### List notifications
+
+Returns the user's most recent notifications (up to 50), newest first.
+
+```
+GET /api/notifications
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`**
+
+```json
+[
+  {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "type": "AppointmentConfirmed",
+    "title": "Appointment confirmed",
+    "message": "Provider confirmed your Haircut appointment for Monday, June 16, 2026 at 2:00 PM UTC.",
+    "appointmentId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    "isRead": false,
+    "createdAt": "2026-06-15T10:30:00Z"
+  }
+]
+```
+
+**Notification types**
+
+| Type | Recipient | When created |
+|------|-----------|--------------|
+| `AppointmentConfirmed` | Customer | Provider confirms a pending booking |
+| `AppointmentCancelled` | Other party | Customer or provider cancels |
+| `RescheduleReceived` | Other party | A reschedule is proposed |
+| `RescheduleAccepted` | Requester | The other party accepts a reschedule |
+
+### Get unread count
+
+```
+GET /api/notifications/unread-count
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`**
+
+```json
+{
+  "count": 2
+}
+```
+
+### Mark one notification as read
+
+```
+PATCH /api/notifications/{id}/read
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `204 No Content`**
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `404 Not Found` | Notification not found or belongs to another user |
+
+### Mark all notifications as read
+
+```
+PATCH /api/notifications/read-all
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `204 No Content`**
 
 ---
 

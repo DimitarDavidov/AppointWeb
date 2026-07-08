@@ -79,16 +79,16 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 5. Frontend sends `POST /api/appointments` with provider, service, and start time
 6. Backend validates **service-specific** availability, prevents double-booking, and rejects self-booking
 7. Appointment is created with status **Pending**; the provider receives a request email
-8. Provider confirms via `PATCH /api/appointments/{id}/confirm` → status becomes **Booked**; the customer receives a confirmation email
+8. Provider confirms via `PATCH /api/appointments/{id}/confirm` → status becomes **Booked**; the customer receives a confirmation email and in-app notification
 9. Customer can view and manage the appointment at `/appointments`
 
 ## Request flow (example: reschedule)
 
 1. Customer or provider proposes a new time via `PATCH /api/appointments/{id}/reschedule`
 2. Backend stores the proposed time in `pendingRescheduleStartTime` / `pendingRescheduleEndTime` and sets status to **Pending**
-3. The other party receives an email notification
+3. The other party receives an email notification and an in-app notification
 4. The other party accepts via `PATCH /api/appointments/{id}/reschedule/accept`
-5. The party who requested the reschedule receives an acceptance email
+5. The party who requested the reschedule receives an acceptance email and in-app notification
 6. If the appointment had a **confirmed** time before the request, reschedule counts and `previousStartTime` are updated; otherwise the change is treated as an initial time adjustment (not counted as a reschedule)
 7. Status returns to **Booked** with the new time
 
@@ -110,6 +110,15 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 5. User enters a new password; frontend sends `POST /api/auth/reset-password`
 6. Backend validates the token, updates the password, and marks the token as used
 
+## Request flow (example: in-app notifications)
+
+1. A logged-in user sees a **bell icon** in the navbar (next to the profile menu)
+2. On load, the frontend polls `GET /api/notifications/unread-count` and `GET /api/notifications` every 30 seconds
+3. When an appointment event occurs (confirm, cancel, reschedule request, reschedule accept), the backend creates a `Notifications` row for the recipient via `NotificationService`
+4. The bell shows an unread badge; opening the panel lists recent notifications (newest first, up to 50)
+5. Clicking a notification marks it read and navigates to `/appointments` (customers) or `/provider` (providers/admins)
+6. **Mark all read** calls `PATCH /api/notifications/read-all`
+
 ## Appointment lifecycle
 
 ```
@@ -126,7 +135,7 @@ Customer books → Pending
 Reschedule request (from Pending or Booked):
   → status Pending with proposed new time
   → other party accepts → Booked (with new time)
-  → requester receives acceptance email
+  → requester receives acceptance email and in-app notification
   → reschedule counts updated only if there was a confirmed time before
 ```
 
@@ -134,7 +143,7 @@ Reschedule request (from Pending or Booked):
 
 ```
 Controllers     →  HTTP endpoints, request validation, status codes
-Services        →  Business logic (JWT, password reset, email, account deletion)
+Services        →  Business logic (JWT, password reset, email, notifications, account deletion)
 Data            →  DbContext, entity configurations, migrations
 Models          →  Domain entities (User, Service, Appointment, etc.)
 DTOs            →  Request/response shapes for the API
@@ -177,3 +186,4 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 - **Availability is per service** — each listing can have its own weekly hours; if none are set, any time is allowed
 - Reschedule requests require acceptance by the other party; only changes from a previously confirmed slot count toward reschedule history
 - Email notifications are sent for booking requests, appointment confirmations, cancellations, reschedule proposals, and accepted reschedules (SMTP in production, console logging when `Email:Host` is empty)
+- In-app notifications are stored in the database for appointment confirmations, cancellations, reschedule proposals, and accepted reschedules; the navbar bell polls for unread items

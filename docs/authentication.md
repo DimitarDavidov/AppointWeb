@@ -164,6 +164,19 @@ All emails use branded HTML templates. Links use `{Frontend:BaseUrl}` (for examp
 
 Email send failures on appointment actions are logged but do not roll back the API operation (except password reset, where a failed send removes the token).
 
+### In-app notifications
+
+Stored in the `Notifications` table and surfaced in the navbar bell. Created by `NotificationService` when appointment events occur.
+
+| Trigger | Recipient | Type |
+|---------|-----------|------|
+| `PATCH /api/appointments/{id}/confirm` | Customer | `AppointmentConfirmed` |
+| `PATCH /api/appointments/{id}/cancel` | Other party | `AppointmentCancelled` |
+| `PATCH /api/appointments/{id}/reschedule` | Other party | `RescheduleReceived` |
+| `PATCH /api/appointments/{id}/reschedule/accept` | Requester | `RescheduleAccepted` |
+
+The frontend polls `GET /api/notifications/unread-count` every 30 seconds while logged in. Notification creation failures are logged but do not roll back the appointment action.
+
 ## Protected vs public endpoints
 
 | Endpoint group | Auth required | Role |
@@ -176,6 +189,8 @@ Email send failures on appointment actions are logged but do not roll back the A
 | `DELETE /api/account` | Yes | Any |
 | `GET /api/appointments` | Yes | Any (scoped by role) |
 | `POST /api/appointments` | Yes | Any |
+| `GET /api/notifications` | Yes | Any |
+| `PATCH /api/notifications/*` | Yes | Any |
 | `GET /api/user/providers` | Yes | Any |
 | `GET /api/provider/*` | Yes | Provider |
 | `GET /api/admin/*` | Yes | Admin |

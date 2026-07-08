@@ -39,6 +39,19 @@ AppointWeb uses **PostgreSQL 16** with **Entity Framework Core** for data access
                  │ StartTime            │
                  │ EndTime              │
                  └──────────────────────┘
+
+                 ┌──────────────────┐
+                 │  Notifications   │
+                 ├──────────────────┤
+                 │ Id (PK)          │
+                 │ UserId (FK)      │──► Users
+                 │ Type             │
+                 │ Title            │
+                 │ Message          │
+                 │ AppointmentId(FK)│──► Appointments (optional)
+                 │ IsRead           │
+                 │ CreatedAt        │
+                 └──────────────────┘
 ```
 
 A user can be a **customer** (books appointments), a **provider** (delivers services), or an **admin** (manages users). The same `Users` table serves all roles.
@@ -143,6 +156,23 @@ If a service has no availability rows, booking is allowed at any time (still sub
 
 Raw reset tokens are never stored — only the hash. The plain token is sent by email and submitted once by the client.
 
+### Notifications
+
+In-app notifications for appointment events. Rows are created alongside email notifications for the same triggers (except new booking requests, which are email-only today).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `Id` | uuid | Primary key |
+| `UserId` | uuid | FK → Users (cascade delete) |
+| `Type` | varchar(50) | `AppointmentConfirmed`, `AppointmentCancelled`, `RescheduleReceived`, or `RescheduleAccepted` |
+| `Title` | varchar(200) | Short heading shown in the UI |
+| `Message` | varchar(1000) | Full notification text |
+| `AppointmentId` | uuid | FK → Appointments (set null on delete), optional |
+| `IsRead` | boolean | Default `false` |
+| `CreatedAt` | timestamptz | UTC |
+
+Indexed on `(UserId, IsRead)` and `(UserId, CreatedAt)` for listing and unread counts.
+
 ## Constraints
 
 ### Unique email and username
@@ -186,6 +216,8 @@ Migrations live in `src/App/Migrations/` and are applied on API startup via `App
 | `AddPendingRescheduleFromConfirmedSlot` | Tracks whether reschedule started from a confirmed slot |
 | `AddCancelledByUserIdToAppointment` | Records who cancelled an appointment |
 | `AddServiceIdToProviderAvailability` | Scopes availability to individual services; migrates existing provider-wide slots to each active service |
+| `AddTimeZoneToUser` | Adds IANA `TimeZoneId` to Users |
+| `AddNotifications` | Creates Notifications table |
 
 ### Manual migration commands
 

@@ -140,7 +140,7 @@ You can copy from `src/App/appsettings.Development.example.json`. The `Jwt:Key` 
 | `Email:FromAddress` / `FromName` | Sender shown in emails |
 | `Frontend:BaseUrl` | Frontend URL used in email links (e.g. `http://localhost:5173`) |
 
-Without `Email:Host`, the API uses `LoggingEmailService` and prints email details to the console — useful for local development. See [Authentication → Email delivery](docs/authentication.md#email-delivery) for the full list of notification triggers.
+Without `Email:Host`, the API uses `LoggingEmailService` and prints email details to the console — useful for local development. See [Authentication → Email delivery](docs/authentication.md#email-delivery) for email triggers and [In-app notifications](docs/authentication.md#in-app-notifications) for the navbar bell.
 
 Migrations run automatically when the API starts.
 
@@ -214,6 +214,10 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 | `PATCH` | `/api/appointments/{id}/reschedule` | Yes | Request a new time |
 | `PATCH` | `/api/appointments/{id}/reschedule/accept` | Yes | Accept a pending reschedule |
 | `PATCH` | `/api/appointments/{id}/status` | Yes | Mark Completed or NoShow |
+| `GET` | `/api/notifications` | Yes | List in-app notifications |
+| `GET` | `/api/notifications/unread-count` | Yes | Unread notification count for navbar badge |
+| `PATCH` | `/api/notifications/{id}/read` | Yes | Mark one notification as read |
+| `PATCH` | `/api/notifications/read-all` | Yes | Mark all notifications as read |
 | `GET` | `/api/provider/appointments` | Provider, Admin | List provider-scoped appointments |
 | `GET` | `/api/account` | Yes | Get current user profile |
 | `GET` | `/api/provider/services` | Provider | List the provider's services |

@@ -25,11 +25,13 @@ ClientApp/src/
 │   ├── admin.ts            # Admin user management
 │   ├── appointments.ts     # Appointment CRUD actions
 │   ├── catalog.ts          # Public service catalog
+│   ├── notifications.ts    # In-app notification list and read state
 │   ├── provider.ts         # Provider services and availability
 │   └── errors.ts           # API error message helper
 ├── components/
 │   ├── Layout/             # Shared layout (navbar + page content)
 │   ├── Navbar/             # Sticky navigation with role-based links
+│   ├── Notifications/      # Notification bell and dropdown panel
 │   ├── ProtectedRoute/     # Auth and role guards
 │   ├── Account/            # Account settings fields and icons
 │   ├── Admin/              # Admin panel tables, cards, modals
@@ -44,6 +46,7 @@ ClientApp/src/
 ├── hooks/
 │   ├── useAsyncData.ts     # Generic async data loading hook
 │   ├── useAccountSettings.ts
+│   ├── useNotifications.ts # Poll and manage in-app notifications
 │   └── useProviderPanelData.ts  # Provider appointments + services data
 ├── pages/
 │   ├── Home.tsx            # Landing page + service catalog
@@ -61,6 +64,7 @@ ClientApp/src/
 │   ├── store.ts            # Redux store configuration
 │   └── hooks.ts            # Typed useAppDispatch / useAppSelector
 ├── types/                  # TypeScript interfaces for API DTOs
+│   └── notifications.ts    # Notification and unread-count types
 ├── utils/                  # Formatting, filters, appointment helpers
 │   ├── appointmentFilters.ts       # Customer appointment tab filters
 │   ├── appointmentCancellationUtils.ts
@@ -97,7 +101,7 @@ Protected routes use the `ProtectedRoute` component, which redirects unauthentic
 ```
 ┌─────────────────────────────────────────────┐
 │  Navbar (sticky)                            │
-│  [Logo]              [User menu / Auth links]│
+│  [Logo]         [Bell] [User menu / Auth]   │
 ├─────────────────────────────────────────────┤
 │                                             │
 │  Page content (via React Router Outlet)     │
@@ -108,8 +112,16 @@ Protected routes use the `ProtectedRoute` component, which redirects unauthentic
 The navbar adapts based on auth state and role:
 
 - **Logged out:** Login and Register links
-- **Logged in:** User dropdown with links to Account, Appointments, and role-specific pages (Provider Panel, Admin Panel)
+- **Logged in:** Notification bell (with unread badge) plus user dropdown with links to Account, Appointments, and role-specific pages (Provider Panel, Admin Panel)
 - **Logout:** Clears Redux state and `localStorage`
+
+### Notifications (`NotificationBell`)
+
+- Rendered in the navbar for logged-in users, to the left of the profile menu
+- Polls `GET /api/notifications` and `GET /api/notifications/unread-count` every 30 seconds via `useNotifications`
+- Dropdown shows recent notifications with title, message, and relative time
+- Unread items are highlighted; clicking one marks it read and navigates to `/appointments` (customers) or `/provider` (providers/admins)
+- **Mark all read** calls `PATCH /api/notifications/read-all`
 
 ## Key pages
 
