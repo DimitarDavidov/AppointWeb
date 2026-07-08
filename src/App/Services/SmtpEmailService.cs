@@ -322,6 +322,48 @@ public class SmtpEmailService : IEmailService
         await SendMessageAsync(message, cancellationToken);
     }
 
+    public async Task SendAppointmentConfirmedEmailAsync(
+        string toEmail,
+        string customerName,
+        string providerName,
+        string serviceName,
+        string appointmentWhen,
+        string appointmentsUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var message = BuildAppointmentConfirmedMessage(
+            toEmail,
+            customerName,
+            providerName,
+            serviceName,
+            appointmentWhen,
+            appointmentsUrl);
+
+        await SendMessageAsync(message, cancellationToken);
+    }
+
+    public async Task SendRescheduleAcceptedEmailAsync(
+        string toEmail,
+        string recipientName,
+        string accepterName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string appointmentsUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var message = BuildRescheduleAcceptedMessage(
+            toEmail,
+            recipientName,
+            accepterName,
+            serviceName,
+            previousWhen,
+            newWhen,
+            appointmentsUrl);
+
+        await SendMessageAsync(message, cancellationToken);
+    }
+
     private async Task SendMessageAsync(MimeMessage message, CancellationToken cancellationToken)
     {
         using var client = new SmtpClient();
@@ -405,6 +447,72 @@ public class SmtpEmailService : IEmailService
             newWhen,
             previousRequestedWhen,
             reason,
+            appointmentsUrl);
+
+        var body = new BodyBuilder
+        {
+            TextBody = textBody,
+            HtmlBody = htmlBody
+        };
+
+        AppointmentRescheduleEmailBuilder.AttachLogo(body);
+
+        message.Body = body.ToMessageBody();
+        return message;
+    }
+
+    private MimeMessage BuildAppointmentConfirmedMessage(
+        string toEmail,
+        string customerName,
+        string providerName,
+        string serviceName,
+        string appointmentWhen,
+        string appointmentsUrl)
+    {
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromAddress));
+        message.To.Add(MailboxAddress.Parse(toEmail));
+        message.Subject = "Your AppointWeb appointment is confirmed";
+
+        var (htmlBody, textBody) = AppointmentConfirmedEmailBuilder.Build(
+            customerName,
+            providerName,
+            serviceName,
+            appointmentWhen,
+            appointmentsUrl);
+
+        var body = new BodyBuilder
+        {
+            TextBody = textBody,
+            HtmlBody = htmlBody
+        };
+
+        AppointmentConfirmedEmailBuilder.AttachLogo(body);
+
+        message.Body = body.ToMessageBody();
+        return message;
+    }
+
+    private MimeMessage BuildRescheduleAcceptedMessage(
+        string toEmail,
+        string recipientName,
+        string accepterName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string appointmentsUrl)
+    {
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromAddress));
+        message.To.Add(MailboxAddress.Parse(toEmail));
+        message.Subject = "Your AppointWeb reschedule was accepted";
+
+        var (htmlBody, textBody) = AppointmentRescheduleEmailBuilder.BuildAccepted(
+            recipientName,
+            accepterName,
+            serviceName,
+            previousWhen,
+            newWhen,
             appointmentsUrl);
 
         var body = new BodyBuilder

@@ -184,4 +184,63 @@ public class LoggingEmailService : IEmailService
 
         return Task.CompletedTask;
     }
+
+    public Task SendAppointmentConfirmedEmailAsync(
+        string toEmail,
+        string customerName,
+        string providerName,
+        string serviceName,
+        string appointmentWhen,
+        string appointmentsUrl,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogWarning(
+            """
+            Email:Host is not configured. Appointment confirmed email for {Email}:
+            Customer: {CustomerName}
+            Provider: {ProviderName}
+            Service: {ServiceName}
+            When: {AppointmentWhen}
+            Appointments: {AppointmentsUrl}
+            """,
+            toEmail,
+            customerName,
+            providerName,
+            serviceName,
+            appointmentWhen,
+            appointmentsUrl);
+
+        return Task.CompletedTask;
+    }
+
+    public Task SendRescheduleAcceptedEmailAsync(
+        string toEmail,
+        string recipientName,
+        string accepterName,
+        string serviceName,
+        string previousWhen,
+        string newWhen,
+        string appointmentsUrl,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogWarning(
+            """
+            Email:Host is not configured. Reschedule accepted email for {Email}:
+            Recipient: {RecipientName}
+            Accepter: {AccepterName}
+            Service: {ServiceName}
+            Previous: {PreviousWhen}
+            New: {NewWhen}
+            Appointments: {AppointmentsUrl}
+            """,
+            toEmail,
+            recipientName,
+            accepterName,
+            serviceName,
+            previousWhen,
+            newWhen,
+            appointmentsUrl);
+
+        return Task.CompletedTask;
+    }
 }

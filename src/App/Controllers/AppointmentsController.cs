@@ -339,6 +339,9 @@ public class AppointmentsController : ControllerBase
             return Forbid();
 
         var appointment = await _db.Appointments
+            .Include(a => a.Customer)
+            .Include(a => a.Provider)
+            .Include(a => a.Service)
             .SingleOrDefaultAsync(a => a.Id == id, ct);
 
         if (appointment is null)
@@ -369,6 +372,28 @@ public class AppointmentsController : ControllerBase
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23P01")
         {
             return Conflict("This time slot is already booked.");
+        }
+
+        try
+        {
+            var appointmentWhen = FormatAppointmentWhen(appointment.StartTime);
+            var appointmentsUrl = $"{_frontendSettings.BaseUrl.TrimEnd('/')}/appointments";
+
+            await _emailService.SendAppointmentConfirmedEmailAsync(
+                appointment.Customer.Email,
+                appointment.Customer.Username,
+                appointment.Provider.Username,
+                appointment.Service.Name,
+                appointmentWhen,
+                appointmentsUrl,
+                ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to send appointment confirmed email for appointment {AppointmentId}",
+                appointment.Id);
         }
 
         return Ok(AppointmentMapper.MapResponse(appointment));
@@ -526,6 +551,8 @@ public class AppointmentsController : ControllerBase
         var role = User.FindFirstValue(ClaimTypes.Role);
 
         var appointment = await _db.Appointments
+            .Include(a => a.Customer)
+            .Include(a => a.Provider)
             .Include(a => a.Service)
             .SingleOrDefaultAsync(a => a.Id == id, ct);
 
@@ -560,6 +587,11 @@ public class AppointmentsController : ControllerBase
             return Conflict("The requested time slot is no longer available.");
         }
 
+        var previousWhen = FormatAppointmentWhen(appointment.StartTime);
+        var newWhen = FormatAppointmentWhen(appointment.PendingRescheduleStartTime.Value);
+        var requesterId = appointment.RescheduleRequestedByUserId.Value;
+        var isCustomerRequester = requesterId == appointment.CustomerId;
+
         if (appointment.PendingRescheduleFromConfirmedSlot)
         {
             appointment.PreviousStartTime = appointment.StartTime;
@@ -583,6 +615,40 @@ public class AppointmentsController : ControllerBase
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23P01")
         {
             return Conflict("The requested time slot is no longer available.");
+        }
+
+        try
+        {
+            var frontendBaseUrl = _frontendSettings.BaseUrl.TrimEnd('/');
+            var requesterEmail = isCustomerRequester
+                ? appointment.Customer.Email
+                : appointment.Provider.Email;
+            var requesterName = isCustomerRequester
+                ? appointment.Customer.Username
+                : appointment.Provider.Username;
+            var accepterName = isCustomerRequester
+                ? appointment.Provider.Username
+                : appointment.Customer.Username;
+            var appointmentsUrl = isCustomerRequester
+                ? $"{frontendBaseUrl}/appointments"
+                : $"{frontendBaseUrl}/provider";
+
+            await _emailService.SendRescheduleAcceptedEmailAsync(
+                requesterEmail,
+                requesterName,
+                accepterName,
+                appointment.Service.Name,
+                previousWhen,
+                newWhen,
+                appointmentsUrl,
+                ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to send reschedule accepted email for appointment {AppointmentId}",
+                appointment.Id);
         }
 
         return Ok(AppointmentMapper.MapResponse(appointment));
