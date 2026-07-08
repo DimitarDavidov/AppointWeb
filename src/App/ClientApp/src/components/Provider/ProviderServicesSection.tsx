@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  createProviderService,
   updateProviderAvailability,
   updateProviderService,
 } from "../../api/provider";
@@ -30,6 +31,7 @@ export function ProviderServicesSection({
   onUpdated,
 }: ProviderServicesSectionProps) {
   const [message, setMessage] = useState("");
+  const [createServiceOpen, setCreateServiceOpen] = useState(false);
   const [editingService, setEditingService] =
     useState<ProviderServiceDetail | null>(null);
   const [editFocus, setEditFocus] = useState<ProviderServiceEditFocus>("title");
@@ -46,10 +48,23 @@ export function ProviderServicesSection({
     return () => window.clearTimeout(timer);
   }, [message]);
 
+  function openCreateService() {
+    setEditingService(null);
+    setEditError("");
+    setCreateServiceOpen(true);
+  }
+
+  function closeCreateService() {
+    if (isSavingService) return;
+    setCreateServiceOpen(false);
+    setEditError("");
+  }
+
   function openServiceEditor(
     service: ProviderServiceDetail,
     focus: ProviderServiceEditFocus
   ) {
+    setCreateServiceOpen(false);
     setEditError("");
     setEditFocus(focus);
     setEditingService(service);
@@ -59,6 +74,24 @@ export function ProviderServicesSection({
     if (isSavingService) return;
     setEditingService(null);
     setEditError("");
+  }
+
+  async function handleCreateService(
+    data: Parameters<typeof createProviderService>[0]
+  ) {
+    setIsSavingService(true);
+    setEditError("");
+
+    try {
+      await createProviderService(data);
+      setCreateServiceOpen(false);
+      setMessage("Service added successfully.");
+      onUpdated();
+    } catch (err) {
+      setEditError(getErrorMessage(err, "Could not add this service."));
+    } finally {
+      setIsSavingService(false);
+    }
   }
 
   async function handleSaveService(
@@ -118,12 +151,15 @@ export function ProviderServicesSection({
       className="provider-tab-panel"
     >
       <EditProviderServiceModal
+        open={createServiceOpen || editingService !== null}
+        mode={createServiceOpen ? "create" : "edit"}
         service={editingService}
         focusField={editFocus}
         isSaving={isSavingService}
         error={editError}
+        onCreate={handleCreateService}
         onSave={handleSaveService}
-        onClose={closeServiceEditor}
+        onClose={createServiceOpen ? closeCreateService : closeServiceEditor}
       />
 
       <EditProviderAvailabilityModal
@@ -134,11 +170,20 @@ export function ProviderServicesSection({
         onClose={closeAvailabilityEditor}
       />
 
-      <div className="provider-tab-panel-intro">
-        <p>
-          Update how each service appears in your catalog, adjust pricing and
-          duration, and manage the hours customers can book you.
-        </p>
+      <div className="provider-services-toolbar">
+        <div className="provider-tab-panel-intro provider-services-intro">
+          <p>
+            Update how each service appears in your catalog, adjust pricing and
+            duration, and manage the hours customers can book you.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="provider-btn provider-btn--primary provider-services-add-btn"
+          onClick={openCreateService}
+        >
+          Add service
+        </button>
       </div>
 
       {message && (
@@ -165,8 +210,15 @@ export function ProviderServicesSection({
           <ProviderEmptyServicesIcon className="provider-empty-icon" />
           <p className="provider-empty-title">No services listed yet</p>
           <p className="provider-empty-text">
-            Once services are linked to your profile, you can manage them here.
+            Add your first service to start appearing in the public catalog.
           </p>
+          <button
+            type="button"
+            className="provider-btn provider-btn--primary"
+            onClick={openCreateService}
+          >
+            Add service
+          </button>
         </div>
       )}
 

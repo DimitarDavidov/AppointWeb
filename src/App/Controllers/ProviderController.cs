@@ -92,6 +92,59 @@ public class ProviderController : ControllerBase
         return Ok(services);
     }
 
+    [HttpPost("services")]
+    public async Task<ActionResult<ProviderServiceResponse>> CreateService(
+        UpdateProviderServiceRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetUserId(out var providerId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        if (!ServiceCategories.IsValid(request.Category))
+        {
+            return BadRequest(
+                $"Category must be one of: {string.Join(", ", ServiceCategories.All)}.");
+        }
+
+        var normalizedCategory = request.Category.Trim();
+
+        var service = new Service
+        {
+            Name = request.Name.Trim(),
+            Description = string.IsNullOrWhiteSpace(request.Description)
+                ? null
+                : request.Description.Trim(),
+            Category = normalizedCategory,
+            Country = request.Country.Trim(),
+            City = request.City.Trim(),
+            DurationMinutes = request.DurationMinutes,
+            Price = request.Price,
+        };
+
+        var link = new ProviderService
+        {
+            ProviderId = providerId,
+            ServiceId = service.Id,
+        };
+
+        _db.Services.Add(service);
+        _db.ProviderServices.Add(link);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(new ProviderServiceResponse
+        {
+            ServiceId = service.Id,
+            ServiceName = service.Name,
+            Description = service.Description,
+            Category = service.Category,
+            Country = service.Country,
+            City = service.City,
+            DurationMinutes = service.DurationMinutes,
+            Price = service.Price,
+        });
+    }
+
     [HttpPatch("services/{serviceId:guid}")]
     public async Task<ActionResult<ProviderServiceResponse>> UpdateService(
         Guid serviceId,
@@ -110,14 +163,18 @@ public class ProviderController : ControllerBase
         if (link is null || !link.IsActive || !link.Service.IsActive)
             return NotFound("Service not found.");
 
+        if (!ServiceCategories.IsValid(request.Category))
+        {
+            return BadRequest(
+                $"Category must be one of: {string.Join(", ", ServiceCategories.All)}.");
+        }
+
         var service = link.Service;
         service.Name = request.Name.Trim();
         service.Description = string.IsNullOrWhiteSpace(request.Description)
             ? null
             : request.Description.Trim();
-        service.Category = string.IsNullOrWhiteSpace(request.Category)
-            ? null
-            : request.Category.Trim();
+        service.Category = request.Category.Trim();
         service.Country = request.Country.Trim();
         service.City = request.City.Trim();
         service.DurationMinutes = request.DurationMinutes;

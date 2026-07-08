@@ -12,8 +12,9 @@ public class UpdateProviderServiceRequest
     [MaxLength(1000)]
     public string? Description { get; set; }
 
+    [Required]
     [MaxLength(100)]
-    public string? Category { get; set; }
+    public string Category { get; set; } = string.Empty;
 
     [Required]
     [MinLength(1)]

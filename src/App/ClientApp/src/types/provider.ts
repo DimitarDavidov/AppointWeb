@@ -12,12 +12,14 @@ export interface ProviderServiceDetail {
 export interface UpdateProviderServiceRequest {
   name: string;
   description: string | null;
-  category: string | null;
+  category: string;
   country: string;
   city: string;
   durationMinutes: number;
   price: number;
 }
+
+export type CreateProviderServiceRequest = UpdateProviderServiceRequest;
 
 export interface ProviderAvailabilitySlot {
   id: string;

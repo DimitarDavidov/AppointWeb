@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { SERVICE_CATEGORIES, isServiceCategory } from "../../constants/serviceCategories";
 import type {
   ProviderServiceDetail,
   ProviderServiceEditFocus,
@@ -6,11 +7,14 @@ import type {
 } from "../../types/provider";
 
 export interface EditProviderServiceModalProps {
+  open: boolean;
+  mode: "create" | "edit";
   service: ProviderServiceDetail | null;
   focusField?: ProviderServiceEditFocus;
   isSaving: boolean;
   error: string;
   onSave: (serviceId: string, data: UpdateProviderServiceRequest) => void;
+  onCreate: (data: UpdateProviderServiceRequest) => void;
   onClose: () => void;
 }
 
@@ -23,11 +27,14 @@ const focusLabels: Record<ProviderServiceEditFocus, string> = {
 };
 
 function EditProviderServiceModal({
+  open,
+  mode,
   service,
   focusField = "title",
   isSaving,
   error,
   onSave,
+  onCreate,
   onClose,
 }: EditProviderServiceModalProps) {
   const [name, setName] = useState("");
@@ -41,26 +48,49 @@ function EditProviderServiceModal({
 
   const nameRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
-  const categoryRef = useRef<HTMLInputElement>(null);
+  const categoryRef = useRef<HTMLSelectElement>(null);
   const countryRef = useRef<HTMLInputElement>(null);
   const cityRef = useRef<HTMLInputElement>(null);
   const durationRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!open) return;
+
+    if (mode === "create") {
+      setName("");
+      setDescription("");
+      setCategory("");
+      setCountry("");
+      setCity("");
+      setDurationMinutes("30");
+      setPrice("");
+      setValidationError("");
+      return;
+    }
+
     if (!service) return;
 
     setName(service.serviceName);
     setDescription(service.description ?? "");
-    setCategory(service.category ?? "");
+    setCategory(
+      service.category && isServiceCategory(service.category) ? service.category : ""
+    );
     setCountry(service.country);
     setCity(service.city);
     setDurationMinutes(String(service.durationMinutes));
     setPrice(String(service.price));
     setValidationError("");
-  }, [service]);
+  }, [open, mode, service]);
 
   useEffect(() => {
+    if (!open || mode !== "create") return;
+
+    nameRef.current?.focus();
+  }, [open, mode]);
+
+  useEffect(() => {
+    if (!open || mode === "create") return;
     if (!service) return;
 
     const focusMap = {
@@ -78,10 +108,10 @@ function EditProviderServiceModal({
     if ("select" in target && typeof target.select === "function") {
       target.select();
     }
-  }, [service, focusField]);
+  }, [open, mode, service, focusField]);
 
   useEffect(() => {
-    if (!service) return;
+    if (!open) return;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape" && !isSaving) {
@@ -96,13 +126,14 @@ function EditProviderServiceModal({
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
     };
-  }, [service, isSaving, onClose]);
+  }, [open, isSaving, onClose]);
 
-  if (!service) {
+  if (!open) {
     return null;
   }
 
-  const serviceId = service.serviceId;
+  const isCreate = mode === "create";
+  const serviceId = service?.serviceId ?? "";
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -113,6 +144,11 @@ function EditProviderServiceModal({
 
     if (trimmedName.length < 2) {
       setValidationError("Title must be at least 2 characters.");
+      return;
+    }
+
+    if (!isServiceCategory(category)) {
+      setValidationError("Please select a category.");
       return;
     }
 
@@ -140,15 +176,22 @@ function EditProviderServiceModal({
     }
 
     setValidationError("");
-    onSave(serviceId, {
+    const payload = {
       name: trimmedName,
       description: description.trim() || null,
-      category: category.trim() || null,
+      category,
       country: trimmedCountry,
       city: trimmedCity,
       durationMinutes: parsedDuration,
       price: parsedPrice,
-    });
+    };
+
+    if (isCreate) {
+      onCreate(payload);
+      return;
+    }
+
+    onSave(serviceId, payload);
   }
 
   const displayError = validationError || error;
@@ -171,11 +214,17 @@ function EditProviderServiceModal({
       >
         <header className="provider-modal-header">
           <h2 id="edit-provider-service-title" className="provider-modal-title">
-            {focusLabels[focusField]}
+            {isCreate ? "Add new service" : focusLabels[focusField]}
           </h2>
           <p className="provider-modal-subtitle">
-            Update how <strong>{service.serviceName}</strong> appears in your
-            catalog.
+            {isCreate ? (
+              "Create a service listing that customers can browse and book."
+            ) : (
+              <>
+                Update how <strong>{service?.serviceName}</strong> appears in your
+                catalog.
+              </>
+            )}
           </p>
         </header>
 
@@ -197,16 +246,23 @@ function EditProviderServiceModal({
 
           <div className="provider-modal-field">
             <label htmlFor="provider-service-category">Category</label>
-            <input
+            <select
               ref={categoryRef}
               id="provider-service-category"
-              type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               disabled={isSaving}
-              maxLength={100}
-              placeholder="Optional"
-            />
+              required
+            >
+              <option value="" disabled>
+                Select a category
+              </option>
+              {SERVICE_CATEGORIES.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="provider-modal-field-row">
@@ -305,7 +361,13 @@ function EditProviderServiceModal({
               className="provider-modal-btn provider-modal-btn-primary"
               disabled={isSaving}
             >
-              {isSaving ? "Saving..." : "Save changes"}
+              {isSaving
+                ? isCreate
+                  ? "Adding..."
+                  : "Saving..."
+                : isCreate
+                  ? "Add service"
+                  : "Save changes"}
             </button>
           </div>
         </form>

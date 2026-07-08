@@ -1072,6 +1072,33 @@
       line-height: 1.5;
       color: var(--color-text-muted);
     }
+
+    .provider-btn {
+      margin-top: 0.65rem;
+    }
+  }
+
+  &-services-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: 1.15rem;
+
+    @include sm-up {
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+  }
+
+  &-services-intro {
+    margin-bottom: 0;
+    flex: 1 1 auto;
+  }
+
+  &-services-add-btn {
+    flex-shrink: 0;
+    align-self: flex-start;
   }
 
   &-service-grid {
