@@ -23,6 +23,8 @@ Detailed documentation for the AppointWeb project. For a quick start guide, see 
 | Cancellation | Records who cancelled and optional reason; emails and in-app notification to the other party |
 | Notifications | Bell icon in navbar with unread badge; appointment confirmed, cancelled, reschedule received, and reschedule accepted |
 | Ratings & reviews | Two-way ratings after a terminal appointment (completed, no-show, cancelled); customers rate the service publicly, providers rate customers privately; stars (0.5–5) and comment both optional; per-service average and public reviews on the service page |
+| Customer rating display | Clicking a customer's name (in the provider panel or on public service reviews) reveals that customer's overall rating — stars only, no comments |
+| My ratings | The account page shows a user's own received ratings: customers see their rating as a customer; providers also see their rating as a provider; "Not rated yet" when empty |
 | Provider panel | Dashboard with stats, appointment tabs, per-service booking hours, and service catalog management |
 | Admin | User search, edit, suspend, delete |
 

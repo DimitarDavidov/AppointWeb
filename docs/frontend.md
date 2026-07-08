@@ -26,7 +26,7 @@ ClientApp/src/
 │   ├── appointments.ts     # Appointment CRUD actions
 │   ├── catalog.ts          # Public service catalog
 │   ├── notifications.ts    # In-app notification list and read state
-│   ├── ratings.ts          # Rating upsert/delete and public service reviews
+│   ├── ratings.ts          # Rating upsert/delete, service reviews, customer + own rating aggregates
 │   ├── provider.ts         # Provider services and availability
 │   └── errors.ts           # API error message helper
 ├── components/
@@ -132,7 +132,9 @@ The navbar adapts based on auth state and role:
 
 - `StarRating` — exports `StarRatingDisplay` (fractional/half-star display) and `StarRatingInput` (half-star selection with hover preview and clear)
 - `AppointmentRatingSection` — the review form/summary embedded in appointment cards; both stars and comment are optional (Save is disabled only when both are empty); upserts via `PUT /api/ratings/appointments/{id}`, supports edit and remove
-- `ServiceReviewsSection` — self-fetching public reviews + average for a provider's service on the service detail page
+- `ServiceReviewsSection` — self-fetching public reviews + average for a provider's service on the service detail page; each reviewer's name is a `CustomerRatingName`
+- `CustomerRatingName` — renders a customer's name as a button; on click it lazily loads and reveals that customer's **overall** rating (stars only, no comments) via `GET /api/ratings/customers/{customerId}`. Used in the provider appointment items and on service reviews
+- `AccountRatingsSection` — self-fetching "Your ratings" panel for the account page; loads `GET /api/ratings/me` and shows the user's own received rating(s), with "Not rated yet" when empty
 - Eligibility is gated with `utils/appointmentOutcomeUtils.ts` → `isRateableStatus`
 
 ## Key pages
@@ -200,6 +202,7 @@ Glass-style dashboard for providers with animated stat cards, tabbed appointment
 
 - Confirm bookings, cancel, request/accept reschedules, mark outcomes
 - On terminal appointments (Past and Cancelled tabs), rate the customer via `AppointmentRatingSection` (viewer `provider`); this feedback is private
+- The **customer name** on each appointment item is clickable (`CustomerRatingName`) to reveal that customer's overall star rating
 - Data: `GET /api/provider/appointments`
 
 ### Admin panel (`/admin`)
@@ -210,6 +213,7 @@ Glass-style dashboard for providers with animated stat cards, tabbed appointment
 ### Account (`/account`)
 
 - Update email, username, password, and phone number
+- **Your ratings** (`AccountRatingsSection`) — the user's own received ratings: customers see their rating as a customer; providers also see their rating as a provider; shows "Not rated yet" when there are none
 - Delete account
 
 ## State management

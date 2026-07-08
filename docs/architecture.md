@@ -135,8 +135,10 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 2. Each participant sees a review section on the appointment (customers on `/appointments`, providers on the `/provider` past/cancelled tabs)
 3. Leaving a review is optional; when opened, the star value and comment are both optional — the user may submit stars only, a comment only, or both (a fully empty submission is rejected)
 4. The frontend upserts via `PUT /api/ratings/appointments/{id}`; the backend derives direction (customer→provider or provider→customer) and the rated user from the caller's role
-5. Customer→provider ratings feed the **public** per-service average and reviews (Completed + No-show only), shown on the service page and catalog cards; provider→customer ratings are stored for later use and are not shown publicly
-6. Ratings are editable and removable at any time (`PUT` again or `DELETE`)
+5. Customer→provider ratings feed the **public** per-service average and reviews (Completed + No-show only), shown on the service page and catalog cards
+6. Provider→customer ratings are aggregated into a customer's **overall rating** (stars only); it is revealed when a customer's name is clicked in the provider panel or on a public service review, via `GET /api/ratings/customers/{customerId}` (public)
+7. The account page shows each user their own received ratings via `GET /api/ratings/me` — customers see their rating as a customer; providers also see their rating as a provider
+8. Ratings are editable and removable at any time (`PUT` again or `DELETE`)
 
 ## Appointment lifecycle
 

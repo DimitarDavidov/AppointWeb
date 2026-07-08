@@ -219,6 +219,8 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 | `PATCH` | `/api/notifications/{id}/read` | Yes | Mark one notification as read |
 | `PATCH` | `/api/notifications/read-all` | Yes | Mark all notifications as read |
 | `GET` | `/api/catalog/{providerId}/{serviceId}/reviews` | No | Public rating summary and reviews for a service |
+| `GET` | `/api/ratings/customers/{customerId}` | No | A customer's overall rating (stars only) |
+| `GET` | `/api/ratings/me` | Yes | Current user's own received ratings (as customer / provider) |
 | `GET` | `/api/ratings/appointments/{id}` | Yes | Get the current user's rating for an appointment |
 | `PUT` | `/api/ratings/appointments/{id}` | Yes | Create or update the current user's rating |
 | `DELETE` | `/api/ratings/appointments/{id}` | Yes | Remove the current user's rating |

@@ -251,6 +251,7 @@ GET /api/catalog/{providerId}/{serviceId}/reviews
     {
       "stars": 5.0,
       "comment": "Great experience, highly recommend.",
+      "reviewerId": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
       "reviewerUsername": "john",
       "createdAt": "2026-06-20T14:30:00Z"
     }
@@ -263,6 +264,7 @@ GET /api/catalog/{providerId}/{serviceId}/reviews
 | `averageRating` | number \| null | Average of star values from public ratings; `null` when none |
 | `ratingCount` | integer | Number of star ratings backing the average |
 | `reviews` | array | Public reviews that include a **comment**, newest first (a review may have a comment with `stars: null`) |
+| `reviews[].reviewerId` | uuid | The reviewer's user id — used to look up that customer's overall rating (see [Get a customer's rating](#get-a-customers-rating)) |
 
 Only ratings on **Completed** or **No-show** appointments are included. Provider→customer ratings are never returned here.
 
@@ -628,9 +630,56 @@ Authorization: Bearer <accessToken>
 
 ## Rating endpoints
 
-All require authentication. A rating can only be left by the appointment's **customer** or **provider**, and only once the appointment is **Completed**, **No-show**, or **Cancelled**. Each participant has one rating per appointment (customer→provider or provider→customer) and may edit it at any time.
+Except where noted, these require authentication. A rating can only be left by the appointment's **customer** or **provider**, and only once the appointment is **Completed**, **No-show**, or **Cancelled**. Each participant has one rating per appointment (customer→provider or provider→customer) and may edit it at any time.
 
 Both the star value and the comment are optional and independent — a submission may contain stars only, a comment only, or both. A completely empty submission is rejected.
+
+### Get a customer's rating
+
+Returns a customer's **overall** rating received from providers (aggregated provider→customer ratings) — stars only, no comments. Used to reveal a customer's rating when their name is clicked (in the provider panel and on public service reviews). **No authentication required.**
+
+```
+GET /api/ratings/customers/{customerId}
+```
+
+**Success response — `200 OK`**
+
+```json
+{
+  "averageRating": 4.5,
+  "ratingCount": 3
+}
+```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `averageRating` | number \| null | Average of star values across all provider→customer ratings for this user; `null` when none |
+| `ratingCount` | integer | Number of star ratings backing the average |
+
+### Get my ratings
+
+Returns the current user's own **received** ratings: as a customer (from providers) and, for providers, as a provider (from customers). Stars only, no comments. Used by the account page.
+
+```
+GET /api/ratings/me
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`**
+
+```json
+{
+  "asCustomer": { "averageRating": 4.5, "ratingCount": 3 },
+  "asProvider": { "averageRating": 4.8, "ratingCount": 12 }
+}
+```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `asCustomer` | object | Aggregate of provider→customer ratings received by this user (all statuses) |
+| `asProvider` | object | Aggregate of customer→provider ratings received by this user, across all their services (Completed + No-show only) |
+
+Each object has `averageRating` (number \| null) and `ratingCount` (integer). A customer typically only uses `asCustomer`; providers use both.
 
 ### Get my rating
 

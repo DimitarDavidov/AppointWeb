@@ -213,6 +213,8 @@ Two-way ratings left after an appointment reaches a terminal state. Each partici
 
 A service's public average and reviews are scoped by `(RateeId = provider, ServiceId)` and only count `CustomerToProvider` ratings on **Completed** or **No-show** appointments, so a provider's two services keep separate ratings.
 
+A customer's **overall rating** aggregates `ProviderToCustomer` ratings by `RateeId` (across all appointments/statuses); this powers the customer rating shown when a name is clicked and the account page's "Your ratings".
+
 ## Constraints
 
 ### Unique email and username
