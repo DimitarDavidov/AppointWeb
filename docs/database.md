@@ -81,8 +81,9 @@ Services are linked to providers through the `ProviderServices` join table. The 
 | `Name` | varchar(200) | Required |
 | `Description` | varchar(1000) | Optional |
 | `Category` | varchar(100) | Required for new/updated services. One of the predefined catalog categories |
-| `Country` | varchar(100) | Required |
-| `City` | varchar(100) | Required |
+| `Country` | varchar(100) | Required column; empty string when `IsRemote` is `true` |
+| `City` | varchar(100) | Required column; empty string when `IsRemote` is `true` |
+| `IsRemote` | boolean | Default `false`. When `true`, the service is offered remotely and city/country are stored as empty strings |
 | `DurationMinutes` | integer | 1–1440 |
 | `Price` | numeric | 0–100000 |
 | `IsActive` | boolean | Default `true` |
@@ -218,6 +219,7 @@ Migrations live in `src/App/Migrations/` and are applied on API startup via `App
 | `AddServiceIdToProviderAvailability` | Scopes availability to individual services; migrates existing provider-wide slots to each active service |
 | `AddTimeZoneToUser` | Adds IANA `TimeZoneId` to Users |
 | `AddNotifications` | Creates Notifications table |
+| `AddIsRemoteToService` | Adds `IsRemote` boolean to Services (default `false`) |
 
 ### Manual migration commands
 

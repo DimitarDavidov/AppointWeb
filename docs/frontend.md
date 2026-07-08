@@ -70,6 +70,8 @@ ClientApp/src/
 │   ├── appointmentCancellationUtils.ts
 │   ├── appointmentRescheduleUtils.ts
 │   ├── appointmentOutcomeUtils.ts
+│   ├── catalogFilters.ts           # Client-side catalog search and location filters
+│   ├── formatService.ts            # Price, duration, and location display helpers
 │   ├── providerPanelUtils.ts       # Provider stats and appointment grouping
 │   └── getTimeGreeting.ts          # Time-of-day greeting from browser timezone
 ├── App.tsx                 # Router setup
@@ -130,10 +132,15 @@ The navbar adapts based on auth state and role:
 - Welcome section with sign-up prompts for guests
 - Service catalog loaded from `GET /api/catalog`
 - Logged-in providers do not see their own listings in the browse grid
+- **Catalog search bar** — two client-side filters (no extra API calls):
+  - **Service search** — matches service name, provider username, category, and description (`utils/catalogFilters.ts` → `matchesServiceSearch`)
+  - **Location search** — matches city, country, or remote offerings; typing `remote`, `online`, or `virtual` also matches remote services (`matchesLocationSearch`)
+- Filters combine with AND logic; empty state message summarizes active queries via `describeCatalogFilterSummary`
+- Each catalog card shows category, provider, **location** (`formatServiceLocation`: `Remote` or `City, Country`), duration, and price
 
 ### Service detail (`/book/:providerId/:serviceId`)
 
-- Shows service info, provider, duration, and price
+- Shows service info, provider, duration, price, and **location** (remote or city/country)
 - Logged-in users can book a time slot
 - Providers viewing their own listing see a preview message instead of the booking form
 
@@ -171,7 +178,7 @@ Glass-style dashboard for providers with animated stat cards, tabbed appointment
 
 - Section header with **+ Add service**
 - Service cards show catalog info with **Edit**, **Hours**, and **Preview** actions
-- **Edit** opens a single modal for all service fields (title, description, category, location, duration, price)
+- **Edit** opens a single modal for all service fields (title, description, category, **remote toggle**, city/country when in-person, duration, price)
 - **Hours** opens a per-service availability editor (`EditProviderAvailabilityModal`) — each listing has its own weekly schedule
 - **Preview** links to the public booking page
 - Dashed **Add service** card at the end of the grid for quick creation

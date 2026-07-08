@@ -16,6 +16,8 @@ Detailed documentation for the AppointWeb project. For a quick start guide, see 
 
 | Area | Highlights |
 |------|------------|
+| Catalog search | Home page search bar filters offerings client-side by service name, provider, category, description, and by city, country, or remote |
+| Service location | Each listing is in-person (city + country) or remote; shown on catalog cards and service detail; providers set this when creating or editing a service |
 | Booking | Catalog browse → book → provider confirms → customer notified by email and in-app → appointment is active |
 | Reschedule | Either party proposes a new time; the other accepts; requester notified by email and in-app; tracked separately from initial pending time changes |
 | Cancellation | Records who cancelled and optional reason; emails and in-app notification to the other party |

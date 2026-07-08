@@ -183,7 +183,7 @@ The frontend runs on **http://localhost:5173** and talks to the API at `http://l
 
 | Route | Access | Description |
 |-------|--------|-------------|
-| `/` | Public | Home page and service catalog |
+| `/` | Public | Home page, service catalog, and client-side search |
 | `/book/:providerId/:serviceId` | Public | Service detail and booking |
 | `/login` | Public | Log in |
 | `/register` | Public | Create an account (Customer or Provider) |

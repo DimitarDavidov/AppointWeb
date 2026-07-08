@@ -70,6 +70,16 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 6. Subsequent API requests include `Authorization: Bearer <token>`
 7. Backend validates the JWT on protected endpoints
 
+## Request flow (example: catalog browse and search)
+
+1. User opens `/` (Home)
+2. Frontend loads all offerings from `GET /api/catalog` (no auth required)
+3. Logged-in providers do not see their own listings in the grid
+4. The **catalog search bar** filters results **client-side** in the browser:
+   - **Service search** — service name, provider username, category, description
+   - **Location search** — city, country, or remote (keywords like `remote`, `online`, `virtual` match remote offerings)
+5. User clicks a card → `/book/:providerId/:serviceId` for detail and booking
+
 ## Request flow (example: booking)
 
 1. User browses the service catalog on `/`
@@ -179,6 +189,8 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 
 - Providers **cannot book their own services** (enforced in API and UI)
 - The home catalog hides a logged-in provider's own listings from the browse grid
+- Catalog search and location filtering happen **client-side** on the full catalog response — there are no server-side search query parameters
+- Services are either **in-person** (city + country required) or **remote** (`IsRemote = true`, city/country stored as empty strings)
 - Appointment lists are scoped by role: customers see their bookings, providers see bookings where they are the provider, admins see all
 - Double-booking is prevented by application checks and a PostgreSQL exclusion constraint
 - Suspended users cannot use authenticated endpoints

@@ -193,11 +193,19 @@ GET /api/catalog
     "category": "Healthcare & Dental",
     "country": "United States",
     "city": "New York",
+    "isRemote": false,
     "durationMinutes": 30,
     "price": 25.00
   }
 ]
 ```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `isRemote` | boolean | When `true`, the service is offered remotely; `city` and `country` are empty strings |
+| `city`, `country` | string | Set for in-person services; empty when `isRemote` is `true` |
+
+The home page filters this list **client-side** — there are no server-side catalog search query parameters.
 
 ---
 
@@ -654,6 +662,7 @@ Authorization: Bearer <accessToken>
     "category": "Healthcare & Dental",
     "country": "United States",
     "city": "New York",
+    "isRemote": false,
     "durationMinutes": 30,
     "price": 25.00
   }
@@ -691,12 +700,21 @@ Authorization: Bearer <accessToken>
     "name": "Updated Service Name",
     "description": "New description",
     "category": "Beauty & Wellness",
+    "isRemote": false,
     "country": "United States",
     "city": "New York",
     "durationMinutes": 45,
     "price": 30.00
 }
 ```
+
+| Field | Type | Rules |
+|-------|------|-------|
+| `isRemote` | boolean | When `true`, city and country are cleared and not required |
+| `country` | string | Required for in-person services (`isRemote: false`) |
+| `city` | string | Required for in-person services (`isRemote: false`) |
+
+Create and update use `ServiceLocationNormalizer` on the backend: remote services store empty `city`/`country`; in-person services require both.
 
 ---
 
