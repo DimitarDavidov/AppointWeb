@@ -1,0 +1,43 @@
+.customer-rating {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.customer-rating-name {
+  padding: 0;
+  font: inherit;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+
+  &:hover {
+    background: transparent;
+    color: var(--color-primary, var(--color-text));
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary, currentColor);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+.customer-rating-detail {
+  display: inline-flex;
+  align-items: center;
+}
+
+.customer-rating-status {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+
+  &--error {
+    color: var(--color-danger, #c0392b);
+  }
+}

@@ -1,0 +1,47 @@
+.account-ratings {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e6ec);
+  border-radius: 12px;
+}
+
+.account-ratings-title {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.account-ratings-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.account-ratings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.account-ratings-label {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.account-ratings-empty {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.account-ratings-status {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+
+  &--error {
+    color: var(--color-danger, #c0392b);
+  }
+}

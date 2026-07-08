@@ -10,4 +10,6 @@ export interface CatalogOffering {
   isRemote: boolean;
   durationMinutes: number;
   price: number;
+  averageRating: number | null;
+  ratingCount: number;
 }

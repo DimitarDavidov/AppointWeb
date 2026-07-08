@@ -5,6 +5,7 @@ import {
   AccountLoadingView,
 } from "../components/Account/AccountPageStates";
 import { DeleteAccountDialog } from "../components/Account/DeleteAccountDialog";
+import { AccountRatingsSection } from "../components/Rating/AccountRatingsSection";
 import { useAccountSettings } from "../hooks/useAccountSettings";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
 import { formatRoleLabel } from "../constants/roles";
@@ -72,6 +73,8 @@ function Account() {
         )}
 
         <AccountFieldsSection settings={settings} />
+
+        <AccountRatingsSection role={role} />
 
         <p className="account-delete-wrap">
           <button type="button" onClick={openDeleteDialog}>

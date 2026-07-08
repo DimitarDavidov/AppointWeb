@@ -26,6 +26,7 @@ ClientApp/src/
 │   ├── appointments.ts     # Appointment CRUD actions
 │   ├── catalog.ts          # Public service catalog
 │   ├── notifications.ts    # In-app notification list and read state
+│   ├── ratings.ts          # Rating upsert/delete and public service reviews
 │   ├── provider.ts         # Provider services and availability
 │   └── errors.ts           # API error message helper
 ├── components/
@@ -37,6 +38,7 @@ ClientApp/src/
 │   ├── Admin/              # Admin panel tables, cards, modals
 │   ├── Appointments/       # Appointment cards, cancel dialog, reschedule meta
 │   ├── ConfirmDialog/      # Reusable confirmation dialog
+│   ├── Rating/             # Star rating input/display, appointment review form, service reviews
 │   └── Provider/           # Provider panel: stats, tabs, service cards, modals, skeleton
 ├── constants/
 │   └── roles.ts            # Role constants and labels
@@ -64,7 +66,8 @@ ClientApp/src/
 │   ├── store.ts            # Redux store configuration
 │   └── hooks.ts            # Typed useAppDispatch / useAppSelector
 ├── types/                  # TypeScript interfaces for API DTOs
-│   └── notifications.ts    # Notification and unread-count types
+│   ├── notifications.ts    # Notification and unread-count types
+│   └── rating.ts           # Rating, review, and submit-request types
 ├── utils/                  # Formatting, filters, appointment helpers
 │   ├── appointmentFilters.ts       # Customer appointment tab filters
 │   ├── appointmentCancellationUtils.ts
@@ -125,6 +128,13 @@ The navbar adapts based on auth state and role:
 - Unread items are highlighted; clicking one marks it read and navigates to `/appointments` (customers) or `/provider` (providers/admins)
 - **Mark all read** calls `PATCH /api/notifications/read-all`
 
+### Ratings (`components/Rating/`)
+
+- `StarRating` — exports `StarRatingDisplay` (fractional/half-star display) and `StarRatingInput` (half-star selection with hover preview and clear)
+- `AppointmentRatingSection` — the review form/summary embedded in appointment cards; both stars and comment are optional (Save is disabled only when both are empty); upserts via `PUT /api/ratings/appointments/{id}`, supports edit and remove
+- `ServiceReviewsSection` — self-fetching public reviews + average for a provider's service on the service detail page
+- Eligibility is gated with `utils/appointmentOutcomeUtils.ts` → `isRateableStatus`
+
 ## Key pages
 
 ### Home (`/`)
@@ -141,6 +151,7 @@ The navbar adapts based on auth state and role:
 ### Service detail (`/book/:providerId/:serviceId`)
 
 - Shows service info, provider, duration, price, and **location** (remote or city/country)
+- Shows the **average star rating** and count (from the catalog offering), plus a **reviews section** (`ServiceReviewsSection`) that loads public reviews from `GET /api/catalog/{providerId}/{serviceId}/reviews`
 - Logged-in users can book a time slot
 - Providers viewing their own listing see a preview message instead of the booking form
 
@@ -151,6 +162,7 @@ The navbar adapts based on auth state and role:
 - **Upcoming** and **Pending** tabs show count badges when greater than zero
 - Supports cancel, reschedule request/accept, and outcome actions (Completed / NoShow)
 - Cancelled appointments show who cancelled and the cancellation reason (when available)
+- Terminal appointments (Completed, No-show, Cancelled) show a **review section** (`AppointmentRatingSection`, viewer `customer`) to rate the provider's service — optional stars (0.5–5) and/or comment, editable and removable
 
 ### Provider panel (`/provider`)
 
@@ -187,6 +199,7 @@ Glass-style dashboard for providers with animated stat cards, tabbed appointment
 **Provider actions on appointments**
 
 - Confirm bookings, cancel, request/accept reschedules, mark outcomes
+- On terminal appointments (Past and Cancelled tabs), rate the customer via `AppointmentRatingSection` (viewer `provider`); this feedback is private
 - Data: `GET /api/provider/appointments`
 
 ### Admin panel (`/admin`)

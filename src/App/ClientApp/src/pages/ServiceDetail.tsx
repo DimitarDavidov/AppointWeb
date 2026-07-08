@@ -4,6 +4,8 @@ import { createAppointment } from "../api/appointments";
 import { getErrorMessage } from "../api/errors";
 import { getCatalogOffering } from "../api/catalog";
 import { AppointmentBookingPicker } from "../components/Calendar/AppointmentBookingPicker";
+import { StarRatingDisplay } from "../components/Rating/StarRating";
+import { ServiceReviewsSection } from "../components/Rating/ServiceReviewsSection";
 import type { Appointment } from "../types/appointment";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { useAppSelector } from "../store/hooks";
@@ -176,6 +178,19 @@ function ServiceDetail() {
           {formatServiceLocation(offering.city, offering.country, offering.isRemote)}
         </p>
 
+        <div className="service-detail-rating">
+          {offering.ratingCount > 0 ? (
+            <StarRatingDisplay
+              value={offering.averageRating}
+              size="md"
+              showValue
+              count={offering.ratingCount}
+            />
+          ) : (
+            <span className="service-detail-rating-empty">No ratings yet</span>
+          )}
+        </div>
+
         {offering.description ? (
           <p className="service-detail-description">{offering.description}</p>
         ) : (
@@ -277,6 +292,8 @@ function ServiceDetail() {
           </div>
         )}
       </div>
+
+      <ServiceReviewsSection providerId={providerId!} serviceId={serviceId!} />
     </div>
   );
 }

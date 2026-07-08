@@ -63,4 +63,5 @@ public class Appointment
     public User Customer { get; set; } = null!;
     public User Provider { get; set; } = null!;
     public Service Service { get; set; } = null!;
+    public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 }

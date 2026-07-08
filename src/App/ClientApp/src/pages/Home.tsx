@@ -11,6 +11,7 @@ import {
 } from "../utils/catalogFilters";
 import { isSameId } from "../utils/isSameId";
 import { useAppSelector } from "../store/hooks";
+import { StarRatingDisplay } from "../components/Rating/StarRating";
 import "./Home.scss";
 
 function SearchIcon() {
@@ -240,6 +241,16 @@ function Home() {
                       )}
                     </p>
                     <h3 className="catalog-card-name">{offering.serviceName}</h3>
+                    {offering.ratingCount > 0 && (
+                      <div className="catalog-card-rating">
+                        <StarRatingDisplay
+                          value={offering.averageRating}
+                          size="sm"
+                          showValue
+                          count={offering.ratingCount}
+                        />
+                      </div>
+                    )}
                     {offering.description && (
                       <p className="catalog-card-description">
                         {offering.description}

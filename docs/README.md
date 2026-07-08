@@ -22,6 +22,7 @@ Detailed documentation for the AppointWeb project. For a quick start guide, see 
 | Reschedule | Either party proposes a new time; the other accepts; requester notified by email and in-app; tracked separately from initial pending time changes |
 | Cancellation | Records who cancelled and optional reason; emails and in-app notification to the other party |
 | Notifications | Bell icon in navbar with unread badge; appointment confirmed, cancelled, reschedule received, and reschedule accepted |
+| Ratings & reviews | Two-way ratings after a terminal appointment (completed, no-show, cancelled); customers rate the service publicly, providers rate customers privately; stars (0.5–5) and comment both optional; per-service average and public reviews on the service page |
 | Provider panel | Dashboard with stats, appointment tabs, per-service booking hours, and service catalog management |
 | Admin | User search, edit, suspend, delete |
 

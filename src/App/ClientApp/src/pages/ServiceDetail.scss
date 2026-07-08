@@ -7,6 +7,15 @@
   background-color: var(--color-bg-subtle);
   box-sizing: border-box;
 
+  &-rating {
+    margin: 0.75rem 0 0;
+  }
+
+  &-rating-empty {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+
   &-card {
     max-width: 720px;
     margin: 0 auto;

@@ -195,7 +195,9 @@ GET /api/catalog
     "city": "New York",
     "isRemote": false,
     "durationMinutes": 30,
-    "price": 25.00
+    "price": 25.00,
+    "averageRating": 4.5,
+    "ratingCount": 12
   }
 ]
 ```
@@ -204,6 +206,10 @@ GET /api/catalog
 |-------|------|-------|
 | `isRemote` | boolean | When `true`, the service is offered remotely; `city` and `country` are empty strings |
 | `city`, `country` | string | Set for in-person services; empty when `isRemote` is `true` |
+| `averageRating` | number \| null | Average customer star rating for this provider's service; `null` when there are no rated appointments |
+| `ratingCount` | integer | Number of star ratings backing the average (public statuses only) |
+
+Public ratings count only **Completed** and **No-show** appointments. Comment-only reviews (no stars) are excluded from `averageRating` and `ratingCount`.
 
 The home page filters this list **client-side** — there are no server-side catalog search query parameters.
 
@@ -224,6 +230,41 @@ GET /api/catalog/{providerId}/{serviceId}
 | Status | Condition |
 |--------|-----------|
 | `404 Not Found` | Offering not found or inactive |
+
+---
+
+### Get service reviews
+
+Returns the public rating summary and written reviews for a provider's service. No authentication required.
+
+```
+GET /api/catalog/{providerId}/{serviceId}/reviews
+```
+
+**Success response — `200 OK`**
+
+```json
+{
+  "averageRating": 4.5,
+  "ratingCount": 12,
+  "reviews": [
+    {
+      "stars": 5.0,
+      "comment": "Great experience, highly recommend.",
+      "reviewerUsername": "john",
+      "createdAt": "2026-06-20T14:30:00Z"
+    }
+  ]
+}
+```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `averageRating` | number \| null | Average of star values from public ratings; `null` when none |
+| `ratingCount` | integer | Number of star ratings backing the average |
+| `reviews` | array | Public reviews that include a **comment**, newest first (a review may have a comment with `stars: null`) |
+
+Only ratings on **Completed** or **No-show** appointments are included. Provider→customer ratings are never returned here.
 
 ---
 
@@ -284,10 +325,19 @@ Authorization: Bearer <accessToken>
     "rescheduleRequestedByUserId": null,
     "providerRescheduleCount": 0,
     "customerRescheduleCount": 0,
-    "previousStartTime": null
+    "previousStartTime": null,
+    "hasRated": false,
+    "myRatingStars": null,
+    "myRatingComment": null
   }
 ]
 ```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `hasRated` | boolean | Whether the **current user** has left a rating for this appointment |
+| `myRatingStars` | number \| null | The current user's own star value, if any |
+| `myRatingComment` | string \| null | The current user's own comment, if any |
 
 ---
 
@@ -573,6 +623,85 @@ Authorization: Bearer <accessToken>
 ```
 
 **Success response — `204 No Content`**
+
+---
+
+## Rating endpoints
+
+All require authentication. A rating can only be left by the appointment's **customer** or **provider**, and only once the appointment is **Completed**, **No-show**, or **Cancelled**. Each participant has one rating per appointment (customer→provider or provider→customer) and may edit it at any time.
+
+Both the star value and the comment are optional and independent — a submission may contain stars only, a comment only, or both. A completely empty submission is rejected.
+
+### Get my rating
+
+Returns the current user's own rating for an appointment.
+
+```
+GET /api/ratings/appointments/{appointmentId}
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `200 OK`**
+
+```json
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "appointmentId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "direction": "CustomerToProvider",
+  "stars": 4.5,
+  "comment": "Friendly and on time.",
+  "createdAt": "2026-06-20T14:30:00Z",
+  "updatedAt": "2026-06-20T14:30:00Z"
+}
+```
+
+`204 No Content` is returned when the user has not rated this appointment.
+
+### Create or update my rating
+
+Upserts the current user's rating. Direction and the rated user are derived from the caller's role in the appointment.
+
+```
+PUT /api/ratings/appointments/{appointmentId}
+Authorization: Bearer <accessToken>
+```
+
+**Request body**
+
+```json
+{
+  "stars": 4.5,
+  "comment": "Friendly and on time."
+}
+```
+
+| Field | Type | Rules |
+|-------|------|-------|
+| `stars` | number \| null | Optional. When present, must be 0.5–5.0 in 0.5 increments |
+| `comment` | string \| null | Optional, max 1000 characters |
+
+**Success response — `200 OK`** — Returns the created/updated rating.
+
+**Error responses**
+
+| Status | Condition |
+|--------|-----------|
+| `400 Bad Request` | Both stars and comment empty, or stars out of range / not a half-step |
+| `403 Forbidden` | Caller is not a participant in the appointment |
+| `404 Not Found` | Appointment not found |
+
+### Delete my rating
+
+```
+DELETE /api/ratings/appointments/{appointmentId}
+Authorization: Bearer <accessToken>
+```
+
+**Success response — `204 No Content`**
+
+| Status | Condition |
+|--------|-----------|
+| `404 Not Found` | The user has no rating for this appointment |
 
 ---
 

@@ -20,6 +20,12 @@ export function getAppointmentsNeedingOutcome(
     );
 }
 
+export function isRateableStatus(status: string): boolean {
+  return (
+    status === "Completed" || status === "NoShow" || status === "Cancelled"
+  );
+}
+
 export type AppointmentOutcomeViewer = "customer" | "provider";
 
 export function getOutcomeStatusLabel(

@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<ProviderAvailability> ProviderAvailabilities => Set<ProviderAvailability>();
     public DbSet<ProviderService> ProviderServices => Set<ProviderService>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Rating> Ratings => Set<Rating>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

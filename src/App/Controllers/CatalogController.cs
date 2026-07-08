@@ -1,5 +1,6 @@
 using AppointWeb.Api.Data;
 using AppointWeb.Api.Dtos.Catalog;
+using AppointWeb.Api.Dtos.Ratings;
 using AppointWeb.Api.Models;
 using AppointWeb.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -105,7 +106,60 @@ public class CatalogController : ControllerBase
                 City = ps.Service.City,
                 IsRemote = ps.Service.IsRemote,
                 DurationMinutes = ps.Service.DurationMinutes,
-                Price = ps.Service.Price
+                Price = ps.Service.Price,
+                AverageRating = ps.Service.Ratings
+                    .Where(r =>
+                        r.RateeId == ps.ProviderId &&
+                        r.Direction == RatingDirection.CustomerToProvider &&
+                        r.Stars != null &&
+                        (r.Appointment.Status == AppointmentStatus.Completed ||
+                         r.Appointment.Status == AppointmentStatus.NoShow))
+                    .Average(r => (double?)r.Stars),
+                RatingCount = ps.Service.Ratings
+                    .Count(r =>
+                        r.RateeId == ps.ProviderId &&
+                        r.Direction == RatingDirection.CustomerToProvider &&
+                        r.Stars != null &&
+                        (r.Appointment.Status == AppointmentStatus.Completed ||
+                         r.Appointment.Status == AppointmentStatus.NoShow)),
             });
+    }
+
+    [HttpGet("{providerId:guid}/{serviceId:guid}/reviews")]
+    public async Task<ActionResult<ServiceReviewsResponse>> GetReviews(
+        Guid providerId,
+        Guid serviceId,
+        CancellationToken ct)
+    {
+        var publicRatings = _db.Ratings
+            .AsNoTracking()
+            .Where(r =>
+                r.RateeId == providerId &&
+                r.ServiceId == serviceId &&
+                r.Direction == RatingDirection.CustomerToProvider &&
+                (r.Appointment.Status == AppointmentStatus.Completed ||
+                 r.Appointment.Status == AppointmentStatus.NoShow));
+
+        var response = new ServiceReviewsResponse
+        {
+            AverageRating = await publicRatings
+                .Where(r => r.Stars != null)
+                .AverageAsync(r => (double?)r.Stars, ct),
+            RatingCount = await publicRatings.CountAsync(r => r.Stars != null, ct),
+            Reviews = await publicRatings
+                .Where(r => r.Comment != null)
+                .OrderByDescending(r => r.UpdatedAt)
+                .Select(r => new ServiceReviewResponse
+                {
+                    Stars = r.Stars,
+                    Comment = r.Comment,
+                    ReviewerId = r.RaterId,
+                    ReviewerUsername = r.Rater.Username,
+                    CreatedAt = r.CreatedAt,
+                })
+                .ToListAsync(ct),
+        };
+
+        return Ok(response);
     }
 }

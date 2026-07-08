@@ -25,6 +25,9 @@ export interface AppointmentDetail extends Appointment {
   providerRescheduleCount: number;
   customerRescheduleCount: number;
   previousStartTime: string | null;
+  hasRated: boolean;
+  myRatingStars: number | null;
+  myRatingComment: string | null;
 }
 
 export interface CancelAppointmentRequest {

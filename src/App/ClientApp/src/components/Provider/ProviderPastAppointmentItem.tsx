@@ -3,8 +3,11 @@ import { updateAppointmentStatus } from "../../api/appointments";
 import type { AppointmentDetail } from "../../types/appointment";
 import {
   getOutcomeStatusLabel,
+  isRateableStatus,
   needsAppointmentOutcome,
 } from "../../utils/appointmentOutcomeUtils";
+import { AppointmentRatingSection } from "../Rating/AppointmentRatingSection";
+import { CustomerRatingName } from "../Rating/CustomerRatingName";
 import { capitalizeFirstLetter } from "../../utils/formatDisplayName";
 import { formatDuration, formatPrice } from "../../utils/formatService";
 import { formatAppointmentDateTime, getDurationMinutes } from "../../utils/formatAppointment";
@@ -126,7 +129,12 @@ export function ProviderPastAppointmentItem({
                 <ProviderCustomerIcon />
                 Customer
               </dt>
-              <dd>{customerName}</dd>
+              <dd>
+                <CustomerRatingName
+                  customerId={appointment.customerId}
+                  name={customerName}
+                />
+              </dd>
             </div>
             <div className="provider-appointment-meta-item">
               <dt>
@@ -195,6 +203,14 @@ export function ProviderPastAppointmentItem({
           />
         )}
       </div>
+
+      {!needsOutcome && isRateableStatus(appointment.status) && (
+        <AppointmentRatingSection
+          appointment={appointment}
+          viewer="provider"
+          onUpdated={onUpdated}
+        />
+      )}
     </li>
   );
 }

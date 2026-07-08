@@ -39,4 +39,5 @@ public class Service
         new List<ProviderService>();
     public ICollection<ProviderAvailability> Availabilities { get; set; } =
         new List<ProviderAvailability>();
+    public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 }

@@ -52,6 +52,21 @@ AppointWeb uses **PostgreSQL 16** with **Entity Framework Core** for data access
                  │ IsRead           │
                  │ CreatedAt        │
                  └──────────────────┘
+
+                 ┌──────────────────┐
+                 │     Ratings      │
+                 ├──────────────────┤
+                 │ Id (PK)          │
+                 │ AppointmentId(FK)│──► Appointments (cascade)
+                 │ ServiceId (FK)   │──► Services
+                 │ RaterId (FK)     │──► Users
+                 │ RateeId (FK)     │──► Users
+                 │ Direction        │
+                 │ Stars (nullable) │
+                 │ Comment          │
+                 │ CreatedAt        │
+                 │ UpdatedAt        │
+                 └──────────────────┘
 ```
 
 A user can be a **customer** (books appointments), a **provider** (delivers services), or an **admin** (manages users). The same `Users` table serves all roles.
@@ -174,6 +189,30 @@ In-app notifications for appointment events. Rows are created alongside email no
 
 Indexed on `(UserId, IsRead)` and `(UserId, CreatedAt)` for listing and unread counts.
 
+### Ratings
+
+Two-way ratings left after an appointment reaches a terminal state. Each participant may leave one rating per appointment.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `Id` | uuid | Primary key |
+| `AppointmentId` | uuid | FK → Appointments (cascade delete) |
+| `ServiceId` | uuid | FK → Services (restrict); stored so per-service averages are cheap |
+| `RaterId` | uuid | FK → Users (restrict); who left the rating |
+| `RateeId` | uuid | FK → Users (restrict); who is being rated |
+| `Direction` | integer | Enum: `CustomerToProvider` (0), `ProviderToCustomer` (1) |
+| `Stars` | numeric(2,1) | Nullable. 0.5–5.0 in 0.5 steps; null when comment-only |
+| `Comment` | varchar(1000) | Nullable |
+| `CreatedAt` | timestamptz | UTC |
+| `UpdatedAt` | timestamptz | UTC, bumped on edit |
+
+- Unique index on `(AppointmentId, Direction)` — one rating per side per appointment.
+- Index on `(RateeId, ServiceId, Direction)` — backs public per-service aggregation.
+- Check constraint `CK_Rating_Stars_Range`: `Stars` is null or one of 0.5…5.0.
+- Check constraint `CK_Rating_NotEmpty`: at least one of `Stars` or `Comment` is present.
+
+A service's public average and reviews are scoped by `(RateeId = provider, ServiceId)` and only count `CustomerToProvider` ratings on **Completed** or **No-show** appointments, so a provider's two services keep separate ratings.
+
 ## Constraints
 
 ### Unique email and username
@@ -220,6 +259,7 @@ Migrations live in `src/App/Migrations/` and are applied on API startup via `App
 | `AddTimeZoneToUser` | Adds IANA `TimeZoneId` to Users |
 | `AddNotifications` | Creates Notifications table |
 | `AddIsRemoteToService` | Adds `IsRemote` boolean to Services (default `false`) |
+| `AddRatings` | Creates Ratings table with unique/aggregation indexes and star/non-empty check constraints |
 
 ### Manual migration commands
 

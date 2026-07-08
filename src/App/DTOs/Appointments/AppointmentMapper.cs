@@ -4,7 +4,9 @@ namespace AppointWeb.Api.Dtos.Appointments;
 
 public static class AppointmentMapper
 {
-    public static IQueryable<AppointmentDetailResponse> ProjectToDetail(IQueryable<Appointment> query) =>
+    public static IQueryable<AppointmentDetailResponse> ProjectToDetail(
+        IQueryable<Appointment> query,
+        Guid currentUserId) =>
         query.Select(a => new AppointmentDetailResponse
         {
             Id = a.Id,
@@ -30,6 +32,15 @@ public static class AppointmentMapper
             ProviderRescheduleCount = a.ProviderRescheduleCount,
             CustomerRescheduleCount = a.CustomerRescheduleCount,
             PreviousStartTime = a.PreviousStartTime,
+            HasRated = a.Ratings.Any(r => r.RaterId == currentUserId),
+            MyRatingStars = a.Ratings
+                .Where(r => r.RaterId == currentUserId)
+                .Select(r => r.Stars)
+                .FirstOrDefault(),
+            MyRatingComment = a.Ratings
+                .Where(r => r.RaterId == currentUserId)
+                .Select(r => r.Comment)
+                .FirstOrDefault(),
         });
 
     public static AppointmentResponse MapResponse(Appointment appointment) =>

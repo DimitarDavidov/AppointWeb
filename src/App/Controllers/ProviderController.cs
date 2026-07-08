@@ -32,7 +32,8 @@ public class ProviderController : ControllerBase
         var appointments = await AppointmentMapper.ProjectToDetail(
                 _db.Appointments
                     .AsNoTracking()
-                    .Where(a => a.ProviderId == providerId))
+                    .Where(a => a.ProviderId == providerId),
+                providerId)
             .OrderBy(a => a.StartTime)
             .ToListAsync(cancellationToken);
 
@@ -64,6 +65,21 @@ public class ProviderController : ControllerBase
                 IsRemote = ps.Service.IsRemote,
                 DurationMinutes = ps.Service.DurationMinutes,
                 Price = ps.Service.Price,
+                AverageRating = ps.Service.Ratings
+                    .Where(r =>
+                        r.RateeId == ps.ProviderId &&
+                        r.Direction == RatingDirection.CustomerToProvider &&
+                        r.Stars != null &&
+                        (r.Appointment.Status == AppointmentStatus.Completed ||
+                         r.Appointment.Status == AppointmentStatus.NoShow))
+                    .Average(r => (double?)r.Stars),
+                RatingCount = ps.Service.Ratings
+                    .Count(r =>
+                        r.RateeId == ps.ProviderId &&
+                        r.Direction == RatingDirection.CustomerToProvider &&
+                        r.Stars != null &&
+                        (r.Appointment.Status == AppointmentStatus.Completed ||
+                         r.Appointment.Status == AppointmentStatus.NoShow)),
             })
             .ToListAsync(cancellationToken);
 

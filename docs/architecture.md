@@ -129,6 +129,15 @@ Users register as **Customer** or **Provider**. The **Admin** role is assigned m
 5. Clicking a notification marks it read and navigates to `/appointments` (customers) or `/provider` (providers/admins)
 6. **Mark all read** calls `PATCH /api/notifications/read-all`
 
+## Request flow (example: ratings)
+
+1. An appointment reaches a terminal state (**Completed**, **No-show**, or **Cancelled**)
+2. Each participant sees a review section on the appointment (customers on `/appointments`, providers on the `/provider` past/cancelled tabs)
+3. Leaving a review is optional; when opened, the star value and comment are both optional — the user may submit stars only, a comment only, or both (a fully empty submission is rejected)
+4. The frontend upserts via `PUT /api/ratings/appointments/{id}`; the backend derives direction (customer→provider or provider→customer) and the rated user from the caller's role
+5. Customer→provider ratings feed the **public** per-service average and reviews (Completed + No-show only), shown on the service page and catalog cards; provider→customer ratings are stored for later use and are not shown publicly
+6. Ratings are editable and removable at any time (`PUT` again or `DELETE`)
+
 ## Appointment lifecycle
 
 ```
@@ -197,5 +206,6 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 - New bookings start as **Pending** until the provider confirms them
 - **Availability is per service** — each listing can have its own weekly hours; if none are set, any time is allowed
 - Reschedule requests require acceptance by the other party; only changes from a previously confirmed slot count toward reschedule history
+- Ratings are optional and only allowed on terminal appointments (Completed, No-show, Cancelled) by the two participants; stars (0.5–5) and comment are each optional but at least one is required; per-service public averages count only Completed and No-show customer→provider ratings
 - Email notifications are sent for booking requests, appointment confirmations, cancellations, reschedule proposals, and accepted reschedules (SMTP in production, console logging when `Email:Host` is empty)
 - In-app notifications are stored in the database for appointment confirmations, cancellations, reschedule proposals, and accepted reschedules; the navbar bell polls for unread items

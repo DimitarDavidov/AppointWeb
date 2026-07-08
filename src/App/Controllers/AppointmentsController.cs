@@ -50,7 +50,7 @@ public class AppointmentsController : ControllerBase
         var role = User.FindFirstValue(ClaimTypes.Role);
 
         var appointments = await AppointmentMapper.ProjectToDetail(
-                FilterAppointmentsForUser(userId, role))
+                FilterAppointmentsForUser(userId, role), userId)
             .OrderBy(a => a.StartTime)
             .ToListAsync(ct);
 

@@ -218,6 +218,10 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 | `GET` | `/api/notifications/unread-count` | Yes | Unread notification count for navbar badge |
 | `PATCH` | `/api/notifications/{id}/read` | Yes | Mark one notification as read |
 | `PATCH` | `/api/notifications/read-all` | Yes | Mark all notifications as read |
+| `GET` | `/api/catalog/{providerId}/{serviceId}/reviews` | No | Public rating summary and reviews for a service |
+| `GET` | `/api/ratings/appointments/{id}` | Yes | Get the current user's rating for an appointment |
+| `PUT` | `/api/ratings/appointments/{id}` | Yes | Create or update the current user's rating |
+| `DELETE` | `/api/ratings/appointments/{id}` | Yes | Remove the current user's rating |
 | `GET` | `/api/provider/appointments` | Provider, Admin | List provider-scoped appointments |
 | `GET` | `/api/account` | Yes | Get current user profile |
 | `GET` | `/api/provider/services` | Provider | List the provider's services |

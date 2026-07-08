@@ -48,6 +48,10 @@ public class AccountDeletionService : IAccountDeletionService
 
         try
         {
+            await _db.Ratings
+                .Where(r => r.RaterId == userId || r.RateeId == userId)
+                .ExecuteDeleteAsync(cancellationToken);
+
             await _db.Appointments
                 .Where(a => a.CustomerId == userId || a.ProviderId == userId)
                 .ExecuteDeleteAsync(cancellationToken);

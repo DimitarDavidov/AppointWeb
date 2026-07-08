@@ -11,6 +11,7 @@ import { CancelAppointmentDialog } from "../Appointments/CancelAppointmentDialog
 import { AppointmentRescheduleMeta } from "../Appointments/AppointmentRescheduleMeta";
 import { AppointmentBookingPicker } from "../Calendar/AppointmentBookingPicker";
 import type { AppointmentDetail } from "../../types/appointment";
+import { CustomerRatingName } from "../Rating/CustomerRatingName";
 import {
   canAcceptReschedule,
   hasPendingReschedule,
@@ -252,7 +253,12 @@ export function ProviderUpcomingAppointmentItem({
                 <ProviderCustomerIcon />
                 Customer
               </dt>
-              <dd>{customerName}</dd>
+              <dd>
+                <CustomerRatingName
+                  customerId={appointment.customerId}
+                  name={customerName}
+                />
+              </dd>
             </div>
             <div className="provider-appointment-meta-item">
               <dt>

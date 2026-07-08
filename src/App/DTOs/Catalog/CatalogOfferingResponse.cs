@@ -13,4 +13,6 @@ public class CatalogOfferingResponse
     public bool IsRemote { get; set; }
     public int DurationMinutes { get; set; }
     public decimal Price { get; set; }
+    public double? AverageRating { get; set; }
+    public int RatingCount { get; set; }
 }

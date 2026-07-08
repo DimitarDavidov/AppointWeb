@@ -19,8 +19,10 @@ import {
 import { getCancelledByLabel } from "../../utils/appointmentCancellationUtils";
 import {
   getOutcomeStatusLabel,
+  isRateableStatus,
   needsAppointmentOutcome,
 } from "../../utils/appointmentOutcomeUtils";
+import { AppointmentRatingSection } from "../Rating/AppointmentRatingSection";
 import { UserRoles } from "../../constants/roles";
 import { useAppSelector } from "../../store/hooks";
 import { isSameId } from "../../utils/isSameId";
@@ -563,6 +565,24 @@ export function AppointmentCard({
           )}
         </>
       )}
+
+      {isRateableStatus(appointment.status) && isCustomerView && (
+        <AppointmentRatingSection
+          appointment={appointment}
+          viewer="customer"
+          onUpdated={onUpdated}
+        />
+      )}
+
+      {isRateableStatus(appointment.status) &&
+        isProviderView &&
+        !isCustomerView && (
+          <AppointmentRatingSection
+            appointment={appointment}
+            viewer="provider"
+            onUpdated={onUpdated}
+          />
+        )}
     </li>
   );
 }

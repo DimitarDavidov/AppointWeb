@@ -24,6 +24,11 @@ public static class AppointmentStatusMapper
     public static bool CanSetOutcome(AppointmentStatus status) =>
         status == AppointmentStatus.Booked;
 
+    public static bool CanBeRated(AppointmentStatus status) =>
+        status is AppointmentStatus.Completed
+            or AppointmentStatus.NoShow
+            or AppointmentStatus.Cancelled;
+
     public static bool TryParseOutcomeStatus(string status, out AppointmentStatus parsed)
     {
         switch (status)
