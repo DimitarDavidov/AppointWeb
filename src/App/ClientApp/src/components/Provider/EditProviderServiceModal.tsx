@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { SERVICE_CATEGORIES, isServiceCategory } from "../../constants/serviceCategories";
 import type {
   ProviderServiceDetail,
@@ -174,7 +175,7 @@ function EditProviderServiceModal({
 
   const displayError = validationError || error;
 
-  return (
+  return createPortal(
     <div className="provider-modal-root" role="presentation">
       <button
         type="button"
@@ -364,7 +365,8 @@ function EditProviderServiceModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

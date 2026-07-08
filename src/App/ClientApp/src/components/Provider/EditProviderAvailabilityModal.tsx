@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { getProviderServiceAvailability } from "../../api/provider";
 import { getAccountProfile } from "../../api/account";
 import { getErrorMessage } from "../../api/errors";
@@ -140,7 +141,7 @@ function EditProviderAvailabilityModal({
 
   const displayError = validationError || error || loadError;
 
-  return (
+  return createPortal(
     <div className="provider-modal-root" role="presentation">
       <button
         type="button"
@@ -229,7 +230,8 @@ function EditProviderAvailabilityModal({
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
