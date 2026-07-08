@@ -190,7 +190,7 @@ GET /api/catalog
     "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
     "serviceName": "Dental Checkup",
     "description": "Routine dental examination",
-    "category": "Healthcare",
+    "category": "Healthcare & Dental",
     "country": "United States",
     "city": "New York",
     "durationMinutes": 30,
@@ -614,12 +614,29 @@ Authorization: Bearer <accessToken>
     "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
     "serviceName": "Dental Checkup",
     "description": "Routine examination",
-    "category": "Healthcare",
+    "category": "Healthcare & Dental",
+    "country": "United States",
+    "city": "New York",
     "durationMinutes": 30,
     "price": 25.00
   }
 ]
 ```
+
+---
+
+### Create service
+
+Creates a new service and links it to the authenticated provider's catalog.
+
+```
+POST /api/provider/services
+Authorization: Bearer <accessToken>
+```
+
+**Request body** — same fields as [Update service](#update-service).
+
+**Success response — `200 OK`** — Returns the created service.
 
 ---
 
@@ -634,11 +651,13 @@ Authorization: Bearer <accessToken>
 
 ```json
 {
-  "name": "Updated Service Name",
-  "description": "New description",
-  "category": "Wellness",
-  "durationMinutes": 45,
-  "price": 30.00
+    "name": "Updated Service Name",
+    "description": "New description",
+    "category": "Beauty & Wellness",
+    "country": "United States",
+    "city": "New York",
+    "durationMinutes": 45,
+    "price": 30.00
 }
 ```
 

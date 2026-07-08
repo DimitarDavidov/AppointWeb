@@ -67,7 +67,7 @@ Services are linked to providers through the `ProviderServices` join table. The 
 | `Id` | uuid | Primary key |
 | `Name` | varchar(200) | Required |
 | `Description` | varchar(1000) | Optional |
-| `Category` | varchar(100) | Optional |
+| `Category` | varchar(100) | Required for new/updated services. One of the predefined catalog categories |
 | `Country` | varchar(100) | Required |
 | `City` | varchar(100) | Required |
 | `DurationMinutes` | integer | 1–1440 |
