@@ -3,9 +3,12 @@ import { Link } from "react-router-dom";
 import welcomeBg from "../assets/images/welcome-bg.png";
 import { getCatalogOfferings } from "../api/catalog";
 import { useAsyncData } from "../hooks/useAsyncData";
-import type { CatalogOffering } from "../types/catalog";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
 import { formatDuration, formatPrice, formatServiceLocation } from "../utils/formatService";
+import {
+  describeCatalogFilterSummary,
+  filterCatalogOfferings,
+} from "../utils/catalogFilters";
 import { isSameId } from "../utils/isSameId";
 import { useAppSelector } from "../store/hooks";
 import "./Home.scss";
@@ -28,20 +31,22 @@ function SearchIcon() {
   );
 }
 
-function matchesCatalogSearch(offering: CatalogOffering, query: string): boolean {
-  const haystack = [
-    offering.serviceName,
-    offering.providerUsername,
-    offering.category,
-    offering.description,
-    offering.city,
-    offering.country,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return haystack.includes(query);
+function LocationIcon() {
+  return (
+    <svg
+      className="catalog-search-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10z" />
+      <circle cx="12" cy="11" r="2.5" />
+    </svg>
+  );
 }
 
 function Home() {
@@ -49,7 +54,8 @@ function Home() {
   const isLoggedIn = !!accessToken;
   const catalogRef = useRef<HTMLElement>(null);
   const [catalogVisible, setCatalogVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [serviceSearchQuery, setServiceSearchQuery] = useState("");
+  const [locationSearchQuery, setLocationSearchQuery] = useState("");
   const {
     data: offerings = [],
     isLoading: isLoadingCatalog,
@@ -65,15 +71,16 @@ function Home() {
       ),
     [offerings, userId]
   );
-  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const hasActiveFilters =
+    serviceSearchQuery.trim().length > 0 || locationSearchQuery.trim().length > 0;
   const filteredOfferings = useMemo(
     () =>
-      normalizedSearch
-        ? bookableOfferings.filter((offering) =>
-            matchesCatalogSearch(offering, normalizedSearch)
-          )
-        : bookableOfferings,
-    [bookableOfferings, normalizedSearch]
+      filterCatalogOfferings(
+        bookableOfferings,
+        serviceSearchQuery,
+        locationSearchQuery
+      ),
+    [bookableOfferings, serviceSearchQuery, locationSearchQuery]
   );
 
   useEffect(() => {
@@ -142,21 +149,36 @@ function Home() {
                 Browse services
               </h2>
               <p className="catalog-subtitle">
-                Scroll to explore providers and services you can book.
+                Search by service or provider, then narrow results by city or
+                country.
               </p>
             </div>
 
-            <label className="catalog-search" htmlFor="catalog-search">
-              <SearchIcon />
-              <input
-                id="catalog-search"
-                type="search"
-                placeholder="Search services..."
-                autoComplete="off"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-              />
-            </label>
+            <div className="catalog-search-bar">
+              <label className="catalog-search" htmlFor="catalog-service-search">
+                <SearchIcon />
+                <input
+                  id="catalog-service-search"
+                  type="search"
+                  placeholder="Search services..."
+                  autoComplete="off"
+                  value={serviceSearchQuery}
+                  onChange={(event) => setServiceSearchQuery(event.target.value)}
+                />
+              </label>
+
+              <label className="catalog-search" htmlFor="catalog-location-search">
+                <LocationIcon />
+                <input
+                  id="catalog-location-search"
+                  type="search"
+                  placeholder="City or country..."
+                  autoComplete="off"
+                  value={locationSearchQuery}
+                  onChange={(event) => setLocationSearchQuery(event.target.value)}
+                />
+              </label>
+            </div>
           </div>
 
           {isLoadingCatalog && (
@@ -178,9 +200,15 @@ function Home() {
           {!isLoadingCatalog &&
             !catalogError &&
             bookableOfferings.length > 0 &&
-            filteredOfferings.length === 0 && (
+            filteredOfferings.length === 0 &&
+            hasActiveFilters && (
               <p className="catalog-status">
-                No services match &ldquo;{searchQuery.trim()}&rdquo;.
+                No services match{" "}
+                {describeCatalogFilterSummary(
+                  serviceSearchQuery,
+                  locationSearchQuery
+                )}
+                .
               </p>
             )}
 
