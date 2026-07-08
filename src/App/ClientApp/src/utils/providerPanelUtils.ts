@@ -12,6 +12,55 @@ export interface ProviderStats {
   services: number;
 }
 
+export interface ProviderServiceStats {
+  completedCount: number;
+  cancelledCount: number;
+  noShowCount: number;
+  revenueEarned: number;
+}
+
+export function computeProviderServiceStats(
+  appointments: AppointmentDetail[]
+): Record<string, ProviderServiceStats> {
+  const stats: Record<string, ProviderServiceStats> = {};
+
+  for (const appointment of appointments) {
+    const existing = stats[appointment.serviceId] ?? {
+      completedCount: 0,
+      cancelledCount: 0,
+      noShowCount: 0,
+      revenueEarned: 0,
+    };
+
+    if (appointment.status === "Completed") {
+      existing.completedCount += 1;
+      existing.revenueEarned += appointment.priceAtBooking;
+    } else if (appointment.status === "Cancelled") {
+      existing.cancelledCount += 1;
+    } else if (appointment.status === "NoShow") {
+      existing.noShowCount += 1;
+    }
+
+    stats[appointment.serviceId] = existing;
+  }
+
+  return stats;
+}
+
+export function getProviderServiceStats(
+  statsByServiceId: Record<string, ProviderServiceStats>,
+  serviceId: string
+): ProviderServiceStats {
+  return (
+    statsByServiceId[serviceId] ?? {
+      completedCount: 0,
+      cancelledCount: 0,
+      noShowCount: 0,
+      revenueEarned: 0,
+    }
+  );
+}
+
 function isSameLocalDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&

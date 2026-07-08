@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { EditActionIcon } from "../Admin/AdminActionIcons";
 import type { ProviderServiceDetail } from "../../types/provider";
+import type { ProviderServiceStats } from "../../utils/providerPanelUtils";
 import {
   formatDuration,
   formatPriceAmount,
@@ -13,11 +15,13 @@ import {
   ProviderRescheduleIcon,
   ProviderServiceIcon,
 } from "./ProviderIcons";
+import { ProviderServiceStatsPanel } from "./ProviderServiceStatsPanel";
 
 interface ProviderServiceCardProps {
   service: ProviderServiceDetail;
   providerId: string;
   index: number;
+  stats: ProviderServiceStats;
   onEdit: (service: ProviderServiceDetail) => void;
   onManageAvailability: (service: ProviderServiceDetail) => void;
 }
@@ -26,9 +30,13 @@ export function ProviderServiceCard({
   service,
   providerId,
   index,
+  stats,
   onEdit,
   onManageAvailability,
 }: ProviderServiceCardProps) {
+  const [showStats, setShowStats] = useState(false);
+  const statsToggleId = `provider-service-stats-${service.serviceId}`;
+
   return (
     <li
       className="provider-service-card"
@@ -67,6 +75,25 @@ export function ProviderServiceCard({
           {formatPriceAmount(service.price)}
         </span>
       </div>
+
+      <button
+        type="button"
+        className={`provider-service-stats-toggle${
+          showStats ? " provider-service-stats-toggle--open" : ""
+        }`}
+        aria-expanded={showStats}
+        aria-controls={statsToggleId}
+        onClick={() => setShowStats((open) => !open)}
+      >
+        <span>{showStats ? "Hide performance" : "View performance"}</span>
+        <span className="provider-service-stats-toggle-icon" aria-hidden="true" />
+      </button>
+
+      {showStats && (
+        <div id={statsToggleId}>
+          <ProviderServiceStatsPanel stats={stats} />
+        </div>
+      )}
 
       <div className="provider-service-card-footer">
         <button

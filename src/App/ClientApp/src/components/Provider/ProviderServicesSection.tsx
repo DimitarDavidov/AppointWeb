@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   createProviderService,
   updateProviderService,
@@ -11,11 +11,17 @@ import EditProviderServiceModal from "./EditProviderServiceModal";
 import { ProviderAddServiceCard } from "./ProviderAddServiceCard";
 import { ProviderEmptyServicesIcon } from "./ProviderIcons";
 import { ProviderServiceCard } from "./ProviderServiceCard";
+import type { AppointmentDetail } from "../../types/appointment";
 import type { ProviderServiceDetail } from "../../types/provider";
+import {
+  computeProviderServiceStats,
+  getProviderServiceStats,
+} from "../../utils/providerPanelUtils";
 
 interface ProviderServicesSectionProps {
   providerId: string | null;
   services: ProviderServiceDetail[];
+  appointments: AppointmentDetail[];
   isLoading: boolean;
   error: string;
   onUpdated: () => void;
@@ -24,6 +30,7 @@ interface ProviderServicesSectionProps {
 export function ProviderServicesSection({
   providerId,
   services,
+  appointments,
   isLoading,
   error,
   onUpdated,
@@ -145,6 +152,11 @@ export function ProviderServicesSection({
   const serviceCountLabel =
     services.length === 1 ? "1 listing" : `${services.length} listings`;
 
+  const serviceStatsById = useMemo(
+    () => computeProviderServiceStats(appointments),
+    [appointments]
+  );
+
   return (
     <section
       id="provider-panel-services"
@@ -237,6 +249,7 @@ export function ProviderServicesSection({
               service={service}
               providerId={providerId}
               index={index}
+              stats={getProviderServiceStats(serviceStatsById, service.serviceId)}
               onEdit={openServiceEditor}
               onManageAvailability={openAvailabilityEditor}
             />

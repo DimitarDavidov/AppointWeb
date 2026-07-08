@@ -172,6 +172,7 @@ function ProviderPanel() {
                 <ProviderServicesSection
                   providerId={userId}
                   services={services}
+                  appointments={appointmentsQuery.data ?? []}
                   isLoading={servicesQuery.isLoading}
                   error={servicesQuery.error}
                   onUpdated={reloadServices}
