@@ -264,6 +264,7 @@
 
       &:hover:not(:disabled) {
         background-color: var(--color-primary-dark);
+        color: #ffffff;
       }
 
       &:disabled {

@@ -4,15 +4,32 @@ import welcomeBg from "../assets/images/welcome-bg.png";
 import { getCatalogOfferings } from "../api/catalog";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { capitalizeFirstLetter } from "../utils/formatDisplayName";
-import { formatDuration, formatPrice, formatServiceLocation } from "../utils/formatService";
 import {
-  describeCatalogFilterSummary,
+  formatDuration,
+  formatPrice,
+  formatServiceLocation,
+} from "../utils/formatService";
+import {
   filterCatalogOfferings,
+  hasActiveCatalogFilters,
 } from "../utils/catalogFilters";
+import {
+  OTHER_CATEGORY,
+  SERVICE_CATEGORIES,
+} from "../constants/serviceCategories";
+import type { ServiceCategory } from "../constants/serviceCategories";
+import { PRICE_RANGES, getPriceRangeById } from "../constants/priceRanges";
 import { isSameId } from "../utils/isSameId";
 import { useAppSelector } from "../store/hooks";
 import { StarRatingDisplay } from "../components/Rating/StarRating";
 import "./Home.scss";
+
+const WELCOME_CATEGORIES: { label: string; category: ServiceCategory }[] = [
+  { label: "Dentists & healthcare", category: "Healthcare & Dental" },
+  { label: "Sports & activities", category: "Sports & Fitness" },
+  { label: "Beauty & wellness", category: "Beauty & Wellness" },
+  { label: "Classes & personal services", category: "Classes & Coaching" },
+];
 
 function SearchIcon() {
   return (
@@ -57,6 +74,10 @@ function Home() {
   const [catalogVisible, setCatalogVisible] = useState(false);
   const [serviceSearchQuery, setServiceSearchQuery] = useState("");
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedPriceRangeId, setSelectedPriceRangeId] = useState<
+    string | null
+  >(null);
   const {
     data: offerings = [],
     isLoading: isLoadingCatalog,
@@ -65,24 +86,70 @@ function Home() {
     initialData: [],
     errorMessage: "Could not load services. Please try again later.",
   });
+
   const bookableOfferings = useMemo(
     () =>
-      offerings.filter(
-        (offering) => !isSameId(userId, offering.providerId)
-      ),
+      offerings.filter((offering) => !isSameId(userId, offering.providerId)),
     [offerings, userId]
   );
-  const hasActiveFilters =
-    serviceSearchQuery.trim().length > 0 || locationSearchQuery.trim().length > 0;
-  const filteredOfferings = useMemo(
-    () =>
-      filterCatalogOfferings(
-        bookableOfferings,
-        serviceSearchQuery,
-        locationSearchQuery
-      ),
-    [bookableOfferings, serviceSearchQuery, locationSearchQuery]
+
+  const availableCategories = useMemo(() => {
+    const present = new Set(
+      bookableOfferings
+        .map((offering) => offering.category)
+        .filter((category): category is string => !!category)
+        .map((category) => category.toLowerCase())
+    );
+    const hasUncategorized = bookableOfferings.some(
+      (offering) => !offering.category
+    );
+
+    return SERVICE_CATEGORIES.filter((category) => {
+      // "Other" also covers services with no category assigned.
+      if (category.toLowerCase() === OTHER_CATEGORY.toLowerCase()) {
+        return present.has(OTHER_CATEGORY.toLowerCase()) || hasUncategorized;
+      }
+      return present.has(category.toLowerCase());
+    });
+  }, [bookableOfferings]);
+
+  const selectedPriceRange = getPriceRangeById(selectedPriceRangeId);
+
+  const filters = useMemo(
+    () => ({
+      serviceQuery: serviceSearchQuery,
+      locationQuery: locationSearchQuery,
+      category: selectedCategory,
+      priceRange: selectedPriceRange,
+    }),
+    [
+      serviceSearchQuery,
+      locationSearchQuery,
+      selectedCategory,
+      selectedPriceRange,
+    ]
   );
+
+  const hasActiveFilters = hasActiveCatalogFilters(filters);
+
+  const filteredOfferings = useMemo(
+    () => filterCatalogOfferings(bookableOfferings, filters),
+    [bookableOfferings, filters]
+  );
+
+  const clearFilters = () => {
+    setServiceSearchQuery("");
+    setLocationSearchQuery("");
+    setSelectedCategory(null);
+    setSelectedPriceRangeId(null);
+  };
+
+  const handleSelectWelcomeCategory = (category: ServiceCategory) => {
+    setSelectedCategory((current) =>
+      current === category ? current : category
+    );
+    catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   useEffect(() => {
     const section = catalogRef.current;
@@ -113,16 +180,23 @@ function Home() {
           <h1 className="welcome-title">Welcome to AppointWeb!</h1>
 
           <p className="welcome-description">
-            Book appointments for the things that matter — dentist visits, fitness
-            classes, salon treatments, tutoring sessions, and more. AppointWeb
-            brings scheduling together in one simple place.
+            Book appointments for the things that matter — dentist visits,
+            fitness classes, salon treatments, tutoring sessions, and more.
+            AppointWeb brings scheduling together in one simple place.
           </p>
 
           <ul className="welcome-features">
-            <li>Dentists & healthcare</li>
-            <li>Sports & activities</li>
-            <li>Beauty & wellness</li>
-            <li>Classes & personal services</li>
+            {WELCOME_CATEGORIES.map(({ label, category }) => (
+              <li key={label}>
+                <button
+                  type="button"
+                  className="welcome-feature"
+                  onClick={() => handleSelectWelcomeCategory(category)}
+                >
+                  {label}
+                </button>
+              </li>
+            ))}
           </ul>
 
           {!isLoggedIn && (
@@ -150,8 +224,8 @@ function Home() {
                 Browse services
               </h2>
               <p className="catalog-subtitle">
-                Search by service or provider, then narrow results by city or
-                country.
+                Search by service or provider, then narrow results by location,
+                category, or price.
               </p>
             </div>
 
@@ -164,11 +238,16 @@ function Home() {
                   placeholder="Search services..."
                   autoComplete="off"
                   value={serviceSearchQuery}
-                  onChange={(event) => setServiceSearchQuery(event.target.value)}
+                  onChange={(event) =>
+                    setServiceSearchQuery(event.target.value)
+                  }
                 />
               </label>
 
-              <label className="catalog-search" htmlFor="catalog-location-search">
+              <label
+                className="catalog-search"
+                htmlFor="catalog-location-search"
+              >
                 <LocationIcon />
                 <input
                   id="catalog-location-search"
@@ -176,10 +255,104 @@ function Home() {
                   placeholder="City, country, or remote..."
                   autoComplete="off"
                   value={locationSearchQuery}
-                  onChange={(event) => setLocationSearchQuery(event.target.value)}
+                  onChange={(event) =>
+                    setLocationSearchQuery(event.target.value)
+                  }
                 />
               </label>
             </div>
+
+            {!isLoadingCatalog &&
+              !catalogError &&
+              bookableOfferings.length > 0 && (
+                <div className="catalog-filters">
+                  {availableCategories.length > 0 && (
+                    <div className="catalog-filter-group">
+                      <span className="catalog-filter-label">Category</span>
+                      <div className="catalog-filter-chips">
+                        <button
+                          type="button"
+                          className={`catalog-filter-chip${
+                            selectedCategory === null
+                              ? " catalog-filter-chip--active"
+                              : ""
+                          }`}
+                          aria-pressed={selectedCategory === null}
+                          onClick={() => setSelectedCategory(null)}
+                        >
+                          All
+                        </button>
+                        {availableCategories.map((category) => (
+                          <button
+                            key={category}
+                            type="button"
+                            className={`catalog-filter-chip${
+                              selectedCategory === category
+                                ? " catalog-filter-chip--active"
+                                : ""
+                            }`}
+                            aria-pressed={selectedCategory === category}
+                            onClick={() =>
+                              setSelectedCategory((current) =>
+                                current === category ? null : category
+                              )
+                            }
+                          >
+                            {category}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="catalog-filter-group">
+                    <span className="catalog-filter-label">Price</span>
+                    <div className="catalog-filter-chips">
+                      <button
+                        type="button"
+                        className={`catalog-filter-chip${
+                          selectedPriceRangeId === null
+                            ? " catalog-filter-chip--active"
+                            : ""
+                        }`}
+                        aria-pressed={selectedPriceRangeId === null}
+                        onClick={() => setSelectedPriceRangeId(null)}
+                      >
+                        Any price
+                      </button>
+                      {PRICE_RANGES.map((range) => (
+                        <button
+                          key={range.id}
+                          type="button"
+                          className={`catalog-filter-chip${
+                            selectedPriceRangeId === range.id
+                              ? " catalog-filter-chip--active"
+                              : ""
+                          }`}
+                          aria-pressed={selectedPriceRangeId === range.id}
+                          onClick={() =>
+                            setSelectedPriceRangeId((current) =>
+                              current === range.id ? null : range.id
+                            )
+                          }
+                        >
+                          {range.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      className="catalog-clear"
+                      onClick={clearFilters}
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                </div>
+              )}
           </div>
 
           {isLoadingCatalog && (
@@ -194,9 +367,11 @@ function Home() {
             </p>
           )}
 
-          {!isLoadingCatalog && !catalogError && bookableOfferings.length === 0 && (
-            <p className="catalog-status">No services available yet.</p>
-          )}
+          {!isLoadingCatalog &&
+            !catalogError &&
+            bookableOfferings.length === 0 && (
+              <p className="catalog-status">No services available yet.</p>
+            )}
 
           {!isLoadingCatalog &&
             !catalogError &&
@@ -204,12 +379,8 @@ function Home() {
             filteredOfferings.length === 0 &&
             hasActiveFilters && (
               <p className="catalog-status">
-                No services match{" "}
-                {describeCatalogFilterSummary(
-                  serviceSearchQuery,
-                  locationSearchQuery
-                )}
-                .
+                No services match your filters. Try adjusting your search,
+                category, or price.
               </p>
             )}
 

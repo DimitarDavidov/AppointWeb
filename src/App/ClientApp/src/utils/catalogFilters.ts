@@ -1,3 +1,5 @@
+import type { PriceRange } from "../constants/priceRanges";
+import { OTHER_CATEGORY } from "../constants/serviceCategories";
 import type { CatalogOffering } from "../types/catalog";
 
 function includesQuery(haystack: string, query: string): boolean {
@@ -35,20 +37,66 @@ export function matchesLocationSearch(
   return includesQuery(haystack, query);
 }
 
+export function matchesCategory(
+  offering: CatalogOffering,
+  category: string
+): boolean {
+  const normalizedCategory = category.toLowerCase();
+
+  // "Other" also captures services that have no category assigned.
+  if (normalizedCategory === OTHER_CATEGORY.toLowerCase()) {
+    return (
+      !offering.category ||
+      offering.category.toLowerCase() === OTHER_CATEGORY.toLowerCase()
+    );
+  }
+
+  if (!offering.category) return false;
+  return offering.category.toLowerCase() === normalizedCategory;
+}
+
+export function matchesPriceRange(
+  offering: CatalogOffering,
+  range: PriceRange
+): boolean {
+  return offering.price >= range.min && offering.price < range.max;
+}
+
+export interface CatalogFilters {
+  serviceQuery?: string;
+  locationQuery?: string;
+  category?: string | null;
+  priceRange?: PriceRange | null;
+}
+
 export function filterCatalogOfferings(
   offerings: CatalogOffering[],
-  serviceQuery: string,
-  locationQuery: string
+  filters: CatalogFilters
 ): CatalogOffering[] {
-  const normalizedService = serviceQuery.trim().toLowerCase();
-  const normalizedLocation = locationQuery.trim().toLowerCase();
+  const normalizedService = (filters.serviceQuery ?? "").trim().toLowerCase();
+  const normalizedLocation = (filters.locationQuery ?? "").trim().toLowerCase();
+  const { category, priceRange } = filters;
 
   return offerings.filter((offering) => {
-    if (normalizedService && !matchesServiceSearch(offering, normalizedService)) {
+    if (
+      normalizedService &&
+      !matchesServiceSearch(offering, normalizedService)
+    ) {
       return false;
     }
 
-    if (normalizedLocation && !matchesLocationSearch(offering, normalizedLocation)) {
+    if (
+      normalizedLocation &&
+      !matchesLocationSearch(offering, normalizedLocation)
+    ) {
+      return false;
+    }
+
+    if (category && !matchesCategory(offering, category)) {
+      return false;
+    }
+
+    if (priceRange && !matchesPriceRange(offering, priceRange)) {
       return false;
     }
 
@@ -56,20 +104,11 @@ export function filterCatalogOfferings(
   });
 }
 
-export function describeCatalogFilterSummary(
-  serviceQuery: string,
-  locationQuery: string
-): string {
-  const service = serviceQuery.trim();
-  const location = locationQuery.trim();
-
-  if (service && location) {
-    return `"${service}" in "${location}"`;
-  }
-
-  if (service) {
-    return `"${service}"`;
-  }
-
-  return `"${location}"`;
+export function hasActiveCatalogFilters(filters: CatalogFilters): boolean {
+  return (
+    (filters.serviceQuery ?? "").trim().length > 0 ||
+    (filters.locationQuery ?? "").trim().length > 0 ||
+    !!filters.category ||
+    !!filters.priceRange
+  );
 }

@@ -8,6 +8,8 @@ export const SERVICE_CATEGORIES = [
 
 export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
 
+export const OTHER_CATEGORY: ServiceCategory = "Other";
+
 export function isServiceCategory(value: string): value is ServiceCategory {
   return SERVICE_CATEGORIES.includes(value as ServiceCategory);
 }
