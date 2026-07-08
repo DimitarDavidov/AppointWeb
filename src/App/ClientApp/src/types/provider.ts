@@ -8,6 +8,7 @@ export interface ProviderServiceDetail {
   isRemote: boolean;
   durationMinutes: number;
   price: number;
+  isActive: boolean;
 }
 
 export interface UpdateProviderServiceRequest {

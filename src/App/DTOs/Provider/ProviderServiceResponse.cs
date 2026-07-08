@@ -15,4 +15,5 @@ public class ProviderServiceResponse
     public decimal Price { get; set; }
     public double? AverageRating { get; set; }
     public int RatingCount { get; set; }
+    public bool IsActive { get; set; }
 }

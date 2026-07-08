@@ -10,6 +10,10 @@
   padding: 1.5rem;
   overflow-y: auto;
   box-sizing: border-box;
+
+  &--no-backdrop {
+    pointer-events: none;
+  }
 }
 
 .confirm-dialog-backdrop {
@@ -40,6 +44,11 @@
   overflow-y: auto;
   box-sizing: border-box;
   flex-shrink: 0;
+  pointer-events: auto;
+
+  .confirm-dialog-root--no-backdrop & {
+    box-shadow: 0 24px 56px rgba(15, 23, 42, 0.22);
+  }
 
   &-title {
     margin: 0 0 0.75rem;

@@ -9,6 +9,7 @@ export interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   isConfirming?: boolean;
+  showBackdrop?: boolean;
   onConfirm: () => void;
   onClose: () => void;
 }
@@ -20,6 +21,7 @@ function ConfirmDialog({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   isConfirming = false,
+  showBackdrop = true,
   onConfirm,
   onClose,
 }: ConfirmDialogProps) {
@@ -46,14 +48,21 @@ function ConfirmDialog({
   }
 
   return createPortal(
-    <div className="confirm-dialog-root" role="presentation">
-      <button
-        type="button"
-        className="confirm-dialog-backdrop"
-        aria-label="Close dialog"
-        disabled={isConfirming}
-        onClick={onClose}
-      />
+    <div
+      className={`confirm-dialog-root${
+        showBackdrop ? "" : " confirm-dialog-root--no-backdrop"
+      }`}
+      role="presentation"
+    >
+      {showBackdrop && (
+        <button
+          type="button"
+          className="confirm-dialog-backdrop"
+          aria-label="Close dialog"
+          disabled={isConfirming}
+          onClick={onClose}
+        />
+      )}
 
       <div
         className="confirm-dialog"

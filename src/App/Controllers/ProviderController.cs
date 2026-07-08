@@ -49,11 +49,9 @@ public class ProviderController : ControllerBase
 
         var services = await _db.ProviderServices
             .AsNoTracking()
-            .Where(ps =>
-                ps.ProviderId == providerId &&
-                ps.IsActive &&
-                ps.Service.IsActive)
-            .OrderBy(ps => ps.Service.Name)
+            .Where(ps => ps.ProviderId == providerId)
+            .OrderByDescending(ps => ps.IsActive && ps.Service.IsActive)
+            .ThenBy(ps => ps.Service.Name)
             .Select(ps => new ProviderServiceResponse
             {
                 ServiceId = ps.ServiceId,
@@ -65,6 +63,7 @@ public class ProviderController : ControllerBase
                 IsRemote = ps.Service.IsRemote,
                 DurationMinutes = ps.Service.DurationMinutes,
                 Price = ps.Service.Price,
+                IsActive = ps.IsActive && ps.Service.IsActive,
                 AverageRating = ps.Service.Ratings
                     .Where(r =>
                         r.RateeId == ps.ProviderId &&
@@ -142,7 +141,88 @@ public class ProviderController : ControllerBase
             IsRemote = service.IsRemote,
             DurationMinutes = service.DurationMinutes,
             Price = service.Price,
+            IsActive = true,
         });
+    }
+
+    [HttpPatch("services/{serviceId:guid}/deactivate")]
+    public async Task<IActionResult> DeactivateService(
+        Guid serviceId,
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetUserId(out var providerId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        var link = await GetOwnedServiceLinkAsync(providerId, serviceId, cancellationToken);
+        if (link is null || !link.IsActive || !link.Service.IsActive)
+            return NotFound("Service not found.");
+
+        link.IsActive = false;
+        link.Service.IsActive = false;
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPatch("services/{serviceId:guid}/reactivate")]
+    public async Task<IActionResult> ReactivateService(
+        Guid serviceId,
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetUserId(out var providerId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        var link = await GetOwnedServiceLinkAsync(providerId, serviceId, cancellationToken);
+        if (link is null)
+            return NotFound("Service not found.");
+
+        if (link.IsActive && link.Service.IsActive)
+            return BadRequest("Service is already active.");
+
+        link.IsActive = true;
+        link.Service.IsActive = true;
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpDelete("services/{serviceId:guid}")]
+    public async Task<IActionResult> DeleteService(
+        Guid serviceId,
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetUserId(out var providerId))
+            return Unauthorized("Invalid token: missing user id.");
+
+        var link = await GetOwnedServiceLinkAsync(providerId, serviceId, cancellationToken);
+        if (link is null)
+            return NotFound("Service not found.");
+
+        if (await _db.Appointments.AnyAsync(a => a.ServiceId == serviceId, cancellationToken))
+        {
+            return BadRequest(
+                "This service cannot be deleted because it has appointment history. Make it inactive instead.");
+        }
+
+        if (await _db.Ratings.AnyAsync(r => r.ServiceId == serviceId, cancellationToken))
+        {
+            return BadRequest(
+                "This service cannot be deleted because it has ratings. Make it inactive instead.");
+        }
+
+        var availabilities = await _db.ProviderAvailabilities
+            .Where(a => a.ProviderId == providerId && a.ServiceId == serviceId)
+            .ToListAsync(cancellationToken);
+
+        _db.ProviderAvailabilities.RemoveRange(availabilities);
+        _db.ProviderServices.Remove(link);
+        _db.Services.Remove(link.Service);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
     }
 
     [HttpPatch("services/{serviceId:guid}")]
@@ -160,7 +240,7 @@ public class ProviderController : ControllerBase
                 ps => ps.ProviderId == providerId && ps.ServiceId == serviceId,
                 cancellationToken);
 
-        if (link is null || !link.IsActive || !link.Service.IsActive)
+        if (link is null)
             return NotFound("Service not found.");
 
         if (!ServiceCategories.IsValid(request.Category))
@@ -199,6 +279,7 @@ public class ProviderController : ControllerBase
             IsRemote = service.IsRemote,
             DurationMinutes = service.DurationMinutes,
             Price = service.Price,
+            IsActive = link.IsActive && service.IsActive,
         });
     }
 
@@ -210,7 +291,7 @@ public class ProviderController : ControllerBase
         if (!User.TryGetUserId(out var providerId))
             return Unauthorized("Invalid token: missing user id.");
 
-        if (!await OwnsActiveServiceAsync(providerId, serviceId, cancellationToken))
+        if (!await OwnsServiceAsync(providerId, serviceId, cancellationToken))
             return NotFound("Service not found.");
 
         var slots = await _db.ProviderAvailabilities
@@ -239,7 +320,7 @@ public class ProviderController : ControllerBase
         if (!User.TryGetUserId(out var providerId))
             return Unauthorized("Invalid token: missing user id.");
 
-        if (!await OwnsActiveServiceAsync(providerId, serviceId, cancellationToken))
+        if (!await OwnsServiceAsync(providerId, serviceId, cancellationToken))
             return NotFound("Service not found.");
 
         var parsedSlots = new List<(int DayOfWeek, TimeOnly Start, TimeOnly End)>();
@@ -295,15 +376,21 @@ public class ProviderController : ControllerBase
         return Ok(updated);
     }
 
-    private Task<bool> OwnsActiveServiceAsync(
+    private Task<bool> OwnsServiceAsync(
         Guid providerId,
         Guid serviceId,
         CancellationToken cancellationToken) =>
         _db.ProviderServices.AsNoTracking().AnyAsync(
-            ps =>
-                ps.ProviderId == providerId &&
-                ps.ServiceId == serviceId &&
-                ps.IsActive &&
-                ps.Service.IsActive,
+            ps => ps.ProviderId == providerId && ps.ServiceId == serviceId,
             cancellationToken);
+
+    private Task<ProviderService?> GetOwnedServiceLinkAsync(
+        Guid providerId,
+        Guid serviceId,
+        CancellationToken cancellationToken) =>
+        _db.ProviderServices
+            .Include(ps => ps.Service)
+            .SingleOrDefaultAsync(
+                ps => ps.ProviderId == providerId && ps.ServiceId == serviceId,
+                cancellationToken);
 }

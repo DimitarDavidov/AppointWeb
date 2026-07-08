@@ -36,6 +36,18 @@ export async function updateProviderService(
   return response.data;
 }
 
+export async function deactivateProviderService(serviceId: string): Promise<void> {
+  await api.patch(`/api/provider/services/${serviceId}/deactivate`);
+}
+
+export async function reactivateProviderService(serviceId: string): Promise<void> {
+  await api.patch(`/api/provider/services/${serviceId}/reactivate`);
+}
+
+export async function deleteProviderService(serviceId: string): Promise<void> {
+  await api.delete(`/api/provider/services/${serviceId}`);
+}
+
 export async function getProviderServiceAvailability(
   serviceId: string
 ): Promise<ProviderAvailabilitySlot[]> {

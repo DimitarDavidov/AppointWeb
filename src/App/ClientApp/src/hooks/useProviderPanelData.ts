@@ -20,6 +20,9 @@ export function useProviderPanelData() {
   });
 
   const services = servicesQuery.data ?? [];
+  const activeServicesCount = services.filter(
+    (service) => service.isActive ?? true
+  ).length;
 
   const upcomingAppointments = getUpcomingAppointments(
     appointmentsQuery.data ?? []
@@ -37,7 +40,7 @@ export function useProviderPanelData() {
 
   const stats = computeProviderStats(
     appointmentsQuery.data ?? [],
-    services.length
+    activeServicesCount
   );
 
   return {
