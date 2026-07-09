@@ -15,6 +15,9 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -53,13 +56,25 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+var frontendBaseUrl = builder.Configuration["Frontend:BaseUrl"]?.Trim().TrimEnd('/');
+var corsOrigins = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+{
+    "http://localhost:5173",
+    "https://localhost:5173"
+};
+
+if (!string.IsNullOrWhiteSpace(frontendBaseUrl))
+{
+    corsOrigins.Add(frontendBaseUrl);
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy =>
         {
             policy
-                .WithOrigins("http://localhost:5173", "https://localhost:5173")
+                .WithOrigins(corsOrigins.ToArray())
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
