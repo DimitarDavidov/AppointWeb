@@ -2,6 +2,11 @@ namespace AppointWeb.Api.Options;
 
 public class EmailSettings
 {
+    /// <summary>
+    /// Resend API key (HTTPS). Use on Railway Free/Hobby where SMTP is blocked.
+    /// </summary>
+    public string ApiKey { get; set; } = string.Empty;
+
     public string Host { get; set; } = string.Empty;
 
     public int Port { get; set; } = 587;

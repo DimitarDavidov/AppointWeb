@@ -37,14 +37,21 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
 builder.Services.Configure<FrontendSettings>(builder.Configuration.GetSection("Frontend"));
 
+var emailApiKey = builder.Configuration["Email:ApiKey"];
 var emailHost = builder.Configuration["Email:Host"];
-if (string.IsNullOrWhiteSpace(emailHost))
+
+if (!string.IsNullOrWhiteSpace(emailApiKey))
 {
-    builder.Services.AddScoped<IEmailService, LoggingEmailService>();
+    builder.Services.AddHttpClient<ResendEmailService>();
+    builder.Services.AddScoped<IEmailService, ResendEmailService>();
+}
+else if (!string.IsNullOrWhiteSpace(emailHost))
+{
+    builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 }
 else
 {
-    builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+    builder.Services.AddScoped<IEmailService, LoggingEmailService>();
 }
 
 builder.Services.AddControllers();
@@ -143,6 +150,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.ApplyMigrations();
+
+using (var seedScope = app.Services.CreateScope())
+{
+    var seedDb = seedScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DatabaseSeeder.SeedAsync(seedDb);
+}
 
 if (args.Contains("seed"))
 {
