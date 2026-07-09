@@ -21,6 +21,7 @@ namespace AppointWeb.Api.Controllers;
 public class AppointmentsController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly BookingSlotService _bookingSlots;
     private readonly IEmailService _emailService;
     private readonly INotificationService _notificationService;
     private readonly FrontendSettings _frontendSettings;
@@ -28,12 +29,14 @@ public class AppointmentsController : ControllerBase
 
     public AppointmentsController(
         AppDbContext db,
+        BookingSlotService bookingSlots,
         IEmailService emailService,
         INotificationService notificationService,
         IOptions<FrontendSettings> frontendSettings,
         ILogger<AppointmentsController> logger)
     {
         _db = db;
+        _bookingSlots = bookingSlots;
         _emailService = emailService;
         _notificationService = notificationService;
         _frontendSettings = frontendSettings.Value;
@@ -109,20 +112,15 @@ public class AppointmentsController : ControllerBase
 
         var endUtc = startUtc.AddMinutes(service.DurationMinutes);
 
-        if (!await FitsProviderAvailabilityAsync(
-                request.ProviderId, request.ServiceId, startUtc, endUtc, ct))
+        if (!await _bookingSlots.IsStartTimeAvailableAsync(
+                request.ProviderId,
+                request.ServiceId,
+                startUtc,
+                excludeAppointmentId: null,
+                ct))
         {
-            return BadRequest("The selected time is outside this service's availability.");
+            return BadRequest("The selected time is not available.");
         }
-
-        var overlaps = await _db.Appointments.AsNoTracking().AnyAsync(a =>
-            a.ProviderId == request.ProviderId &&
-            (a.Status == AppointmentStatus.Booked || a.Status == AppointmentStatus.Pending) &&
-            a.StartTime < endUtc &&
-            a.EndTime > startUtc, ct);
-
-        if (overlaps)
-            return Conflict("This time slot is already booked.");
 
         var appointment = new Appointment
         {
@@ -432,12 +430,15 @@ public class AppointmentsController : ControllerBase
 
         var endUtc = startUtc.AddMinutes(appointment.Service.DurationMinutes);
 
-        if (!await FitsProviderAvailabilityAsync(
-                appointment.ProviderId, appointment.ServiceId, startUtc, endUtc, ct))
-            return BadRequest("The selected time is outside this service's availability.");
-
-        if (!await IsProposedSlotAvailableAsync(appointment, startUtc, endUtc, ct))
-            return Conflict("This time slot is already booked.");
+        if (!await _bookingSlots.IsStartTimeAvailableAsync(
+                appointment.ProviderId,
+                appointment.ServiceId,
+                startUtc,
+                appointment.Id,
+                ct))
+        {
+            return BadRequest("The selected time is not available.");
+        }
 
         var previousWhen = FormatAppointmentWhen(appointment.StartTime);
         var newWhen = FormatAppointmentWhen(startUtc);
@@ -593,10 +594,11 @@ public class AppointmentsController : ControllerBase
         if (!appointment.Service.IsActive)
             return BadRequest("This service is no longer available.");
 
-        if (!await IsProposedSlotAvailableAsync(
-                appointment,
+        if (!await _bookingSlots.IsStartTimeAvailableAsync(
+                appointment.ProviderId,
+                appointment.ServiceId,
                 appointment.PendingRescheduleStartTime.Value,
-                appointment.PendingRescheduleEndTime.Value,
+                appointment.Id,
                 ct))
         {
             return Conflict("The requested time slot is no longer available.");
@@ -750,20 +752,6 @@ public class AppointmentsController : ControllerBase
     private static string FormatAppointmentWhen(DateTime utc) =>
         utc.ToString("dddd, MMMM d, yyyy 'at' h:mm tt 'UTC'", CultureInfo.InvariantCulture);
 
-    private async Task<bool> IsProposedSlotAvailableAsync(
-        Appointment appointment,
-        DateTime startUtc,
-        DateTime endUtc,
-        CancellationToken ct)
-    {
-        return !await _db.Appointments.AsNoTracking().AnyAsync(a =>
-            a.Id != appointment.Id &&
-            a.ProviderId == appointment.ProviderId &&
-            (a.Status == AppointmentStatus.Booked || a.Status == AppointmentStatus.Pending) &&
-            a.StartTime < endUtc &&
-            a.EndTime > startUtc, ct);
-    }
-
     private IQueryable<Appointment> FilterAppointmentsForUser(Guid userId, string? role)
     {
         var query = _db.Appointments.AsNoTracking();
@@ -782,45 +770,4 @@ public class AppointmentsController : ControllerBase
         return appointment.CustomerId == userId || appointment.ProviderId == userId;
     }
 
-    private async Task<bool> FitsProviderAvailabilityAsync(
-        Guid providerId,
-        Guid serviceId,
-        DateTime startUtc,
-        DateTime endUtc,
-        CancellationToken ct)
-    {
-        var hasAvailabilityRules = await _db.ProviderAvailabilities
-            .AsNoTracking()
-            .AnyAsync(
-                a => a.ProviderId == providerId && a.ServiceId == serviceId,
-                ct);
-
-        if (!hasAvailabilityRules)
-            return true;
-
-        // Availability windows are wall-clock times in the provider's timezone,
-        // so convert the (UTC) booking start into the provider's local time
-        // before comparing day-of-week and time-of-day.
-        var providerTimeZoneId = await _db.Users
-            .AsNoTracking()
-            .Where(u => u.Id == providerId)
-            .Select(u => u.TimeZoneId)
-            .SingleOrDefaultAsync(ct);
-
-        var providerTz = TimeZoneResolver.Resolve(providerTimeZoneId);
-        var localStart = TimeZoneResolver.ToLocal(startUtc, providerTz);
-
-        // Only the start time needs to fall within an availability window; the
-        // appointment may run past the window end (e.g. a 1h service booked at
-        // 5:30 when the provider works until 6:00 ends at 6:30 and is allowed).
-        var startTime = TimeOnly.FromDateTime(localStart);
-        var dayOfWeek = (int)localStart.DayOfWeek;
-
-        return await _db.ProviderAvailabilities.AsNoTracking().AnyAsync(a =>
-            a.ProviderId == providerId &&
-            a.ServiceId == serviceId &&
-            a.DayOfWeek == dayOfWeek &&
-            a.StartTime <= startTime &&
-            a.EndTime > startTime, ct);
-    }
 }

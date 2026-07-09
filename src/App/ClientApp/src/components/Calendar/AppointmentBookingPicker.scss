@@ -62,6 +62,12 @@
       background-color: rgba(207, 250, 254, 0.65);
     }
 
+    .rdp-disabled:not(.rdp-selected) .rdp-day_button {
+      opacity: 0.42;
+      color: var(--color-text-muted);
+      cursor: not-allowed;
+    }
+
     .rdp-selected .rdp-day_button {
       background-color: var(--color-primary-light);
       color: var(--color-brand-teal-dark);

@@ -1,6 +1,6 @@
 import "react-day-picker/style.css";
 import { DayPicker } from "react-day-picker";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getBookingSlots } from "../../api/catalog";
 import { getErrorMessage } from "../../api/errors";
 import {
@@ -40,6 +40,7 @@ export function AppointmentBookingPicker({
     async function loadSlots() {
       setIsLoading(true);
       setError("");
+      setSlots([]);
 
       try {
         const from = startOfMonthUtc(visibleMonth);
@@ -81,6 +82,17 @@ export function AppointmentBookingPicker({
   const selectedDayKey = selectedDay ? toLocalDateKey(selectedDay) : null;
   const daySlots = selectedDayKey ? (slotsByDate.get(selectedDayKey) ?? []) : [];
 
+  const isDayDisabled = useCallback(
+    (date: Date) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (date < today) return true;
+      if (isLoading) return true;
+      return !slotsByDate.has(toLocalDateKey(date));
+    },
+    [isLoading, slotsByDate]
+  );
+
   useEffect(() => {
     if (!selectedDay) return;
 
@@ -101,14 +113,15 @@ export function AppointmentBookingPicker({
             onSelect={setSelectedDay}
             month={visibleMonth}
             onMonthChange={setVisibleMonth}
-            disabled={{ before: new Date() }}
+            disabled={isDayDisabled}
             modifiers={{ available: availableDates }}
             modifiersClassNames={{ available: "booking-picker-day--available" }}
             showOutsideDays
             fixedWeeks
           />
           <p className="booking-picker-calendar-hint">
-            Days with a dot have open slots. Duration: {durationMinutes} min.
+            Days with a dot have open slots. Unavailable days are grayed out.
+            Duration: {durationMinutes} min.
           </p>
         </div>
 
