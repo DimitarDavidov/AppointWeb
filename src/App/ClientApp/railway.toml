@@ -1,0 +1,3 @@
+[build]
+builder = "RAILPACK"
+buildCommand = "npm install --include=dev && npm run build"
