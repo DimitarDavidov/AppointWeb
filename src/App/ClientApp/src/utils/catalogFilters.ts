@@ -43,7 +43,6 @@ export function matchesCategory(
 ): boolean {
   const normalizedCategory = category.toLowerCase();
 
-  // "Other" also captures services that have no category assigned.
   if (normalizedCategory === OTHER_CATEGORY.toLowerCase()) {
     return (
       !offering.category ||

@@ -105,7 +105,6 @@ function Home() {
     );
 
     return SERVICE_CATEGORIES.filter((category) => {
-      // "Other" also covers services with no category assigned.
       if (category.toLowerCase() === OTHER_CATEGORY.toLowerCase()) {
         return present.has(OTHER_CATEGORY.toLowerCase()) || hasUncategorized;
       }

@@ -7,10 +7,6 @@ using Microsoft.Extensions.Options;
 
 namespace AppointWeb.Api.Services;
 
-/// <summary>
-/// Sends transactional email via Resend's HTTPS API (port 443).
-/// Works on Railway Free/Hobby plans where outbound SMTP is blocked.
-/// </summary>
 public class ResendEmailService : IEmailService
 {
     private const string LogoContentId = "appointweb-logo";

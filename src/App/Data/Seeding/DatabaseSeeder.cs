@@ -4,12 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AppointWeb.Api.Data.Seeding;
 
-/// <summary>
-/// Populates the database with a realistic demo dataset: providers and customers,
-/// bookable services, availability, past and future appointments across every
-/// status, plus two-directional ratings, comments and in-app notifications.
-/// Safe to run repeatedly - it no-ops once the demo data is present.
-/// </summary>
+// Populates the database with a realistic demo dataset: providers and customers,
+// bookable services, availability, past and future appointments across every
+// status, plus two-directional ratings, comments and in-app notifications.
+// Safe to run repeatedly - it no-ops once the demo data is present.
+
 public static class DatabaseSeeder
 {
     private const string DemoPassword = "Password123!";
@@ -312,7 +311,6 @@ public static class DatabaseSeeder
             CreatedAt = DateTime.UtcNow,
         };
 
-    /// <summary>Builds a UTC timestamp relative to today at the given hour/minute.</summary>
     private static DateTime AtUtc(int dayOffset, int hour, int minute)
     {
         var date = DateTime.UtcNow.Date.AddDays(dayOffset);

@@ -24,9 +24,6 @@ public static class RatingMapper
             UpdatedAt = rating.UpdatedAt,
         };
 
-    /// <summary>
-    /// Valid star values are 0.5–5.0 in 0.5 increments.
-    /// </summary>
     public static bool IsValidStars(decimal stars) =>
         stars >= 0.5m && stars <= 5.0m && (stars * 2m) % 1m == 0m;
 }

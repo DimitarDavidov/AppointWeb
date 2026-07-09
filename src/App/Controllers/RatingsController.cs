@@ -21,7 +21,7 @@ public class RatingsController : ControllerBase
         _db = db;
     }
 
-    /// <summary>Returns the current user's own rating for an appointment, or 204 if none.</summary>
+    // Returns the current user's own rating for an appointment, or 204 if none.
     [HttpGet("appointments/{appointmentId:guid}")]
     public async Task<ActionResult<RatingResponse>> GetMine(
         Guid appointmentId,
@@ -42,9 +42,7 @@ public class RatingsController : ControllerBase
         return Ok(RatingMapper.MapResponse(rating));
     }
 
-    /// <summary>
-    /// Returns a customer's overall rating received from providers (stars only, no comments).
-    /// </summary>
+    // Returns a customer's overall rating received from providers (stars only, no comments).
     [HttpGet("customers/{customerId:guid}")]
     [AllowAnonymous]
     public async Task<ActionResult<RatingAggregateResponse>> GetCustomerRating(
@@ -60,10 +58,8 @@ public class RatingsController : ControllerBase
         return Ok(await AggregateAsync(ratings, ct));
     }
 
-    /// <summary>
-    /// Returns the current user's own received ratings: as a customer (from providers)
-    /// and, for providers, as a provider (from customers). Stars only, no comments.
-    /// </summary>
+    // Returns the current user's own received ratings: as a customer (from providers)
+    // and, for providers, as a provider (from customers). Stars only, no comments.
     [HttpGet("me")]
     public async Task<ActionResult<UserRatingSummaryResponse>> GetMyRatings(
         CancellationToken ct)
@@ -105,7 +101,7 @@ public class RatingsController : ControllerBase
         };
     }
 
-    /// <summary>Creates or updates the current user's rating for an appointment.</summary>
+    // Creates or updates the current user's rating for an appointment.
     [HttpPut("appointments/{appointmentId:guid}")]
     public async Task<ActionResult<RatingResponse>> Upsert(
         Guid appointmentId,
@@ -178,7 +174,7 @@ public class RatingsController : ControllerBase
         return Ok(RatingMapper.MapResponse(rating));
     }
 
-    /// <summary>Removes the current user's rating for an appointment.</summary>
+    // Removes the current user's rating for an appointment.
     [HttpDelete("appointments/{appointmentId:guid}")]
     public async Task<IActionResult> Delete(Guid appointmentId, CancellationToken ct)
     {

@@ -84,7 +84,6 @@ export function useAsyncData<T>(
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- caller controls refetch deps
   }, [enabled, errorMessage, reloadCount, ...deps]);
 
   return { data, setData, isLoading, error, reload };

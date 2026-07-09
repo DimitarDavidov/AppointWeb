@@ -1,8 +1,5 @@
 namespace AppointWeb.Api.Dtos.Admin;
 
-/// <summary>
-/// A cancelled appointment cancelled by a given user, used for CSV export.
-/// </summary>
 public class AdminCancelledAppointmentResponse
 {
     public Guid Id { get; set; }

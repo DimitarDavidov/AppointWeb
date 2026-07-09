@@ -90,7 +90,6 @@ function EditProviderAvailabilityModal({
         if (!cancelled) setTimeZoneId(profile.timeZoneId);
       })
       .catch(() => {
-        // Non-critical: the hint just won't show a specific zone.
       });
 
     return () => {

@@ -29,7 +29,6 @@ public class AppointmentDetailResponse
     public int CustomerRescheduleCount { get; set; }
     public DateTime? PreviousStartTime { get; set; }
 
-    /// <summary>Whether the current user has already rated this appointment.</summary>
     public bool HasRated { get; set; }
     public decimal? MyRatingStars { get; set; }
     public string? MyRatingComment { get; set; }

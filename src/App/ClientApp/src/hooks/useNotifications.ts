@@ -29,7 +29,6 @@ export function useNotifications(enabled: boolean) {
       setNotifications(items);
       setUnreadCount(count);
     } catch {
-      // Keep existing state on poll failures.
     }
   }, [enabled]);
 

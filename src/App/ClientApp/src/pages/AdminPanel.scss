@@ -315,7 +315,6 @@
       background-color: rgba(6, 182, 212, 0.04);
     }
 
-    // Compact, centered stat columns (Services … Revenue)
     th:nth-child(6),
     th:nth-child(7),
     th:nth-child(8),
@@ -328,7 +327,6 @@
       white-space: nowrap;
     }
 
-    // Pin the Actions column to the right so it stays visible while scrolling
     th:last-child,
     tbody tr:not(.admin-table-detail-row) td:last-child {
       position: sticky;
@@ -348,7 +346,6 @@
       background-color: #f6feff;
     }
 
-    // Keep the action buttons on a single row so rows stay compact
     tbody tr:not(.admin-table-detail-row) td:last-child .admin-actions {
       flex-wrap: nowrap;
       gap: 0.4rem;
@@ -653,7 +650,6 @@
     }
   }
 
-  // Tablet: two-column card grid
   @media (min-width: $breakpoint-md) and (max-width: ($breakpoint-lg - 1px)) {
     &-user-list {
       display: grid;
@@ -662,7 +658,6 @@
     }
   }
 
-  // Inline per-user stat chips (card view)
   &-stats {
     display: flex;
     flex-wrap: wrap;
@@ -719,7 +714,6 @@
     }
   }
 
-  // Cancelled count rendered as a pressable value (card chip)
   &-stat-chip-btn {
     border: none;
     background: none;
@@ -747,7 +741,6 @@
     }
   }
 
-  // Cancelled count rendered as a pressable pill (table cell)
   &-cancelled-btn {
     display: inline-flex;
     align-items: center;
@@ -786,7 +779,6 @@
     }
   }
 
-  // Expand controls (card view)
   &-insights {
     display: flex;
     flex-wrap: wrap;
@@ -847,7 +839,6 @@
     }
   }
 
-  // Numeric table cells
   &-num {
     font-variant-numeric: tabular-nums;
     font-weight: 600;
@@ -914,7 +905,6 @@
     background-color: var(--color-bg-subtle);
   }
 
-  // Per-service breakdown
   &-breakdown {
     padding: 1rem 1.15rem;
 

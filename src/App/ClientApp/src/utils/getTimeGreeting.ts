@@ -20,7 +20,6 @@ export function getLocalHour(
     return date.getHours();
   }
 
-  // Intl may return "24" for midnight in some environments.
   const hour = Number(hourPart.value);
   return hour === 24 ? 0 : hour;
 }
