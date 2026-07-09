@@ -2,6 +2,15 @@
 
 A portfolio appointment booking application with a **React** frontend and **ASP.NET Core** backend. Customers browse services and book appointments; providers manage their listings and availability; admins manage users.
 
+## Live demo
+
+| Service | URL |
+|---------|-----|
+| **App** | https://appointweb-frontend-production.up.railway.app |
+| **API** | https://appointweb-production.up.railway.app |
+
+Deployed on [Railway](https://railway.app). See [Deployment guide](docs/deployment.md) for environment variables and setup.
+
 ## Documentation
 
 | Guide | Description |
@@ -9,8 +18,9 @@ A portfolio appointment booking application with a **React** frontend and **ASP.
 | [Architecture](docs/architecture.md) | System overview and request flow |
 | [API Reference](docs/api.md) | Endpoints, request/response formats |
 | [Authentication](docs/authentication.md) | JWT flow, roles, frontend auth state |
-| [Database](docs/database.md) | Schema, entities, migrations |
+| [Database](docs/database.md) | Schema, entities, migrations, demo seed |
 | [Frontend](docs/frontend.md) | React app structure and routing |
+| [Deployment](docs/deployment.md) | Railway production setup |
 
 Full documentation index: **[docs/README.md](docs/README.md)**
 
@@ -35,16 +45,19 @@ Install these before running the app locally:
 
 ```
 AppointWeb/
+├── docs/                         # Detailed documentation
 ├── src/
 │   ├── App/                      # Backend API + frontend
 │   │   ├── ClientApp/            # React frontend (Vite)
 │   │   ├── Controllers/          # API endpoints
-│   │   ├── Data/                 # EF Core DbContext & configs
+│   │   ├── Data/                 # EF Core DbContext, seeding
+│   │   ├── Extensions/           # Connection string resolver, etc.
+│   │   ├── Dockerfile            # API container image (Railway)
 │   │   ├── Models/               # Domain models
-│   │   ├── Services/             # Business logic & JWT
+│   │   ├── Services/             # Business logic, JWT, email
 │   │   └── Migrations/           # Database migrations
 │   └── docker/
-│       └── docker-compose.yml    # PostgreSQL container
+│       └── docker-compose.yml    # PostgreSQL container (local)
 └── README.md
 ```
 
@@ -128,21 +141,30 @@ Create `src/App/appsettings.Development.json`:
 }
 ```
 
-You can copy from `src/App/appsettings.Development.example.json`. The `Jwt:Key` must be long enough for HMAC-SHA256 signing (32+ characters recommended).
+The `Jwt:Key` must be long enough for HMAC-SHA256 signing (32+ characters recommended).
 
 **Email (password reset and appointment notifications)**
 
+The API picks an email provider automatically:
+
+| Configuration | Provider | Typical use |
+|---------------|----------|-------------|
+| `Email:ApiKey` set | Resend (HTTPS) | Railway / production (SMTP blocked on Hobby) |
+| `Email:Host` set | SMTP (MailKit) | Local dev with Gmail |
+| Neither set | Console logging | Local dev without SMTP |
+
 | Setting | Purpose |
 |---------|---------|
-| `Email:Host` | SMTP server (leave empty to log email content to the console instead of sending) |
+| `Email:ApiKey` | Resend API key (`re_...`) |
+| `Email:Host` | SMTP server |
 | `Email:Port` | SMTP port (587 for Gmail) |
 | `Email:Username` / `Password` | SMTP credentials |
 | `Email:FromAddress` / `FromName` | Sender shown in emails |
 | `Frontend:BaseUrl` | Frontend URL used in email links (e.g. `http://localhost:5173`) |
 
-Without `Email:Host`, the API uses `LoggingEmailService` and prints email details to the console — useful for local development. See [Authentication → Email delivery](docs/authentication.md#email-delivery) for email triggers and [In-app notifications](docs/authentication.md#in-app-notifications) for the navbar bell.
+See [Authentication → Email delivery](docs/authentication.md#email-delivery) for triggers and [Deployment](docs/deployment.md) for Railway + Resend setup.
 
-Migrations run automatically when the API starts.
+On startup the API applies EF Core migrations and seeds demo data when the database is empty. See [Database → Demo seed data](docs/database.md#demo-seed-data).
 
 ### 3. Start the backend API
 
@@ -169,15 +191,26 @@ npm install
 npm run dev
 ```
 
-The frontend runs on **http://localhost:5173** and talks to the API at `http://localhost:8080`.
+The frontend runs on **http://localhost:5173** and talks to the API at `http://localhost:8080` (default in `src/api/api.ts`).
+
+For other environments, set `VITE_API_URL` before building the frontend (see [Frontend → Environment](docs/frontend.md#environment)).
 
 ## URLs
+
+### Local
 
 | Service | URL |
 |---------|-----|
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:8080 |
 | PostgreSQL | localhost:5432 |
+
+### Production (Railway)
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://appointweb-frontend-production.up.railway.app |
+| Backend API | https://appointweb-production.up.railway.app |
 
 ## Frontend pages
 
@@ -246,6 +279,11 @@ See the full [API Reference](docs/api.md) for request/response formats and examp
 - Confirm the backend is running on port `8080`
 - Check the browser console for CORS or network errors
 - The API allows requests from `http://localhost:5173`
+- **Production:** ensure `VITE_API_URL` points to the API URL and `Frontend:BaseUrl` matches the frontend origin
+
+**White screen after deploy**
+
+- Usually `VITE_API_URL` was set to the frontend URL instead of the API URL — fix and redeploy the frontend service
 
 **Port already in use**
 

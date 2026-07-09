@@ -1,6 +1,8 @@
 # API Reference
 
-Base URL: **http://localhost:8080**
+**Local base URL:** `http://localhost:8080`
+
+**Production base URL:** `https://appointweb-production.up.railway.app`
 
 All request and response bodies are JSON unless noted otherwise.
 
@@ -31,7 +33,7 @@ POST /api/auth/register
 | `username` | string | Required, 3–50 characters, unique |
 | `email` | string | Required, valid email, unique |
 | `password` | string | Required, minimum 6 characters |
-| `phoneNumber` | string | Optional |
+| `phoneNumber` | string | Optional; no format validation on the API today |
 | `role` | string | Optional. `Customer` (default) or `Provider`. Admin cannot be self-assigned |
 
 **Success response — `200 OK`**

@@ -11,6 +11,14 @@ Detailed documentation for the AppointWeb project. For a quick start guide, see 
 | [Authentication](authentication.md) | JWT flow, roles, and frontend auth state |
 | [Database](database.md) | Schema, entities, and relationships |
 | [Frontend](frontend.md) | React app structure, routing, and state management |
+| [Deployment](deployment.md) | Railway production setup, env vars, email (Resend) |
+
+## Live demo
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://appointweb-frontend-production.up.railway.app |
+| API | https://appointweb-production.up.railway.app |
 
 ## Feature overview
 
@@ -33,6 +41,9 @@ Detailed documentation for the AppointWeb project. For a quick start guide, see 
 ## Quick links
 
 - **Run locally:** [README → Local setup](../README.md#local-setup)
-- **API base URL:** `http://localhost:8080`
-- **Frontend URL:** `http://localhost:5173`
-- **Backend config template:** `src/App/appsettings.Development.example.json`
+- **Deploy to Railway:** [Deployment guide](deployment.md)
+- **API base URL (local):** `http://localhost:8080`
+- **API base URL (production):** `https://appointweb-production.up.railway.app`
+- **Frontend URL (local):** `http://localhost:5173`
+- **Frontend URL (production):** `https://appointweb-frontend-production.up.railway.app`
+- **Backend config:** create `src/App/appsettings.Development.json` (gitignored) — template in [README](../README.md#2-configure-the-backend)

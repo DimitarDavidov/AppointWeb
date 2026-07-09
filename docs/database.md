@@ -279,6 +279,32 @@ cd src/App
 dotnet ef migrations add YourMigrationName
 ```
 
+## Demo seed data
+
+On every API startup, `DatabaseSeeder.SeedAsync` runs after migrations. It is **idempotent**: if the marker user `dr.smith@appointweb.dev` already exists, seeding is skipped.
+
+The seed creates:
+
+- **Providers:** `dr.smith`, `coach.mike`, `bella.beauty`, `tutor.tom` (`*@appointweb.dev`)
+- **Customers:** `emma`, `frank`, `grace`, `henry`, `iris` (`*@appointweb.dev`)
+- **Services:** dental, fitness, beauty, guitar lesson, etc.
+- **Sample appointments** across all statuses, ratings, and notifications
+
+| Setting | Value |
+|---------|-------|
+| Demo password | `Password123!` |
+| Marker email | `dr.smith@appointweb.dev` |
+| Default timezone | `Europe/Sofia` |
+
+User accounts created via **Register** on production are stored alongside seed data. The live demo also includes manually registered users.
+
+To run seeding only (without starting the web server):
+
+```bash
+cd src/App
+dotnet run -- seed
+```
+
 ## Docker connection details
 
 These match `src/docker/docker-compose.yml`:

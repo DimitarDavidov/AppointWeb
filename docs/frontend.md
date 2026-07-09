@@ -261,7 +261,7 @@ dispatch(logout());
 
 The axios instance in `src/api/api.ts` is configured with:
 
-- **Base URL:** `http://localhost:8080`
+- **Base URL:** `import.meta.env.VITE_API_URL` if set, otherwise `http://localhost:8080`
 - **JWT interceptor:** automatically attaches `Authorization: Bearer <token>` from `localStorage`
 
 Domain-specific API calls are split across `src/api/*.ts` modules. Provider availability uses per-service endpoints:
@@ -287,4 +287,14 @@ npm run preview   # Preview production build locally
 
 ## Environment
 
-The API base URL is hardcoded in `src/api/api.ts` as `http://localhost:8080` for local development. For other environments, this would be moved to an environment variable (e.g. `VITE_API_URL`).
+| Variable | When | Value |
+|----------|------|-------|
+| `VITE_API_URL` | Build time (production) | Public API URL, e.g. `https://appointweb-production.up.railway.app` |
+
+Vite exposes only variables prefixed with `VITE_`. The value is embedded in the production bundle — redeploy after changing it.
+
+**Local development:** omit `VITE_API_URL`; the client defaults to `http://localhost:8080`.
+
+**Railway:** set `VITE_API_URL` on the frontend service to the **API** URL (not the frontend URL). Build config: `src/App/ClientApp/railway.toml`.
+
+See [Deployment](deployment.md) for the full production setup.

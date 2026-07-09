@@ -146,12 +146,17 @@ Forgot password form → POST /api/auth/forgot-password
 
 ### Email delivery
 
+The API selects an email provider at startup (`Program.cs`):
+
 | Mode | When | Behaviour |
 |------|------|-----------|
-| `LoggingEmailService` | `Email:Host` is empty | Email content logged to the console |
-| `SmtpEmailService` | SMTP configured | HTML + plain-text email via MailKit |
+| `ResendEmailService` | `Email:ApiKey` is set | HTML + plain-text via [Resend](https://resend.com) HTTPS API — use on **Railway** where SMTP is blocked |
+| `SmtpEmailService` | `Email:Host` is set (no API key) | HTML + plain-text via MailKit SMTP |
+| `LoggingEmailService` | Neither configured | Email content logged to the console |
 
-All emails use branded HTML templates. Links use `{Frontend:BaseUrl}` (for example `http://localhost:5173`).
+All emails use branded HTML templates. Links use `{Frontend:BaseUrl}` (for example `http://localhost:5173` locally, or your Railway frontend URL in production).
+
+**Resend test mode:** with sender `onboarding@resend.dev`, only the Resend account owner's email receives messages. Verify a custom domain for delivery to all users. See [Deployment → Email on Railway](deployment.md#email-on-railway).
 
 | Trigger | Recipient | Purpose |
 |---------|-----------|---------|
@@ -219,6 +224,8 @@ JWT settings in `appsettings.Development.json`:
 
 Email and frontend settings for transactional emails (password reset, appointment notifications):
 
+**Local (SMTP or console)**
+
 ```json
 {
   "Email": {
@@ -236,7 +243,24 @@ Email and frontend settings for transactional emails (password reset, appointmen
 }
 ```
 
-See `appsettings.Development.example.json` for the full template.
+**Production (Railway + Resend)**
+
+```json
+{
+  "Email": {
+    "ApiKey": "re_xxxxxxxx",
+    "FromAddress": "noreply@yourdomain.com",
+    "FromName": "AppointWeb"
+  },
+  "Frontend": {
+    "BaseUrl": "https://your-frontend.up.railway.app"
+  }
+}
+```
+
+On Railway, set these as environment variables (`Email__ApiKey`, `Email__FromAddress`, `Frontend__BaseUrl`, etc.). See [Deployment](deployment.md).
+
+Create `appsettings.Development.json` locally (gitignored). A full local template is in the [main README](../README.md#2-configure-the-backend).
 
 ## Security notes (portfolio context)
 

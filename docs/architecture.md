@@ -42,13 +42,36 @@ On startup the API:
 
 1. Verifies the database connection
 2. Applies EF Core migrations automatically
-3. Listens on port `8080`
+3. Seeds demo data if the database is empty (see [Database → Demo seed data](database.md#demo-seed-data))
+4. Listens on port `8080` locally, or Railway's `PORT` in production
 
 ### Database (`src/docker`)
 
 - **PostgreSQL 16** running in Docker
 - Started via `docker compose` — only the database is containerized
-- Backend and frontend run natively on the host machine
+- **Backend and frontend run natively on the host** during local development
+- **Production (Railway):** API runs in Docker; frontend is a static Vite build; PostgreSQL is managed by Railway — see [Deployment](deployment.md)
+
+## Production deployment
+
+```
+┌─────────────────────────┐     HTTPS      ┌─────────────────────────┐
+│  React (static build)   │ ─────────────► │  ASP.NET API (Docker)   │
+│  VITE_API_URL → API     │                │  PORT from Railway      │
+└─────────────────────────┘                └────────────┬────────────┘
+                                                        │ EF Core + SSL
+                                                        ▼
+                                               ┌─────────────────────────┐
+                                               │  PostgreSQL (Railway)   │
+                                               └─────────────────────────┘
+```
+
+Key production differences from local dev:
+
+- Connection strings come from `ConnectionStringResolver` (supports Railway `postgres://` URIs)
+- CORS includes `Frontend:BaseUrl` in addition to localhost
+- Email uses **Resend** when `Email:ApiKey` is set (SMTP is blocked on Railway Hobby)
+- Demo seed runs automatically on first deploy when the marker user is absent
 
 ## User roles
 
@@ -189,21 +212,24 @@ Middleware      →  Global error handling, suspended-user blocking
 
 ## CORS
 
-The API allows requests from the Vite dev server:
+The API allows requests from:
 
-- `http://localhost:5173`
-- `https://localhost:5173`
+- `http://localhost:5173` and `https://localhost:5173` (local Vite dev server)
+- The origin configured in `Frontend:BaseUrl` (production frontend URL)
 
 Configured in `Program.cs` under the `AllowFrontend` policy.
 
 ## Configuration
 
-| File | Purpose |
-|------|---------|
-| `appsettings.Development.json` | Connection string, JWT, email settings (gitignored) |
-| `appsettings.Development.example.json` | Template to copy for local setup |
-| `Properties/launchSettings.json` | Backend port (`8080`) |
+| File / setting | Purpose |
+|----------------|---------|
+| `appsettings.Development.json` | Connection string, JWT, email (gitignored — create locally) |
+| `Properties/launchSettings.json` | Backend port (`8080`) locally |
 | `src/docker/docker-compose.yml` | PostgreSQL credentials and port |
+| `src/App/Dockerfile` | API container image for Railway |
+| `src/App/ClientApp/railway.toml` | Frontend build command on Railway |
+| `VITE_API_URL` | Frontend env var — API base URL at build time |
+| Railway env vars | See [Deployment](deployment.md) |
 
 ## Business rules (high level)
 
@@ -218,6 +244,6 @@ Configured in `Program.cs` under the `AllowFrontend` policy.
 - **Availability is per service** — each listing can have its own weekly hours; if none are set, any time is allowed
 - Reschedule requests require acceptance by the other party; only changes from a previously confirmed slot count toward reschedule history
 - Ratings are optional and only allowed on terminal appointments (Completed, No-show, Cancelled) by the two participants; stars (0.5–5) and comment are each optional but at least one is required; per-service public averages count only Completed and No-show customer→provider ratings
-- Email notifications are sent for booking requests, appointment confirmations, cancellations, reschedule proposals, and accepted reschedules (SMTP in production, console logging when `Email:Host` is empty)
+- Email notifications are sent for booking requests, appointment confirmations, cancellations, reschedule proposals, and accepted reschedules. Provider priority: **Resend** (`Email:ApiKey`) → **SMTP** (`Email:Host`) → **console logging** (see [Authentication → Email delivery](authentication.md#email-delivery))
 - In-app notifications are stored in the database for appointment confirmations, cancellations, reschedule proposals, and accepted reschedules; the navbar bell polls for unread items
 - Admin insights are derived on read (no new tables): per-user counts, per-service breakdowns, and revenue are computed by querying appointments; **revenue counts Completed appointments only** (sum of `priceAtBooking`)

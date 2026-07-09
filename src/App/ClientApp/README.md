@@ -13,6 +13,8 @@ npm run dev
 
 Runs on http://localhost:5173 (requires the backend API on http://localhost:8080).
 
+**Production:** set `VITE_API_URL` to the API URL before build. See [Deployment guide](../../docs/deployment.md).
+
 ## Scripts
 
 | Command | Description |
