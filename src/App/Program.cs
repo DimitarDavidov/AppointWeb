@@ -42,16 +42,18 @@ var emailHost = builder.Configuration["Email:Host"];
 
 if (!string.IsNullOrWhiteSpace(emailApiKey))
 {
-    builder.Services.AddHttpClient<ResendEmailService>();
-    builder.Services.AddScoped<IEmailService, ResendEmailService>();
+    builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
+    Console.WriteLine("Email provider: Resend (HTTPS API)");
 }
 else if (!string.IsNullOrWhiteSpace(emailHost))
 {
     builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+    Console.WriteLine("Email provider: SMTP");
 }
 else
 {
     builder.Services.AddScoped<IEmailService, LoggingEmailService>();
+    Console.WriteLine("Email provider: console logging (no email configured)");
 }
 
 builder.Services.AddControllers();
