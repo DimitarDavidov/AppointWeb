@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
+import Important from "./pages/Important";
 import ServiceDetail from "./pages/ServiceDetail";
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/important" element={<Important />} />
           <Route
             path="/book/:providerId/:serviceId"
             element={<ServiceDetail />}

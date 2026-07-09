@@ -109,11 +109,22 @@ function Navbar() {
     setUserMenuOpen((open) => !open);
   }
 
+  const isImportantPage = location.pathname === "/important";
+
   return (
     <nav className="navbar">
-      <Link to="/" className="navbar-brand" onClick={closeMobileMenu}>
-        <img src={logo} alt="AppointWeb" className="navbar-logo" />
-      </Link>
+      <div className="navbar-start">
+        <Link to="/" className="navbar-brand" onClick={closeMobileMenu}>
+          <img src={logo} alt="AppointWeb" className="navbar-logo" />
+        </Link>
+        <Link
+          to="/important"
+          className={`navbar-important-link${isImportantPage ? " is-active" : ""}`}
+          onClick={closeMobileMenu}
+        >
+          Important
+        </Link>
+      </div>
 
       {isLoggedIn ? (
         <div className="navbar-end">
@@ -231,6 +242,28 @@ function Navbar() {
           className="navbar-mobile-panel"
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="navbar-mobile-list">
+            <MobileNavLink
+              to="/important"
+              label="Important"
+              icon={
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              }
+              onClick={closeMobileMenu}
+            />
+          </div>
           {isLoggedIn ? (
             <>
               <div className="navbar-mobile-user">
